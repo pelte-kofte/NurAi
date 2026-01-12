@@ -114,4 +114,48 @@ Typical usage:
 git clone <repo>
 cd nurai-ai-core
 claude .
+Claude Code will automatically load:
+	•	Global rules
+	•	Agents
+	•	Prompts
+	•	Execution plan
 
+⸻
+
+⚠️ Disclaimer
+
+NurAI provides general Islamic guidance for educational and spiritual support purposes only.
+
+It does not:
+	•	Issue fatwas
+	•	Replace scholars
+	•	Provide legal, medical, or political advice
+
+Users are encouraged to consult qualified scholars for personal rulings.
+
+---
+
+🧭 Vision
+
+NurAI aims to be:
+	•	Trustworthy
+	•	Gentle
+	•	Consistent
+	•	Spiritually comforting
+
+Every design decision should answer one question:
+
+“Does this make the user feel calmer and closer to Allah?”
+
+⸻
+
+📄 License
+
+License to be defined.
+This repository may be private or partially open-sourced.
+
+bismillah.
+
+code
+
+---
