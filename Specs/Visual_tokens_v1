@@ -1,0 +1,236 @@
+# NurAI – Visual Tokens (v1)
+Version: 1.0
+
+This document translates NurAI Visual DNA
+into concrete but flexible visual tokens.
+
+These tokens are NOT branding assets.
+They are implementation-ready design constraints.
+
+Exact values may evolve, relationships MUST NOT.
+
+---
+
+## 🎨 COLOR TOKENS
+
+Colors are intentionally low-saturation and warm.
+They are designed to reduce cognitive load.
+
+---
+
+### 🟫 COLOR: Background Base
+
+Role:
+- Main app background
+
+Guidelines:
+- Warm off-white
+- Slight beige / parchment undertone
+- Never pure white
+
+Example direction (not mandatory):
+- Light parchment
+- Soft cream
+
+Usage:
+- App root background
+- Reading screens
+
+---
+
+### 🟫 COLOR: Surface / Card
+
+Role:
+- Cards and containers
+
+Guidelines:
+- 3–6% darker than Background Base
+- Difference should be felt, not clearly seen
+
+Usage:
+- AyahCard
+- ReadingCard
+- Soft sections
+
+---
+
+### ⚫ COLOR: Primary Text
+
+Role:
+- Main readable text
+
+Guidelines:
+- Dark gray
+- Never full black
+- Comfortable for long reading
+
+Usage:
+- Ayah meanings
+- Main paragraphs
+- Core UI text
+
+---
+
+### ⚪ COLOR: Secondary Text
+
+Role:
+- Supporting text
+
+Guidelines:
+- Lighter gray
+- Clearly secondary
+- Must not compete with content
+
+Usage:
+- Labels
+- Meta info
+- Helper text
+
+---
+
+### 🌿 COLOR: Accent (Very Limited)
+
+Role:
+- Subtle emphasis
+
+Guidelines:
+- Earthy tone (olive / clay / sand family)
+- Desaturated
+- Used sparingly
+
+Rules:
+- No large surfaces
+- No backgrounds
+- Never dominant
+
+Usage:
+- Active state indicators
+- Soft highlights
+- Gentle focus cues
+
+---
+
+## ✍️ TYPOGRAPHY TOKENS
+
+Typography carries NurAI’s emotional weight.
+
+---
+
+### FONT ROLE 1: UI / Body Font
+
+Purpose:
+- Interface clarity
+- Neutral communication
+
+Characteristics:
+- Sans-serif
+- Humanist or neutral grotesk
+- High readability
+- No strong personality
+
+Recommended candidates:
+- Inter (acceptable but not branded)
+- Source Sans 3
+- IBM Plex Sans
+- SF Pro (iOS native)
+
+Rule:
+If it draws attention to itself, it’s wrong.
+
+---
+
+### FONT ROLE 2: Reading / Ayah Font
+
+Purpose:
+- Spiritual reading
+- Calm reflection
+
+Characteristics:
+- Slight serif or humanist serif
+- Soft contrast
+- Modern, not traditional
+- Book-like rhythm
+
+Recommended candidates:
+- Literata
+- Source Serif 4
+- Crimson Pro
+- Charter
+
+Rule:
+Reading text should feel like a page, not a UI label.
+
+---
+
+## 📐 SPACING TOKENS
+
+Spacing is the primary visual identity.
+
+Base unit:
+- 8px system
+
+Rules:
+- Vertical spacing > horizontal spacing
+- Cards must never feel tight
+- One idea per section
+
+Preferred gaps:
+- Section spacing: 24–32px
+- Card padding: 16–20px
+- Line height: generous (1.4–1.6)
+
+---
+
+## 🔘 BUTTON TOKENS
+
+Button philosophy:
+- Low pressure
+- Optional feeling
+
+Preferred styles:
+- Text buttons
+- Soft outlined buttons
+- Muted accent color only on interaction
+
+Avoid:
+- Solid bright buttons
+- Aggressive primary CTAs
+- Large block buttons everywhere
+
+---
+
+## 🌙 MOTION TOKENS
+
+Motion is reassurance, not excitement.
+
+Rules:
+- Duration: slow (200–300ms)
+- Easing: ease-out
+- No bounce
+- No attention-seeking animations
+
+---
+
+## 🚫 VISUAL RESTRICTIONS
+
+Do NOT use:
+- Progress bars
+- Streak visuals
+- Achievement badges
+- Loud gradients
+- High-contrast color blocks
+
+---
+
+## 🧭 FINAL IMPLEMENTATION RULE
+
+When in doubt:
+- Reduce contrast
+- Increase spacing
+- Remove decoration
+
+Calm is the brand.
+
+---
+
+END OF VISUAL TOKENS
