@@ -182,6 +182,95 @@ Before generating code, Claude must:
 If unclear:
 - Ask one clarification question max.
 
+
+
+# NurAI – Development Plan
+
+## Phase 0 – Foundation (Current)
+Status: In progress
+
+- Product vision finalized
+- PDR.md completed and frozen (v1)
+- UI visual direction defined
+- AI boundaries clearly defined
+
+Goal:
+Establish a clear, calm product foundation before any coding.
+
+---
+
+## Phase 1 – Core Reading Experience (MVP)
+Status: Planned
+
+- Prepare raw Quran data (AR / TR / EN)
+- Implement Explore:
+  - Surah list
+  - Ayah reading
+  - Translation toggle
+  - Optional ayah focus mode
+
+Goal:
+Ensure the app functions as a reliable Quran reading experience.
+
+---
+
+## Phase 2 – Home & Daily Presence
+Status: Planned
+
+- Implement Home screen
+- Daily Verse rotation from NurAI Ayah Pool
+- Gentle navigation to Explore and Settings
+
+Goal:
+Create a calm entry point and daily spiritual presence.
+
+---
+
+## Phase 3 – Intentional Features
+Status: Planned
+
+- Surah Reading Intent (non-goal based)
+- Ramadan / special period support
+- Local-only data storage
+
+Goal:
+Support spiritual intention without performance pressure.
+
+---
+
+## Phase 4 – Guidance (AI-Assisted)
+Status: Planned
+
+- Theme detection from user input
+- Verse suggestion from NurAI Ayah Pool
+- Strict AI boundaries enforced
+
+Goal:
+Offer gentle guidance only when the user seeks it.
+
+---
+
+## Phase 5 – Utilities & Presence
+Status: Planned
+
+- Prayer time notifications
+- Qibla direction tool
+
+Goal:
+Provide quiet, functional religious utilities.
+
+---
+
+## Phase 6 – Polish & Reflection
+Status: Planned
+
+- UI spacing and typography refinement
+- Notification tone tuning
+- Performance and accessibility improvements
+
+Goal:
+Polish the experience without adding new features.
+
 ---
 
 END OF DOCUMENT
