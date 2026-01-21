@@ -1,5 +1,35 @@
 # NurAI – Product Definition & Requirements
 
+## Explore – Quran Reading
+
+### Purpose
+Allow users to freely read any surah and ayah without AI guidance,
+tracking, or pressure.
+
+### Scope
+- Full surah list (1–114)
+- Ayah-by-ayah reading
+- Optional translation toggle
+- Optional focused ayah reading mode
+
+### Explicit Non-Goals
+- No progress tracking
+- No reading statistics
+- No streaks or completion indicators
+- No AI suggestions inside Explore
+
+### User Flow
+Explore →
+Surah List →
+Surah Detail (Ayahs) →
+(Optional) Ayah Focus Mode
+
+### Data Source
+- Raw Quran JSON (AR / TR / EN)
+- Read-only
+- Offline-first
+
+
 ## 1. Product Vision
 NurAI is a calm, private Islamic mobile application focused on
 reflection, reading, and gentle spiritual companionship.
