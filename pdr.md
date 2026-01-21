@@ -163,4 +163,46 @@ It offers gentle companionship without urgency, pressure, or guidance.
 - The same daily verse is shown for all sessions within the same calendar day
 - A new verse is shown the next day
 
+## Surah Reading Intent (Non-Goal Based)
+
+### Purpose
+Surah Reading Intent allows users to gently mark surahs they
+intend to read during a specific spiritual period
+(e.g. Ramadan, special nights, or a personal time frame).
+
+This feature supports intention (niyet), not performance.
+
+### How It Works
+- Users may create a reading intent tied to a named period
+  (e.g. “Ramadan 2026”).
+- Users manually select one or more surahs.
+- A surah may be marked as “read” by the user at any time.
+
+### Data Handling
+- All intent data is stored locally by default.
+- No historical logs, statistics, or analytics are kept.
+- No data is shared, compared, or visualized.
+
+### UI Principles
+- No percentages, progress bars, or completion ratios.
+- No streaks or consecutive-day logic.
+- No “behind”, “missed”, or “catch up” language.
+- Completed surahs are shown quietly (e.g. subtle checkmark).
+
+### Tone & Language
+- Language must remain gentle and invitational.
+- The system must never imply obligation or failure.
+- Silence is preferred over reminders.
+
+### Explicit Non-Goals
+- No gamification
+- No performance metrics
+- No competitive or comparative elements
+- No reminders based on incomplete intent
+
+### Relationship to Explore
+- Surah Reading Intent integrates with Explore.
+- Users may mark a surah as read from the Surah Detail screen.
+- Explore remains fully usable without any intent created.
+
 END.
