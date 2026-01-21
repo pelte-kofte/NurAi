@@ -121,4 +121,46 @@ AI must never:
 - NurAI Ayah Pool (10–20 ayahs)
 - Basic conversational theme detection
 
+## Home – Daily Presence
+
+### Purpose
+Home is a quiet entry point into the app.
+It offers gentle companionship without urgency, pressure, or guidance.
+
+### Core Elements
+
+#### Daily Verse
+- One verse is shown per day from the curated NurAI Ayah Pool.
+- The verse is selected deterministically (date-based rotation).
+- No AI is required for selection.
+- The verse remains the same throughout the day.
+
+#### Entry Points
+- Continue to Explore (Qur’an reading)
+- Open Reflection (optional, quiet)
+- Access Settings
+
+### Tone & Language
+- Soft, invitational language
+- No calls to action that imply urgency
+- No productivity framing
+
+### Explicit Non-Goals
+- No streaks or daily completion indicators
+- No “missed day” messaging
+- No reminders to read if the user does not engage
+- No analytics-driven personalization
+
+### Data Source
+- Daily Verse is sourced ONLY from `nurai_ayahs.json`
+- Raw Quran data is NOT used here
+
+### AI Boundaries
+- AI is not involved in Daily Verse selection
+- AI may later assist with optional reflection prompts, never verse content
+
+### Persistence
+- The same daily verse is shown for all sessions within the same calendar day
+- A new verse is shown the next day
+
 END.
