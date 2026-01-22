@@ -1,5 +1,8 @@
-# Ignore SQL dumps
-tools/*.sql
+# Large source files
+tools/quran.sql
+
+# Generated files
+assets/quran/raw/*.json
 
 # OS junk
 .DS_Store

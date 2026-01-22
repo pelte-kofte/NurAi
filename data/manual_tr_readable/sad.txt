@@ -1,0 +1,13 @@
+# Surah: 1
+# Name: Fatiha
+# Language: tr-readable
+# Type: phonetic
+# Source: manual_verified
+
+1|1|Bismillahirrahmanirrahim
+1|2|El hamdu lillahi rabbil alemin
+1|3|Er rahmanir rahim
+1|4|Maliki yevmiddin
+1|5|Iyyake nabudu ve iyyake nestein
+1|6|Ihdinas siratal mustakim
+1|7|Siratallezine enamte aleyhim gayril magdubi aleyhim ve lad dallin
