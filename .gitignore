@@ -1,0 +1,6 @@
+# Ignore SQL dumps
+tools/*.sql
+
+# OS junk
+.DS_Store
+Thumbs.db
