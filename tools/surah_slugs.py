@@ -1,0 +1,23 @@
+SURAH_SLUGS = {
+  1: "fatiha",
+  2: "bakara",
+  3: "ali-imran",
+  4: "nisa",
+  5: "maide",
+  6: "enam",
+  7: "araf",
+  8: "enfal",
+  9: "tevbe",
+  10: "yunus",
+  11: "hud",
+  12: "yusuf",
+  13: "rad",
+  14: "ibrahim",
+  15: "hicr",
+  16: "nahl",
+  17: "isra",
+  18: "kehf",
+  19: "meryem",
+  20: "taha",
+  # (devamını ben bir sonraki adımda tam vereceğim)
+}

@@ -1,0 +1,1028 @@
+[
+  {
+    "id": 1,
+    "name_ar": "الفاتحة",
+    "name_tr": "Fâtiha",
+    "name_en": "Al-Fatihah",
+    "ayah_count": 7,
+    "revelation_place": "Meccan",
+    "order": 1
+  },
+  {
+    "id": 2,
+    "name_ar": "البقرة",
+    "name_tr": "Bakara",
+    "name_en": "Al-Baqarah",
+    "ayah_count": 286,
+    "revelation_place": "Medinan",
+    "order": 2
+  },
+  {
+    "id": 3,
+    "name_ar": "آل عمران",
+    "name_tr": "Âl-i İmrân",
+    "name_en": "Aal-E-Imran",
+    "ayah_count": 200,
+    "revelation_place": "Medinan",
+    "order": 3
+  },
+  {
+    "id": 4,
+    "name_ar": "النساء",
+    "name_tr": "Nisâ",
+    "name_en": "An-Nisa",
+    "ayah_count": 176,
+    "revelation_place": "Medinan",
+    "order": 4
+  },
+  {
+    "id": 5,
+    "name_ar": "المائدة",
+    "name_tr": "Mâide",
+    "name_en": "Al-Ma'idah",
+    "ayah_count": 120,
+    "revelation_place": "Medinan",
+    "order": 5
+  },
+  {
+    "id": 6,
+    "name_ar": "الأنعام",
+    "name_tr": "En‘âm",
+    "name_en": "Al-An'am",
+    "ayah_count": 165,
+    "revelation_place": "Meccan",
+    "order": 6
+  },
+  {
+    "id": 7,
+    "name_ar": "الأعراف",
+    "name_tr": "A‘râf",
+    "name_en": "Al-A'raf",
+    "ayah_count": 206,
+    "revelation_place": "Meccan",
+    "order": 7
+  },
+  {
+    "id": 8,
+    "name_ar": "الأنفال",
+    "name_tr": "Enfâl",
+    "name_en": "Al-Anfal",
+    "ayah_count": 75,
+    "revelation_place": "Medinan",
+    "order": 8
+  },
+  {
+    "id": 9,
+    "name_ar": "التوبة",
+    "name_tr": "Tevbe",
+    "name_en": "At-Tawbah",
+    "ayah_count": 129,
+    "revelation_place": "Medinan",
+    "order": 9
+  },
+  {
+    "id": 10,
+    "name_ar": "يونس",
+    "name_tr": "Yûnus",
+    "name_en": "Yunus",
+    "ayah_count": 109,
+    "revelation_place": "Meccan",
+    "order": 10
+  },
+  {
+    "id": 11,
+    "name_ar": "هود",
+    "name_tr": "Hûd",
+    "name_en": "Hud",
+    "ayah_count": 123,
+    "revelation_place": "Meccan",
+    "order": 11
+  },
+  {
+    "id": 12,
+    "name_ar": "يوسف",
+    "name_tr": "Yûsuf",
+    "name_en": "Yusuf",
+    "ayah_count": 111,
+    "revelation_place": "Meccan",
+    "order": 12
+  },
+  {
+    "id": 13,
+    "name_ar": "الرعد",
+    "name_tr": "Ra‘d",
+    "name_en": "Ar-Ra'd",
+    "ayah_count": 43,
+    "revelation_place": "Medinan",
+    "order": 13
+  },
+  {
+    "id": 14,
+    "name_ar": "إبراهيم",
+    "name_tr": "İbrâhîm",
+    "name_en": "Ibrahim",
+    "ayah_count": 52,
+    "revelation_place": "Meccan",
+    "order": 14
+  },
+  {
+    "id": 15,
+    "name_ar": "الحجر",
+    "name_tr": "Hicr",
+    "name_en": "Al-Hijr",
+    "ayah_count": 99,
+    "revelation_place": "Meccan",
+    "order": 15
+  },
+  {
+    "id": 16,
+    "name_ar": "النحل",
+    "name_tr": "Nahl",
+    "name_en": "An-Nahl",
+    "ayah_count": 128,
+    "revelation_place": "Meccan",
+    "order": 16
+  },
+  {
+    "id": 17,
+    "name_ar": "الإسراء",
+    "name_tr": "İsrâ",
+    "name_en": "Al-Isra",
+    "ayah_count": 111,
+    "revelation_place": "Meccan",
+    "order": 17
+  },
+  {
+    "id": 18,
+    "name_ar": "الكهف",
+    "name_tr": "Kehf",
+    "name_en": "Al-Kahf",
+    "ayah_count": 110,
+    "revelation_place": "Meccan",
+    "order": 18
+  },
+  {
+    "id": 19,
+    "name_ar": "مريم",
+    "name_tr": "Meryem",
+    "name_en": "Maryam",
+    "ayah_count": 98,
+    "revelation_place": "Meccan",
+    "order": 19
+  },
+  {
+    "id": 20,
+    "name_ar": "طه",
+    "name_tr": "Tâhâ",
+    "name_en": "Ta-Ha",
+    "ayah_count": 135,
+    "revelation_place": "Meccan",
+    "order": 20
+  },
+  {
+    "id": 21,
+    "name_ar": "الأنبياء",
+    "name_tr": "Enbiyâ",
+    "name_en": "Al-Anbiya",
+    "ayah_count": 112,
+    "revelation_place": "Meccan",
+    "order": 21
+  },
+  {
+    "id": 22,
+    "name_ar": "الحج",
+    "name_tr": "Hac",
+    "name_en": "Al-Hajj",
+    "ayah_count": 78,
+    "revelation_place": "Medinan",
+    "order": 22
+  },
+  {
+    "id": 23,
+    "name_ar": "المؤمنون",
+    "name_tr": "Mü’minûn",
+    "name_en": "Al-Mu'minun",
+    "ayah_count": 118,
+    "revelation_place": "Meccan",
+    "order": 23
+  },
+  {
+    "id": 24,
+    "name_ar": "النور",
+    "name_tr": "Nûr",
+    "name_en": "An-Nur",
+    "ayah_count": 64,
+    "revelation_place": "Medinan",
+    "order": 24
+  },
+  {
+    "id": 25,
+    "name_ar": "الفرقان",
+    "name_tr": "Furkân",
+    "name_en": "Al-Furqan",
+    "ayah_count": 77,
+    "revelation_place": "Meccan",
+    "order": 25
+  },
+  {
+    "id": 26,
+    "name_ar": "الشعراء",
+    "name_tr": "Şuarâ",
+    "name_en": "Ash-Shu'ara",
+    "ayah_count": 227,
+    "revelation_place": "Meccan",
+    "order": 26
+  },
+  {
+    "id": 27,
+    "name_ar": "النمل",
+    "name_tr": "Neml",
+    "name_en": "An-Naml",
+    "ayah_count": 93,
+    "revelation_place": "Meccan",
+    "order": 27
+  },
+  {
+    "id": 28,
+    "name_ar": "القصص",
+    "name_tr": "Kasas",
+    "name_en": "Al-Qasas",
+    "ayah_count": 88,
+    "revelation_place": "Meccan",
+    "order": 28
+  },
+  {
+    "id": 29,
+    "name_ar": "العنكبوت",
+    "name_tr": "Ankebût",
+    "name_en": "Al-Ankabut",
+    "ayah_count": 69,
+    "revelation_place": "Meccan",
+    "order": 29
+  },
+  {
+    "id": 30,
+    "name_ar": "الروم",
+    "name_tr": "Rûm",
+    "name_en": "Ar-Rum",
+    "ayah_count": 60,
+    "revelation_place": "Meccan",
+    "order": 30
+  },
+  {
+    "id": 31,
+    "name_ar": "لقمان",
+    "name_tr": "Lokmân",
+    "name_en": "Luqman",
+    "ayah_count": 34,
+    "revelation_place": "Meccan",
+    "order": 31
+  },
+  {
+    "id": 32,
+    "name_ar": "السجدة",
+    "name_tr": "Secde",
+    "name_en": "As-Sajdah",
+    "ayah_count": 30,
+    "revelation_place": "Meccan",
+    "order": 32
+  },
+  {
+    "id": 33,
+    "name_ar": "الأحزاب",
+    "name_tr": "Ahzâb",
+    "name_en": "Al-Ahzab",
+    "ayah_count": 73,
+    "revelation_place": "Medinan",
+    "order": 33
+  },
+  {
+    "id": 34,
+    "name_ar": "سبإ",
+    "name_tr": "Sebe’",
+    "name_en": "Saba",
+    "ayah_count": 54,
+    "revelation_place": "Meccan",
+    "order": 34
+  },
+  {
+    "id": 35,
+    "name_ar": "فاطر",
+    "name_tr": "Fâtır",
+    "name_en": "Fatir",
+    "ayah_count": 45,
+    "revelation_place": "Meccan",
+    "order": 35
+  },
+  {
+    "id": 36,
+    "name_ar": "يس",
+    "name_tr": "Yâsîn",
+    "name_en": "Ya-Sin",
+    "ayah_count": 83,
+    "revelation_place": "Meccan",
+    "order": 36
+  },
+  {
+    "id": 37,
+    "name_ar": "الصافات",
+    "name_tr": "Sâffât",
+    "name_en": "As-Saffat",
+    "ayah_count": 182,
+    "revelation_place": "Meccan",
+    "order": 37
+  },
+  {
+    "id": 38,
+    "name_ar": "ص",
+    "name_tr": "Sâd",
+    "name_en": "Sad",
+    "ayah_count": 88,
+    "revelation_place": "Meccan",
+    "order": 38
+  },
+  {
+    "id": 39,
+    "name_ar": "الزمر",
+    "name_tr": "Zümer",
+    "name_en": "Az-Zumar",
+    "ayah_count": 75,
+    "revelation_place": "Meccan",
+    "order": 39
+  },
+  {
+    "id": 40,
+    "name_ar": "غافر",
+    "name_tr": "Mü’min",
+    "name_en": "Ghafir",
+    "ayah_count": 85,
+    "revelation_place": "Meccan",
+    "order": 40
+  },
+  {
+    "id": 41,
+    "name_ar": "فصلت",
+    "name_tr": "Fussilet",
+    "name_en": "Fussilat",
+    "ayah_count": 54,
+    "revelation_place": "Meccan",
+    "order": 41
+  },
+  {
+    "id": 42,
+    "name_ar": "الشورى",
+    "name_tr": "Şûrâ",
+    "name_en": "Ash-Shura",
+    "ayah_count": 53,
+    "revelation_place": "Meccan",
+    "order": 42
+  },
+  {
+    "id": 43,
+    "name_ar": "الزخرف",
+    "name_tr": "Zuhruf",
+    "name_en": "Az-Zukhruf",
+    "ayah_count": 89,
+    "revelation_place": "Meccan",
+    "order": 43
+  },
+  {
+    "id": 44,
+    "name_ar": "الدخان",
+    "name_tr": "Duhân",
+    "name_en": "Ad-Dukhan",
+    "ayah_count": 59,
+    "revelation_place": "Meccan",
+    "order": 44
+  },
+  {
+    "id": 45,
+    "name_ar": "الجاثية",
+    "name_tr": "Câsiye",
+    "name_en": "Al-Jathiyah",
+    "ayah_count": 37,
+    "revelation_place": "Meccan",
+    "order": 45
+  },
+  {
+    "id": 46,
+    "name_ar": "الأحقاف",
+    "name_tr": "Ahkâf",
+    "name_en": "Al-Ahqaf",
+    "ayah_count": 35,
+    "revelation_place": "Meccan",
+    "order": 46
+  },
+  {
+    "id": 47,
+    "name_ar": "محمد",
+    "name_tr": "Muhammed",
+    "name_en": "Muhammad",
+    "ayah_count": 38,
+    "revelation_place": "Medinan",
+    "order": 47
+  },
+  {
+    "id": 48,
+    "name_ar": "الفتح",
+    "name_tr": "Fetih",
+    "name_en": "Al-Fath",
+    "ayah_count": 29,
+    "revelation_place": "Medinan",
+    "order": 48
+  },
+  {
+    "id": 49,
+    "name_ar": "الحجرات",
+    "name_tr": "Hucurât",
+    "name_en": "Al-Hujurat",
+    "ayah_count": 18,
+    "revelation_place": "Medinan",
+    "order": 49
+  },
+  {
+    "id": 50,
+    "name_ar": "ق",
+    "name_tr": "Kâf",
+    "name_en": "Qaf",
+    "ayah_count": 45,
+    "revelation_place": "Meccan",
+    "order": 50
+  },
+  {
+    "id": 51,
+    "name_ar": "الذاريات",
+    "name_tr": "Zâriyât",
+    "name_en": "Adh-Dhariyat",
+    "ayah_count": 60,
+    "revelation_place": "Meccan",
+    "order": 51
+  },
+  {
+    "id": 52,
+    "name_ar": "الطور",
+    "name_tr": "Tûr",
+    "name_en": "At-Tur",
+    "ayah_count": 49,
+    "revelation_place": "Meccan",
+    "order": 52
+  },
+  {
+    "id": 53,
+    "name_ar": "النجم",
+    "name_tr": "Necm",
+    "name_en": "An-Najm",
+    "ayah_count": 62,
+    "revelation_place": "Meccan",
+    "order": 53
+  },
+  {
+    "id": 54,
+    "name_ar": "القمر",
+    "name_tr": "Kamer",
+    "name_en": "Al-Qamar",
+    "ayah_count": 55,
+    "revelation_place": "Meccan",
+    "order": 54
+  },
+  {
+    "id": 55,
+    "name_ar": "الرحمن",
+    "name_tr": "Rahmân",
+    "name_en": "Ar-Rahman",
+    "ayah_count": 78,
+    "revelation_place": "Medinan",
+    "order": 55
+  },
+  {
+    "id": 56,
+    "name_ar": "الواقعة",
+    "name_tr": "Vâkıa",
+    "name_en": "Al-Waqi'ah",
+    "ayah_count": 96,
+    "revelation_place": "Meccan",
+    "order": 56
+  },
+  {
+    "id": 57,
+    "name_ar": "الحديد",
+    "name_tr": "Hadîd",
+    "name_en": "Al-Hadid",
+    "ayah_count": 29,
+    "revelation_place": "Medinan",
+    "order": 57
+  },
+  {
+    "id": 58,
+    "name_ar": "المجادلة",
+    "name_tr": "Mücâdele",
+    "name_en": "Al-Mujadila",
+    "ayah_count": 22,
+    "revelation_place": "Medinan",
+    "order": 58
+  },
+  {
+    "id": 59,
+    "name_ar": "الحشر",
+    "name_tr": "Haşr",
+    "name_en": "Al-Hashr",
+    "ayah_count": 24,
+    "revelation_place": "Medinan",
+    "order": 59
+  },
+  {
+    "id": 60,
+    "name_ar": "الممتحنة",
+    "name_tr": "Mümtehine",
+    "name_en": "Al-Mumtahanah",
+    "ayah_count": 13,
+    "revelation_place": "Medinan",
+    "order": 60
+  },
+  {
+    "id": 61,
+    "name_ar": "الصف",
+    "name_tr": "Saff",
+    "name_en": "As-Saff",
+    "ayah_count": 14,
+    "revelation_place": "Medinan",
+    "order": 61
+  },
+  {
+    "id": 62,
+    "name_ar": "الجمعة",
+    "name_tr": "Cum‘a",
+    "name_en": "Al-Jumu'ah",
+    "ayah_count": 11,
+    "revelation_place": "Medinan",
+    "order": 62
+  },
+  {
+    "id": 63,
+    "name_ar": "المنافقون",
+    "name_tr": "Münâfikûn",
+    "name_en": "Al-Munafiqun",
+    "ayah_count": 11,
+    "revelation_place": "Medinan",
+    "order": 63
+  },
+  {
+    "id": 64,
+    "name_ar": "التغابن",
+    "name_tr": "Tegâbün",
+    "name_en": "At-Taghabun",
+    "ayah_count": 18,
+    "revelation_place": "Medinan",
+    "order": 64
+  },
+  {
+    "id": 65,
+    "name_ar": "الطلاق",
+    "name_tr": "Talâk",
+    "name_en": "At-Talaq",
+    "ayah_count": 12,
+    "revelation_place": "Medinan",
+    "order": 65
+  },
+  {
+    "id": 66,
+    "name_ar": "التحريم",
+    "name_tr": "Tahrîm",
+    "name_en": "At-Tahrim",
+    "ayah_count": 12,
+    "revelation_place": "Medinan",
+    "order": 66
+  },
+  {
+    "id": 67,
+    "name_ar": "الملك",
+    "name_tr": "Mülk",
+    "name_en": "Al-Mulk",
+    "ayah_count": 30,
+    "revelation_place": "Meccan",
+    "order": 67
+  },
+  {
+    "id": 68,
+    "name_ar": "القلم",
+    "name_tr": "Kalem",
+    "name_en": "Al-Qalam",
+    "ayah_count": 52,
+    "revelation_place": "Meccan",
+    "order": 68
+  },
+  {
+    "id": 69,
+    "name_ar": "الحاقة",
+    "name_tr": "Hâkka",
+    "name_en": "Al-Haqqah",
+    "ayah_count": 52,
+    "revelation_place": "Meccan",
+    "order": 69
+  },
+  {
+    "id": 70,
+    "name_ar": "المعارج",
+    "name_tr": "Meâric",
+    "name_en": "Al-Ma'arij",
+    "ayah_count": 44,
+    "revelation_place": "Meccan",
+    "order": 70
+  },
+  {
+    "id": 71,
+    "name_ar": "نوح",
+    "name_tr": "Nûh",
+    "name_en": "Nuh",
+    "ayah_count": 28,
+    "revelation_place": "Meccan",
+    "order": 71
+  },
+  {
+    "id": 72,
+    "name_ar": "الجن",
+    "name_tr": "Cin",
+    "name_en": "Al-Jinn",
+    "ayah_count": 28,
+    "revelation_place": "Meccan",
+    "order": 72
+  },
+  {
+    "id": 73,
+    "name_ar": "المزمل",
+    "name_tr": "Müzzemmil",
+    "name_en": "Al-Muzzammil",
+    "ayah_count": 20,
+    "revelation_place": "Meccan",
+    "order": 73
+  },
+  {
+    "id": 74,
+    "name_ar": "المدثر",
+    "name_tr": "Müddessir",
+    "name_en": "Al-Muddathir",
+    "ayah_count": 56,
+    "revelation_place": "Meccan",
+    "order": 74
+  },
+  {
+    "id": 75,
+    "name_ar": "القيامة",
+    "name_tr": "Kıyâmet",
+    "name_en": "Al-Qiyamah",
+    "ayah_count": 40,
+    "revelation_place": "Meccan",
+    "order": 75
+  },
+  {
+    "id": 76,
+    "name_ar": "الإنسان",
+    "name_tr": "İnsân",
+    "name_en": "Al-Insan",
+    "ayah_count": 31,
+    "revelation_place": "Medinan",
+    "order": 76
+  },
+  {
+    "id": 77,
+    "name_ar": "المرسلات",
+    "name_tr": "Mürselât",
+    "name_en": "Al-Mursalat",
+    "ayah_count": 50,
+    "revelation_place": "Meccan",
+    "order": 77
+  },
+  {
+    "id": 78,
+    "name_ar": "النبأ",
+    "name_tr": "Neb’e",
+    "name_en": "An-Naba",
+    "ayah_count": 40,
+    "revelation_place": "Meccan",
+    "order": 78
+  },
+  {
+    "id": 79,
+    "name_ar": "النازعات",
+    "name_tr": "Nâzi‘ât",
+    "name_en": "An-Nazi'at",
+    "ayah_count": 46,
+    "revelation_place": "Meccan",
+    "order": 79
+  },
+  {
+    "id": 80,
+    "name_ar": "عبس",
+    "name_tr": "Abese",
+    "name_en": "Abasa",
+    "ayah_count": 42,
+    "revelation_place": "Meccan",
+    "order": 80
+  },
+  {
+    "id": 81,
+    "name_ar": "التكوير",
+    "name_tr": "Tekvîr",
+    "name_en": "At-Takwir",
+    "ayah_count": 29,
+    "revelation_place": "Meccan",
+    "order": 81
+  },
+  {
+    "id": 82,
+    "name_ar": "الإنفطار",
+    "name_tr": "İnfitâr",
+    "name_en": "Al-Infitar",
+    "ayah_count": 19,
+    "revelation_place": "Meccan",
+    "order": 82
+  },
+  {
+    "id": 83,
+    "name_ar": "المطففين",
+    "name_tr": "Mutaffifîn",
+    "name_en": "Al-Mutaffifin",
+    "ayah_count": 36,
+    "revelation_place": "Meccan",
+    "order": 83
+  },
+  {
+    "id": 84,
+    "name_ar": "الإنشقاق",
+    "name_tr": "İnşikâk",
+    "name_en": "Al-Inshiqaq",
+    "ayah_count": 25,
+    "revelation_place": "Meccan",
+    "order": 84
+  },
+  {
+    "id": 85,
+    "name_ar": "البروج",
+    "name_tr": "Bürûc",
+    "name_en": "Al-Buruj",
+    "ayah_count": 22,
+    "revelation_place": "Meccan",
+    "order": 85
+  },
+  {
+    "id": 86,
+    "name_ar": "الطارق",
+    "name_tr": "Târık",
+    "name_en": "At-Tariq",
+    "ayah_count": 17,
+    "revelation_place": "Meccan",
+    "order": 86
+  },
+  {
+    "id": 87,
+    "name_ar": "الأعلى",
+    "name_tr": "A‘lâ",
+    "name_en": "Al-A'la",
+    "ayah_count": 19,
+    "revelation_place": "Meccan",
+    "order": 87
+  },
+  {
+    "id": 88,
+    "name_ar": "الغاشية",
+    "name_tr": "Gâşiye",
+    "name_en": "Al-Ghashiyah",
+    "ayah_count": 26,
+    "revelation_place": "Meccan",
+    "order": 88
+  },
+  {
+    "id": 89,
+    "name_ar": "الفجر",
+    "name_tr": "Fecr",
+    "name_en": "Al-Fajr",
+    "ayah_count": 30,
+    "revelation_place": "Meccan",
+    "order": 89
+  },
+  {
+    "id": 90,
+    "name_ar": "البلد",
+    "name_tr": "Beled",
+    "name_en": "Al-Balad",
+    "ayah_count": 20,
+    "revelation_place": "Meccan",
+    "order": 90
+  },
+  {
+    "id": 91,
+    "name_ar": "الشمس",
+    "name_tr": "Şems",
+    "name_en": "Ash-Shams",
+    "ayah_count": 15,
+    "revelation_place": "Meccan",
+    "order": 91
+  },
+  {
+    "id": 92,
+    "name_ar": "الليل",
+    "name_tr": "Leyl",
+    "name_en": "Al-Layl",
+    "ayah_count": 21,
+    "revelation_place": "Meccan",
+    "order": 92
+  },
+  {
+    "id": 93,
+    "name_ar": "الضحى",
+    "name_tr": "Duha",
+    "name_en": "Ad-Duha",
+    "ayah_count": 11,
+    "revelation_place": "Meccan",
+    "order": 93
+  },
+  {
+    "id": 94,
+    "name_ar": "الشرح",
+    "name_tr": "İnşirâh",
+    "name_en": "Ash-Sharh",
+    "ayah_count": 8,
+    "revelation_place": "Meccan",
+    "order": 94
+  },
+  {
+    "id": 95,
+    "name_ar": "التين",
+    "name_tr": "Tîn",
+    "name_en": "At-Tin",
+    "ayah_count": 8,
+    "revelation_place": "Meccan",
+    "order": 95
+  },
+  {
+    "id": 96,
+    "name_ar": "العلق",
+    "name_tr": "Alak",
+    "name_en": "Al-Alaq",
+    "ayah_count": 19,
+    "revelation_place": "Meccan",
+    "order": 96
+  },
+  {
+    "id": 97,
+    "name_ar": "القدر",
+    "name_tr": "Kadr",
+    "name_en": "Al-Qadr",
+    "ayah_count": 5,
+    "revelation_place": "Meccan",
+    "order": 97
+  },
+  {
+    "id": 98,
+    "name_ar": "البينة",
+    "name_tr": "Beyyine",
+    "name_en": "Al-Bayyinah",
+    "ayah_count": 8,
+    "revelation_place": "Medinan",
+    "order": 98
+  },
+  {
+    "id": 99,
+    "name_ar": "الزلزلة",
+    "name_tr": "Zilzâl",
+    "name_en": "Az-Zalzalah",
+    "ayah_count": 8,
+    "revelation_place": "Medinan",
+    "order": 99
+  },
+  {
+    "id": 100,
+    "name_ar": "العاديات",
+    "name_tr": "Âdiyât",
+    "name_en": "Al-Adiyat",
+    "ayah_count": 11,
+    "revelation_place": "Meccan",
+    "order": 100
+  },
+  {
+    "id": 101,
+    "name_ar": "القارعة",
+    "name_tr": "Kâria",
+    "name_en": "Al-Qari'ah",
+    "ayah_count": 11,
+    "revelation_place": "Meccan",
+    "order": 101
+  },
+  {
+    "id": 102,
+    "name_ar": "التكاثر",
+    "name_tr": "Tekâsür",
+    "name_en": "At-Takathur",
+    "ayah_count": 8,
+    "revelation_place": "Meccan",
+    "order": 102
+  },
+  {
+    "id": 103,
+    "name_ar": "العصر",
+    "name_tr": "Asr",
+    "name_en": "Al-Asr",
+    "ayah_count": 3,
+    "revelation_place": "Meccan",
+    "order": 103
+  },
+  {
+    "id": 104,
+    "name_ar": "الهمزة",
+    "name_tr": "Hümeze",
+    "name_en": "Al-Humazah",
+    "ayah_count": 9,
+    "revelation_place": "Meccan",
+    "order": 104
+  },
+  {
+    "id": 105,
+    "name_ar": "الفيل",
+    "name_tr": "Fîl",
+    "name_en": "Al-Fil",
+    "ayah_count": 5,
+    "revelation_place": "Meccan",
+    "order": 105
+  },
+  {
+    "id": 106,
+    "name_ar": "قريش",
+    "name_tr": "Kureyş",
+    "name_en": "Quraysh",
+    "ayah_count": 4,
+    "revelation_place": "Meccan",
+    "order": 106
+  },
+  {
+    "id": 107,
+    "name_ar": "الماعون",
+    "name_tr": "Mâûn",
+    "name_en": "Al-Ma'un",
+    "ayah_count": 7,
+    "revelation_place": "Meccan",
+    "order": 107
+  },
+  {
+    "id": 108,
+    "name_ar": "الكوثر",
+    "name_tr": "Kevser",
+    "name_en": "Al-Kawthar",
+    "ayah_count": 3,
+    "revelation_place": "Meccan",
+    "order": 108
+  },
+  {
+    "id": 109,
+    "name_ar": "الكافرون",
+    "name_tr": "Kâfirûn",
+    "name_en": "Al-Kafirun",
+    "ayah_count": 6,
+    "revelation_place": "Meccan",
+    "order": 109
+  },
+  {
+    "id": 110,
+    "name_ar": "النصر",
+    "name_tr": "Nasr",
+    "name_en": "An-Nasr",
+    "ayah_count": 3,
+    "revelation_place": "Medinan",
+    "order": 110
+  },
+  {
+    "id": 111,
+    "name_ar": "المسد",
+    "name_tr": "Tebbet",
+    "name_en": "Al-Masad",
+    "ayah_count": 5,
+    "revelation_place": "Meccan",
+    "order": 111
+  },
+  {
+    "id": 112,
+    "name_ar": "الإخلاص",
+    "name_tr": "İhlâs",
+    "name_en": "Al-Ikhlas",
+    "ayah_count": 4,
+    "revelation_place": "Meccan",
+    "order": 112
+  },
+  {
+    "id": 113,
+    "name_ar": "الفلق",
+    "name_tr": "Felak",
+    "name_en": "Al-Falaq",
+    "ayah_count": 5,
+    "revelation_place": "Meccan",
+    "order": 113
+  },
+  {
+    "id": 114,
+    "name_ar": "الناس",
+    "name_tr": "Nâs",
+    "name_en": "An-Nas",
+    "ayah_count": 6,
+    "revelation_place": "Meccan",
+    "order": 114
+  }
+]
