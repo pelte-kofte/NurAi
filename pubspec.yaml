@@ -1,36 +1,40 @@
-name: bebek_takip
-description: "Bebek takip uygulaması"
+name: nurai
+description: A calm, mobile-first Islamic app for Quran reading and reflection.
 publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.10.4
-
-
-
-
+  sdk: ^3.0.0
 
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.8
-  flutter_svg: ^2.2.3
-  pdf: ^3.11.3
-  path_provider: ^2.1.5
-  share_plus: ^12.0.1
-  intl: ^0.20.2
-  google_fonts: ^6.3.3
-
-  shared_preferences: ^2.2.2
-
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^6.0.0
+  flutter_lints: ^3.0.0
 
 flutter:
   uses-material-design: true
-  
+
   assets:
-    - assets/icons/illustration/
+    - assets/quran/final/quran_ar_tr.json
+    - assets/quran/meta/surahs.json
+
+  fonts:
+  - family: Amiri
+    fonts:
+      - asset: assets/fonts/Amiri-Regular.ttf
+      - asset: assets/fonts/Amiri-Bold.ttf
+        weight: 700
+
+  - family: Merriweather
+    fonts:
+      - asset: assets/fonts/Merriweather.ttf
+
+  - family: Inter
+    fonts:
+      - asset: assets/fonts/Inter.ttf
+
+
