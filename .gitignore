@@ -7,3 +7,34 @@ assets/quran/raw/*.json
 # OS junk
 .DS_Store
 Thumbs.db
+
+
+# Node / JS
+node_modules/
+.next/
+dist/
+build/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# Env
+.env
+.env.local
+
+# Large raw sources (optional)
+assets/quran/source/
+tools/quran.sql
