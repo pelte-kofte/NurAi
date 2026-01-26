@@ -205,4 +205,85 @@ This feature supports intention (niyet), not performance.
 - Users may mark a surah as read from the Surah Detail screen.
 - Explore remains fully usable without any intent created.
 
+
+## Collective Reading (Cüz Niyeti / Birlikte Okuma)
+
+### Purpose
+
+Collective Reading allows users to silently participate in a shared
+Qur’an reading intention (e.g. Ramadan hatim),
+without social pressure, visibility, or performance tracking.
+
+The feature emphasizes shared niyet, not shared progress.
+
+### Core Principles
+
+- Reading remains individual
+- Intention may be collective
+- No obligation, no deadlines
+- No visible progress comparison
+- Silence is preferred over feedback
+
+### Scope
+- Primarily designed for Ramadan
+- May be reused for other spiritual periods
+- Fully optional
+- Local-first by default
+
+### Conceptual Model
+- Collective Reading is based on Juz assignment, not surah completion.
+- A Juz is treated as a reading range, not a UI object.
+
+### Juz Structure (Critical Design Decision)
+- A Juz:
+  - May begin in the middle of a surah
+  - May end in the middle of another surah
+  - Is NOT represented as a standalone reading screen
+  - Instead, a Juz exists only as a background ayah range.
+      JuzRange {
+        juzNumber: Int
+        start: { surah, ayah }
+        end: { surah, ayah }
+      }
+
+   - This structure is not exposed to the user.
+     
+### User Experience
+- Users read Qur’an normally via Explore
+- No special “Juz mode” UI
+- No ayah labels indicating Juz boundaries
+- No interruption to reading flow
+If a user reads an ayah that falls within their assigned Juz range,
+the system silently counts it toward the collective intention.
+
+### Completion
+- Users may optionally mark their Juz as completed
+- The system responds only with a gentle acknowledgment:
+    “Allah kabul etsin.”
+- No celebration
+- No statistics
+- No automatic reassignment
+
+### Visibility & Privacy
+- Users cannot see:
+  - Other participants
+  - Completion status
+  - Remaining Juz count
+- The system never displays:
+  - Percentages
+  - Progress bars
+  -Timelines
+
+### Relationship to Explore
+- Explore remains fully usable without Collective Reading
+- Collective Reading never alters Explore behavior
+- Users may complete or ignore their assigned Juz without consequence
+
+### Explicit Non-Goals
+- No group chat
+- No leaderboard
+- No public hatim status
+- No reminders based on incomplete reading
+- No forced continuation
+
 END.
