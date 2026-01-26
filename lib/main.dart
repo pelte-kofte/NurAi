@@ -1,6 +1,12 @@
 import 'package:flutter/material.dart';
 import 'data/quran_data.dart';
+import 'data/reading_progress_service.dart';
+import 'data/bookmark_service.dart';
 import 'features/home/home_screen.dart';
+
+/// Global route observer for lifecycle-aware screens.
+final RouteObserver<ModalRoute<void>> routeObserver =
+    RouteObserver<ModalRoute<void>>();
 
 void main() {
   runApp(const NurAIApp());
@@ -16,6 +22,7 @@ class NurAIApp extends StatelessWidget {
     return MaterialApp(
       title: 'NurAI',
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [routeObserver],
       theme: ThemeData(
         useMaterial3: true,
         fontFamily: 'Inter',
@@ -31,10 +38,18 @@ class NurAIApp extends StatelessWidget {
 class _AppLoader extends StatelessWidget {
   const _AppLoader();
 
+  Future<void> _loadAppData() async {
+    await Future.wait([
+      QuranData.instance.load(),
+      ReadingProgressService.init(),
+      BookmarkService.init(),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<void>(
-      future: QuranData.instance.load(),
+      future: _loadAppData(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const _LoadingScreen();

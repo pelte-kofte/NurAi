@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/quran_data.dart';
 import '../../models/surah.dart';
+import '../bookmarks/bookmark_screen.dart';
 import '../reading/ayah_reading_screen.dart';
 
 /// Displays the list of 114 surahs in a calm, readable format.
@@ -36,6 +37,20 @@ class SurahListScreen extends StatelessWidget {
           ),
         ),
         centerTitle: false,
+        actions: [
+          IconButton(
+            icon: const Icon(
+              Icons.bookmark_border_rounded,
+              size: 22,
+              color: Color(0xFF7A746F),
+            ),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const BookmarkScreen()),
+              );
+            },
+          ),
+        ],
       ),
       body: ListView.separated(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
@@ -58,13 +73,14 @@ class _SurahListItem extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
+        Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
             builder: (_) => AyahReadingScreen(
               surahNumber: surah.id,
               surahName: surah.nameTurkish,
             ),
           ),
+          (route) => route.isFirst,
         );
       },
       child: Container(

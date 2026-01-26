@@ -1,12 +1,35 @@
 import 'package:flutter/material.dart';
 import '../../data/quran_data.dart';
-import '../../models/ayah.dart';
+import '../../data/daily_ayah_service.dart';
+import '../../data/reading_progress_service.dart';
+import '../../main.dart';
+import '../reading/ayah_reading_screen.dart';
 import '../surah/surah_list_screen.dart';
 
-/// Home screen displaying a time-based greeting and daily ayah.
-/// Data is loaded from QuranData singleton.
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> with RouteAware {
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    routeObserver.subscribe(this, ModalRoute.of(context)!);
+  }
+
+  @override
+  void dispose() {
+    routeObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  @override
+  void didPopNext() {
+    _refresh();
+  }
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
@@ -17,9 +40,16 @@ class HomeScreen extends StatelessWidget {
     return 'Hayırlı geceler';
   }
 
+  void _refresh() {
+    setState(() {});
+  }
+
   @override
   Widget build(BuildContext context) {
-    final dailyAyah = QuranData.instance.getDailyAyah();
+    final dailyAyah = DailyAyahService.getTodayAyahWithContext(
+      QuranData.instance.ayahs,
+      QuranData.instance.getSurahName,
+    );
 
     return Scaffold(
       backgroundColor: const Color(0xFFFBF6F2),
@@ -31,7 +61,7 @@ class HomeScreen extends StatelessWidget {
             children: [
               _buildGreeting(),
               const SizedBox(height: 32),
-              if (dailyAyah != null) _buildDailyAyahCard(dailyAyah),
+              _buildDailyAyahCard(dailyAyah),
               const SizedBox(height: 24),
               _buildRamadanInfo(),
               const SizedBox(height: 24),
@@ -56,10 +86,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDailyAyahCard(Ayah ayah) {
-    final surahName = QuranData.instance.getSurahName(ayah.surah);
-    final reference = '$surahName Suresi, ${ayah.ayahNumber}';
-
+  Widget _buildDailyAyahCard(DailyAyah dailyAyah) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -91,7 +118,7 @@ class HomeScreen extends StatelessWidget {
           SizedBox(
             width: double.infinity,
             child: Text(
-              ayah.arabic,
+              dailyAyah.arabic,
               textAlign: TextAlign.right,
               textDirection: TextDirection.rtl,
               style: const TextStyle(
@@ -107,7 +134,7 @@ class HomeScreen extends StatelessWidget {
           Container(height: 1, color: const Color(0xFFEDE6E1)),
           const SizedBox(height: 16),
           Text(
-            ayah.turkishReadable,
+            dailyAyah.turkishReadable,
             style: const TextStyle(
               fontFamily: 'Merriweather',
               fontSize: 16,
@@ -118,7 +145,7 @@ class HomeScreen extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            reference,
+            dailyAyah.reference,
             style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
@@ -161,44 +188,78 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  /// Subtle entry point to the surah list — an invitation, not a demand.
   Widget _buildReadingEntry(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const SurahListScreen()),
-        );
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFDF9F6),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
-        ),
-        child: const Row(
-          children: [
-            Expanded(
-              child: Text(
-                'Okumaya başla',
-                style: TextStyle(
-                  fontFamily: 'Merriweather',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF2B2725),
-                  height: 1.4,
+    final hasProgress = ReadingProgressService.hasHistory();
+    final surahNumber = hasProgress ? ReadingProgressService.getLastSurah() : 1;
+    final surahName = QuranData.instance.getSurahName(surahNumber);
+    final ayahNumber = hasProgress ? ReadingProgressService.getLastAyah() : 1;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          onTap: () {
+            if (hasProgress) {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => AyahReadingScreen(
+                    surahNumber: surahNumber,
+                    surahName: surahName,
+                  ),
                 ),
+              ).then((_) => _refresh());
+            } else {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const SurahListScreen()),
+              ).then((_) => _refresh());
+            }
+          },
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFDF9F6),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
+            ),
+            child: const Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Okumaya başla',
+                    style: TextStyle(
+                      fontFamily: 'Merriweather',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF2B2725),
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 14,
+                  color: Color(0xFF7A746F),
+                ),
+              ],
+            ),
+          ),
+        ),
+        if (hasProgress)
+          Padding(
+            padding: const EdgeInsets.only(left: 4, top: 8),
+            child: Text(
+              '$surahName Suresi · $ayahNumber. Ayet',
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                fontStyle: FontStyle.italic,
+                color: Color(0xFF7A746F),
               ),
             ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 14,
-              color: Color(0xFF7A746F),
-            ),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
 }
