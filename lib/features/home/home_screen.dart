@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../data/quran_data.dart';
 import '../../data/daily_ayah_service.dart';
+import '../../data/daily_wisdom_service.dart';
+import '../../data/notes_service.dart';
 import '../../data/reading_progress_service.dart';
 import '../../main.dart';
+import '../collective/collective_reading_screen.dart';
+import '../notes/note_editor_screen.dart';
 import '../reading/ayah_reading_screen.dart';
 import '../surah/surah_list_screen.dart';
 
@@ -60,12 +64,20 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildGreeting(),
+              const SizedBox(height: 24),
+              _buildNotesEntry(context),
               const SizedBox(height: 32),
               _buildDailyAyahCard(dailyAyah),
+              if (DailyWisdomService.getTodayWisdom() != null) ...[
+                const SizedBox(height: 20),
+                _buildWisdomCard(DailyWisdomService.getTodayWisdom()!),
+              ],
               const SizedBox(height: 24),
               _buildRamadanInfo(),
               const SizedBox(height: 24),
               _buildReadingEntry(context),
+              const SizedBox(height: 16),
+              _buildCollectiveReadingEntry(context),
             ],
           ),
         ),
@@ -82,6 +94,87 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         fontWeight: FontWeight.w400,
         color: Color(0xFF2B2725),
         height: 1.3,
+      ),
+    );
+  }
+
+  Widget _buildNotesEntry(BuildContext context) {
+    final preview = NotesService.getFirstLinePreview();
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const NoteEditorScreen()),
+        ).then((_) => _refresh());
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFDF9F6),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                preview ?? 'Bugün nasılsınız?',
+                style: TextStyle(
+                  fontFamily: preview != null ? 'Merriweather' : 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  fontStyle: preview != null ? FontStyle.italic : FontStyle.normal,
+                  color: const Color(0xFF7A746F),
+                  height: 1.4,
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.edit_outlined,
+              size: 16,
+              color: Color(0xFFB5AEA8),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildWisdomCard(DailyWisdom wisdom) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDF9F6),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            wisdom.text,
+            style: const TextStyle(
+              fontFamily: 'Merriweather',
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              fontStyle: FontStyle.italic,
+              color: Color(0xFF2B2725),
+              height: 1.6,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '— ${wisdom.source}',
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFF7A746F),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -260,6 +353,61 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             ),
           ),
       ],
+    );
+  }
+
+  Widget _buildCollectiveReadingEntry(BuildContext context) {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const CollectiveReadingScreen()),
+        );
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFDF9F6),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
+        ),
+        child: const Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Cüz Niyeti',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF7A746F),
+                      height: 1.4,
+                    ),
+                  ),
+                  SizedBox(height: 2),
+                  Text(
+                    'Birlikte okuma için niyet et',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFFB5AEA8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 12,
+              color: Color(0xFFB5AEA8),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

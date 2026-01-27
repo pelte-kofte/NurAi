@@ -22,6 +22,7 @@ flutter:
   assets:
     - assets/quran/final/quran_ar_tr.json
     - assets/quran/meta/surahs.json
+    - assets/quran/meta/juz_ranges.json
 
   fonts:
   - family: Amiri

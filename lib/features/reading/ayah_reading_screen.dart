@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../data/quran_data.dart';
 import '../../data/reading_progress_service.dart';
 import '../../data/bookmark_service.dart';
+import '../../data/collective_reading_service.dart';
 import '../../models/ayah.dart';
 import '../surah/surah_list_screen.dart';
 
@@ -26,6 +27,8 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   final ScrollController _scrollController = ScrollController();
   late final List<Ayah> _ayahs;
   late final int? _scrollToAyah;
+  late int _currentLastReadAyah;
+  JuzRange? _activeJuzRange;
 
   static const double _ayahBlockHeight = 180.0;
 
@@ -33,15 +36,22 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   void initState() {
     super.initState();
     _ayahs = QuranData.instance.getAyahsForSurah(widget.surahNumber);
+    _activeJuzRange = CollectiveReadingService.getSelectedJuzRange();
 
-    // Determine scroll/highlight target: explicit initialAyah or saved progress
+    // Determine scroll target: explicit initialAyah or saved progress
     if (widget.initialAyah != null) {
       _scrollToAyah = widget.initialAyah;
+      _currentLastReadAyah = widget.initialAyah!;
     } else {
       final savedSurah = ReadingProgressService.getLastSurah();
-      _scrollToAyah = (savedSurah == widget.surahNumber)
-          ? ReadingProgressService.getLastAyah()
-          : null;
+      if (savedSurah == widget.surahNumber) {
+        final savedAyah = ReadingProgressService.getLastAyah();
+        _scrollToAyah = savedAyah;
+        _currentLastReadAyah = savedAyah;
+      } else {
+        _scrollToAyah = null;
+        _currentLastReadAyah = 1;
+      }
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToTarget());
@@ -56,6 +66,19 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
       _scrollController
           .jumpTo(offset.clamp(0, _scrollController.position.maxScrollExtent));
     }
+  }
+
+  void _onAyahTap(int ayahNumber) {
+    setState(() => _currentLastReadAyah = ayahNumber);
+    ReadingProgressService.saveProgress(widget.surahNumber, ayahNumber);
+    // Silent tracking for collective reading (no UI feedback)
+    CollectiveReadingService.recordAyahRead(widget.surahNumber, ayahNumber);
+  }
+
+  bool _isAyahWithinJuzRange(Ayah ayah) {
+    if (_activeJuzRange == null) return false;
+    if (CollectiveReadingService.isCompleted()) return false;
+    return _activeJuzRange!.containsAyah(ayah.surah, ayah.ayahNumber);
   }
 
   @override
@@ -111,17 +134,11 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
         itemCount: _ayahs.length,
         itemBuilder: (context, index) {
           final ayah = _ayahs[index];
-          final isTarget =
-              _scrollToAyah != null && ayah.ayahNumber == _scrollToAyah;
           return _AyahBlock(
             ayah: ayah,
-            isNavigationTarget: isTarget,
-            onTap: () {
-              ReadingProgressService.saveProgress(
-                widget.surahNumber,
-                ayah.ayahNumber,
-              );
-            },
+            isLastRead: ayah.ayahNumber == _currentLastReadAyah,
+            isWithinJuzRange: _isAyahWithinJuzRange(ayah),
+            onTap: () => _onAyahTap(ayah.ayahNumber),
           );
         },
       ),
@@ -129,15 +146,17 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   }
 }
 
-/// A single ayah with subtle bookmark toggle and navigation target indicator.
+/// A single ayah with subtle bookmark toggle and last-read indicator.
 class _AyahBlock extends StatefulWidget {
   final Ayah ayah;
-  final bool isNavigationTarget;
+  final bool isLastRead;
+  final bool isWithinJuzRange;
   final VoidCallback? onTap;
 
   const _AyahBlock({
     required this.ayah,
-    this.isNavigationTarget = false,
+    this.isLastRead = false,
+    this.isWithinJuzRange = false,
     this.onTap,
   });
 
@@ -167,52 +186,72 @@ class _AyahBlockState extends State<_AyahBlock> {
 
   @override
   Widget build(BuildContext context) {
+    // Subtle color variations for Juz range
+    final arabicColor = widget.isWithinJuzRange
+        ? const Color(0xFF1F1D1C) // Slightly darker
+        : const Color(0xFF2B2725);
+
     return GestureDetector(
       onTap: widget.onTap,
       behavior: HitTestBehavior.opaque,
       child: Container(
         margin: const EdgeInsets.only(bottom: 40),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: widget.isNavigationTarget
-              ? const Color(0xFFF6F1ED)
+          color: widget.isLastRead
+              ? const Color(0xFFF4EFEA)
               : Colors.transparent,
-          borderRadius: BorderRadius.circular(6),
+          borderRadius: BorderRadius.circular(8),
         ),
-        child: Stack(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Dot marker for navigation target ayah
-            if (widget.isNavigationTarget)
-              const Positioned(
-                left: 0,
-                top: 12,
+            // Subtle left dot for Juz range indicator (ambient, not instructional)
+            if (widget.isWithinJuzRange && !widget.isLastRead)
+              const Padding(
+                padding: EdgeInsets.only(top: 14, right: 6),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Color(0xFFB57A5A),
+                    color: Color(0xFFD4CCC6),
                     shape: BoxShape.circle,
                   ),
-                  child: SizedBox(width: 6, height: 6),
+                  child: SizedBox(width: 4, height: 4),
                 ),
               ),
-            // Ayah content
-            Padding(
-              padding: const EdgeInsets.only(left: 14),
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Dot marker above Arabic text for last-read ayah
+                  if (widget.isLastRead)
+                    const Padding(
+                      padding: EdgeInsets.only(bottom: 8),
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: Color(0xFFB57A5A),
+                            shape: BoxShape.circle,
+                          ),
+                          child: SizedBox(width: 6, height: 6),
+                        ),
+                      ),
+                    ),
+                  // Arabic text
                   Text(
                     widget.ayah.arabic,
                     textAlign: TextAlign.right,
                     textDirection: TextDirection.rtl,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Amiri',
                       fontSize: 28,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF2B2725),
+                      color: arabicColor,
                       height: 2.0,
                     ),
                   ),
                   const SizedBox(height: 12),
+                  // Turkish text and bookmark
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [

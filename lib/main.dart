@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'data/quran_data.dart';
 import 'data/reading_progress_service.dart';
 import 'data/bookmark_service.dart';
+import 'data/collective_reading_service.dart';
+import 'data/notes_service.dart';
 import 'features/home/home_screen.dart';
 
 /// Global route observer for lifecycle-aware screens.
@@ -43,6 +45,8 @@ class _AppLoader extends StatelessWidget {
       QuranData.instance.load(),
       ReadingProgressService.init(),
       BookmarkService.init(),
+      CollectiveReadingService.init(),
+      NotesService.init(),
     ]);
   }
 
