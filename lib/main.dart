@@ -3,6 +3,7 @@ import 'data/quran_data.dart';
 import 'data/reading_progress_service.dart';
 import 'data/bookmark_service.dart';
 import 'data/collective_reading_service.dart';
+import 'data/local_preferences_service.dart';
 import 'data/notes_service.dart';
 import 'features/home/home_screen.dart';
 
@@ -21,16 +22,29 @@ class NurAIApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'NurAI',
-      debugShowCheckedModeBanner: false,
-      navigatorObservers: [routeObserver],
-      theme: ThemeData(
-        useMaterial3: true,
-        fontFamily: 'Inter',
-        scaffoldBackgroundColor: const Color(0xFFFBF6F2),
-      ),
-      home: const _AppLoader(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: LocalPreferencesService.themeMode,
+      builder: (context, currentMode, _) {
+        return MaterialApp(
+          title: 'NurAI',
+          debugShowCheckedModeBanner: false,
+          navigatorObservers: [routeObserver],
+          themeMode: currentMode,
+          theme: ThemeData(
+            useMaterial3: true,
+            fontFamily: 'Inter',
+            scaffoldBackgroundColor: const Color(0xFFFBF6F2),
+            brightness: Brightness.light,
+          ),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            fontFamily: 'Inter',
+            scaffoldBackgroundColor: const Color(0xFF1C1A19),
+            brightness: Brightness.dark,
+          ),
+          home: const _AppLoader(),
+        );
+      },
     );
   }
 }
@@ -47,6 +61,7 @@ class _AppLoader extends StatelessWidget {
       BookmarkService.init(),
       CollectiveReadingService.init(),
       NotesService.init(),
+      LocalPreferencesService.init(),
     ]);
   }
 

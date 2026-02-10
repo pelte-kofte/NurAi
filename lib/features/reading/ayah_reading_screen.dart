@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../data/quran_data.dart';
 import '../../data/reading_progress_service.dart';
 import '../../data/bookmark_service.dart';
 import '../../data/collective_reading_service.dart';
+import '../../data/local_preferences_service.dart';
 import '../../models/ayah.dart';
+import '../../models/reading_context.dart';
 import '../surah/surah_list_screen.dart';
 
 /// Displays a full surah for calm, focused reading.
@@ -11,12 +14,14 @@ class AyahReadingScreen extends StatefulWidget {
   final int surahNumber;
   final String surahName;
   final int? initialAyah;
+  final ReadingContext readingContext;
 
   const AyahReadingScreen({
     super.key,
     required this.surahNumber,
     required this.surahName,
     this.initialAyah,
+    this.readingContext = const ReadingContext.explore(),
   });
 
   @override
@@ -26,8 +31,11 @@ class AyahReadingScreen extends StatefulWidget {
 class _AyahReadingScreenState extends State<AyahReadingScreen> {
   final ScrollController _scrollController = ScrollController();
   late final List<Ayah> _ayahs;
-  late final int? _scrollToAyah;
+  late final bool _isJuzMode;
+  late int _currentLastReadSurah;
   late int _currentLastReadAyah;
+  int? _scrollToSurah;
+  int? _scrollToAyah;
   JuzRange? _activeJuzRange;
 
   static const double _ayahBlockHeight = 180.0;
@@ -35,32 +43,79 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   @override
   void initState() {
     super.initState();
-    _ayahs = QuranData.instance.getAyahsForSurah(widget.surahNumber);
-    _activeJuzRange = CollectiveReadingService.getSelectedJuzRange();
+    _isJuzMode = widget.readingContext.type == ReadingContextType.juz;
 
-    // Determine scroll target: explicit initialAyah or saved progress
-    if (widget.initialAyah != null) {
-      _scrollToAyah = widget.initialAyah;
-      _currentLastReadAyah = widget.initialAyah!;
+    if (_isJuzMode) {
+      _initJuzMode();
     } else {
-      final savedSurah = ReadingProgressService.getLastSurah();
-      if (savedSurah == widget.surahNumber) {
-        final savedAyah = ReadingProgressService.getLastAyah();
-        _scrollToAyah = savedAyah;
-        _currentLastReadAyah = savedAyah;
-      } else {
-        _scrollToAyah = null;
-        _currentLastReadAyah = 1;
-      }
+      _initSurahMode();
     }
 
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToTarget());
   }
 
-  void _scrollToTarget() {
-    if (_scrollToAyah == null || _scrollToAyah! <= 1) return;
+  void _initJuzMode() {
+    final juzNumber = widget.readingContext.juzNumber!;
+    final range = CollectiveReadingService.getJuzRange(juzNumber);
+    _activeJuzRange = range;
 
-    final index = _ayahs.indexWhere((a) => a.ayahNumber == _scrollToAyah);
+    if (range != null) {
+      _ayahs = QuranData.instance.getAyahsInRange(
+        range.startSurah,
+        range.startAyah,
+        range.endSurah,
+        range.endAyah,
+      );
+    } else {
+      _ayahs = [];
+    }
+
+    final ctxProgress =
+        ReadingProgressService.getContextProgress(widget.readingContext);
+    if (ctxProgress != null) {
+      _scrollToSurah = ctxProgress.surah;
+      _scrollToAyah = ctxProgress.ayah;
+      _currentLastReadSurah = ctxProgress.surah;
+      _currentLastReadAyah = ctxProgress.ayah;
+    } else if (_ayahs.isNotEmpty) {
+      _currentLastReadSurah = _ayahs.first.surah;
+      _currentLastReadAyah = _ayahs.first.ayahNumber;
+    } else {
+      _currentLastReadSurah = 0;
+      _currentLastReadAyah = 0;
+    }
+  }
+
+  void _initSurahMode() {
+    _ayahs = QuranData.instance.getAyahsForSurah(widget.surahNumber);
+    _activeJuzRange = CollectiveReadingService.getSelectedJuzRange();
+
+    if (widget.initialAyah != null) {
+      _scrollToSurah = widget.surahNumber;
+      _scrollToAyah = widget.initialAyah;
+      _currentLastReadSurah = widget.surahNumber;
+      _currentLastReadAyah = widget.initialAyah!;
+    } else {
+      final ctxProgress =
+          ReadingProgressService.getContextProgress(widget.readingContext);
+      if (ctxProgress != null && ctxProgress.surah == widget.surahNumber) {
+        _scrollToSurah = ctxProgress.surah;
+        _scrollToAyah = ctxProgress.ayah;
+        _currentLastReadSurah = widget.surahNumber;
+        _currentLastReadAyah = ctxProgress.ayah;
+      } else {
+        _currentLastReadSurah = widget.surahNumber;
+        _currentLastReadAyah = 1;
+      }
+    }
+  }
+
+  void _scrollToTarget() {
+    if (_scrollToAyah == null) return;
+
+    final index = _ayahs.indexWhere((a) =>
+        a.surah == (_scrollToSurah ?? widget.surahNumber) &&
+        a.ayahNumber == _scrollToAyah);
     if (index > 0) {
       final offset = index * _ayahBlockHeight;
       _scrollController
@@ -68,17 +123,40 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
     }
   }
 
-  void _onAyahTap(int ayahNumber) {
-    setState(() => _currentLastReadAyah = ayahNumber);
-    ReadingProgressService.saveProgress(widget.surahNumber, ayahNumber);
-    // Silent tracking for collective reading (no UI feedback)
-    CollectiveReadingService.recordAyahRead(widget.surahNumber, ayahNumber);
+  void _onAyahTap(Ayah ayah) {
+    setState(() {
+      _currentLastReadSurah = ayah.surah;
+      _currentLastReadAyah = ayah.ayahNumber;
+    });
+    if (LocalPreferencesService.hapticsEnabled.value) {
+      HapticFeedback.selectionClick();
+    }
+    ReadingProgressService.saveGlobalLastRead(ayah.surah, ayah.ayahNumber);
+    ReadingProgressService.saveContextProgress(
+      widget.readingContext,
+      ayah.surah,
+      ayah.ayahNumber,
+    );
+    CollectiveReadingService.recordAyahRead(ayah.surah, ayah.ayahNumber);
   }
 
   bool _isAyahWithinJuzRange(Ayah ayah) {
+    if (_isJuzMode) return false; // All ayahs are within range in juz mode
     if (_activeJuzRange == null) return false;
     if (CollectiveReadingService.isCompleted()) return false;
     return _activeJuzRange!.containsAyah(ayah.surah, ayah.ayahNumber);
+  }
+
+  bool _isLastRead(Ayah ayah) {
+    return ayah.surah == _currentLastReadSurah &&
+        ayah.ayahNumber == _currentLastReadAyah;
+  }
+
+  String get _title {
+    if (_isJuzMode) {
+      return '${widget.readingContext.juzNumber}. Cüz';
+    }
+    return widget.surahName;
   }
 
   @override
@@ -105,7 +183,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          widget.surahName,
+          _title,
           style: const TextStyle(
             fontFamily: 'Merriweather',
             fontSize: 18,
@@ -114,31 +192,51 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
           ),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.list_rounded,
-              size: 22,
-              color: Color(0xFF7A746F),
+          if (!_isJuzMode)
+            IconButton(
+              icon: const Icon(
+                Icons.list_rounded,
+                size: 22,
+                color: Color(0xFF7A746F),
+              ),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => const SurahListScreen()),
+                );
+              },
             ),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SurahListScreen()),
-              );
-            },
-          ),
         ],
       ),
       body: ListView.builder(
         controller: _scrollController,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-        itemCount: _ayahs.length,
+        itemCount: _ayahs.length + (_isJuzMode ? 1 : 0),
         itemBuilder: (context, index) {
-          final ayah = _ayahs[index];
+          // Subtle header for juz mode
+          if (_isJuzMode && index == 0) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 24),
+              child: Text(
+                '${widget.readingContext.juzNumber}. Cüz · Sessizce eşlik ediyorsunuz',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFFB5AEA8),
+                  height: 1.4,
+                ),
+              ),
+            );
+          }
+
+          final ayahIndex = _isJuzMode ? index - 1 : index;
+          final ayah = _ayahs[ayahIndex];
           return _AyahBlock(
             ayah: ayah,
-            isLastRead: ayah.ayahNumber == _currentLastReadAyah,
+            isLastRead: _isLastRead(ayah),
             isWithinJuzRange: _isAyahWithinJuzRange(ayah),
-            onTap: () => _onAyahTap(ayah.ayahNumber),
+            onTap: () => _onAyahTap(ayah),
           );
         },
       ),
@@ -177,6 +275,9 @@ class _AyahBlockState extends State<_AyahBlock> {
   }
 
   Future<void> _toggleBookmark() async {
+    if (LocalPreferencesService.hapticsEnabled.value) {
+      HapticFeedback.selectionClick();
+    }
     final newState = await BookmarkService.toggle(
       widget.ayah.surah,
       widget.ayah.ayahNumber,

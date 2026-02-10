@@ -98,10 +98,16 @@ class CollectiveReadingService {
   static JuzRange? getSelectedJuzRange() {
     final juzNumber = getSelectedJuz();
     if (juzNumber == null) return null;
-    return _juzRanges.firstWhere(
-      (j) => j.juzNumber == juzNumber,
-      orElse: () => _juzRanges.first,
-    );
+    return getJuzRange(juzNumber);
+  }
+
+  /// Get a JuzRange by juz number. Returns null if not found.
+  static JuzRange? getJuzRange(int juzNumber) {
+    if (_juzRanges.isEmpty) return null;
+    for (final r in _juzRanges) {
+      if (r.juzNumber == juzNumber) return r;
+    }
+    return null;
   }
 
   /// Silently record an ayah read. No UI feedback.

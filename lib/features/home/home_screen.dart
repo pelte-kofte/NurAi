@@ -1,13 +1,18 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../data/quran_data.dart';
+import '../../data/collective_reading_service.dart';
 import '../../data/daily_ayah_service.dart';
 import '../../data/daily_wisdom_service.dart';
+import '../../data/local_preferences_service.dart';
 import '../../data/notes_service.dart';
 import '../../data/reading_progress_service.dart';
+import '../../models/reading_context.dart';
 import '../../main.dart';
 import '../collective/collective_reading_screen.dart';
 import '../notes/note_editor_screen.dart';
+import '../qibla/qibla_screen.dart';
 import '../reading/ayah_reading_screen.dart';
+import '../settings/settings_screen.dart';
 import '../surah/surah_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,6 +23,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with RouteAware {
+  final GlobalKey _quickActionsKey = GlobalKey();
+  OverlayEntry? _quickActionsEntry;
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -26,6 +34,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   void dispose() {
+    _removeQuickActionsPopover();
     routeObserver.unsubscribe(this);
     super.dispose();
   }
@@ -37,11 +46,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 6) return 'Hayırlı geceler';
-    if (hour < 12) return 'Hayırlı sabahlar';
-    if (hour < 17) return 'Hayırlı günler';
-    if (hour < 21) return 'Hayırlı akşamlar';
-    return 'Hayırlı geceler';
+    if (hour < 6) return 'Hay\u0131rl\u0131 geceler';
+    if (hour < 12) return 'Hay\u0131rl\u0131 sabahlar';
+    if (hour < 17) return 'Hay\u0131rl\u0131 g\u00fcnler';
+    if (hour < 21) return 'Hay\u0131rl\u0131 ak\u015famlar';
+    return 'Hay\u0131rl\u0131 geceler';
   }
 
   void _refresh() {
@@ -77,6 +86,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               const SizedBox(height: 24),
               _buildReadingEntry(context),
               const SizedBox(height: 16),
+              _buildHatimEntry(context),
+              const SizedBox(height: 16),
               _buildCollectiveReadingEntry(context),
             ],
           ),
@@ -86,26 +97,241 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   Widget _buildGreeting() {
-    return Text(
-      _getGreeting(),
-      style: const TextStyle(
-        fontFamily: 'Merriweather',
-        fontSize: 28,
-        fontWeight: FontWeight.w400,
-        color: Color(0xFF2B2725),
-        height: 1.3,
-      ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        GestureDetector(
+          key: _quickActionsKey,
+          onTap: _showQuickActionsPopover,
+          child: const Padding(
+            padding: EdgeInsets.only(top: 6, right: 12),
+            child: Icon(
+              Icons.menu_rounded,
+              size: 24,
+              color: Color(0xFF7A746F),
+            ),
+          ),
+        ),
+        Expanded(
+          child: Text(
+            _getGreeting(),
+            style: const TextStyle(
+              fontFamily: 'Merriweather',
+              fontSize: 28,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFF2B2725),
+              height: 1.3,
+            ),
+          ),
+        ),
+        GestureDetector(
+          onTap: _openSettingsModal,
+          child: const Padding(
+            padding: EdgeInsets.only(top: 6),
+            child: Icon(
+              Icons.settings_rounded,
+              size: 24,
+              color: Color(0xFF7A746F),
+            ),
+          ),
+        ),
+      ],
     );
   }
+
+  void _showQuickActionsPopover() {
+    if (_quickActionsEntry != null) {
+      _removeQuickActionsPopover();
+      return;
+    }
+
+    final overlay = Overlay.of(context);
+    final renderBox =
+        _quickActionsKey.currentContext?.findRenderObject() as RenderBox?;
+    if (overlay == null || renderBox == null) {
+      return;
+    }
+
+    final origin = renderBox.localToGlobal(Offset.zero);
+    final size = renderBox.size;
+
+    _quickActionsEntry = OverlayEntry(
+      builder: (ctx) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: GestureDetector(
+                behavior: HitTestBehavior.translucent,
+                onTap: _removeQuickActionsPopover,
+              ),
+            ),
+            Positioned(
+              left: origin.dx,
+              top: origin.dy + size.height + 8,
+              child: Material(
+                color: Colors.transparent,
+                child: StatefulBuilder(
+                  builder: (ctx, setPopoverState) {
+                    return Container(
+                      width: 220,
+                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFDF9F6),
+                        borderRadius: BorderRadius.circular(14),
+                        boxShadow: const [
+                          BoxShadow(
+                            color: Color(0x1A2B2725),
+                            blurRadius: 12,
+                            offset: Offset(0, 6),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              _removeQuickActionsPopover();
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => const QiblaScreen(),
+                                ),
+                              );
+                            },
+                            behavior: HitTestBehavior.opaque,
+                            child: Padding(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8),
+                              child: Row(
+                                children: const [
+                                  Icon(
+                                    Icons.explore_rounded,
+                                    size: 18,
+                                    color: Color(0xFF7A746F),
+                                  ),
+                                  SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      'Kıble',
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w400,
+                                        color: Color(0xFF2B2725),
+                                      ),
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.chevron_right_rounded,
+                                    size: 16,
+                                    color: Color(0xFFB5AEA8),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          Container(
+                            height: 1,
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            color: const Color(0xFFEDE6E1),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 6),
+                            child: Row(
+                              children: [
+                                const Expanded(
+                                  child: Text(
+                                    'Ezan alarmları',
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w400,
+                                      color: Color(0xFF2B2725),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(
+                                  height: 26,
+                                  child: Switch.adaptive(
+                                    value: LocalPreferencesService
+                                        .adhanEnabled.value,
+                                    onChanged: (v) {
+                                      LocalPreferencesService
+                                          .setAdhanEnabled(v);
+                                      setPopoverState(() {});
+                                    },
+                                    activeTrackColor:
+                                        const Color(0xFFB57A5A),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    overlay.insert(_quickActionsEntry!);
+  }
+
+  void _removeQuickActionsPopover() {
+    _quickActionsEntry?.remove();
+    _quickActionsEntry = null;
+  }
+
+  void _openSettingsModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      enableDrag: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return ClipRRect(
+          borderRadius:
+              const BorderRadius.vertical(top: Radius.circular(24)),
+          child: SizedBox(
+            height: MediaQuery.of(ctx).size.height * 0.95,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(top: 10, bottom: 6),
+                  child: Container(
+                    width: 48,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE0D7D0),
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                  ),
+                ),
+                const Expanded(child: SettingsScreen()),
+              ],
+            ),
+          ),
+        );
+      },
+    ).then((_) => _refresh());
+  }
+
 
   Widget _buildNotesEntry(BuildContext context) {
     final preview = NotesService.getFirstLinePreview();
 
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const NoteEditorScreen()),
-        ).then((_) => _refresh());
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(builder: (_) => const NoteEditorScreen()),
+            )
+            .then((_) => _refresh());
       },
       child: Container(
         width: double.infinity,
@@ -119,12 +345,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           children: [
             Expanded(
               child: Text(
-                preview ?? 'Bugün nasılsınız?',
+                preview ?? 'Bug\u00fcn nas\u0131ls\u0131n\u0131z?',
                 style: TextStyle(
                   fontFamily: preview != null ? 'Merriweather' : 'Inter',
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  fontStyle: preview != null ? FontStyle.italic : FontStyle.normal,
+                  fontStyle:
+                      preview != null ? FontStyle.italic : FontStyle.normal,
                   color: const Color(0xFF7A746F),
                   height: 1.4,
                 ),
@@ -166,7 +393,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           ),
           const SizedBox(height: 10),
           Text(
-            '— ${wisdom.source}',
+            '\u2014 ${wisdom.source}',
             style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
@@ -198,7 +425,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Günün Ayeti',
+            'G\u00fcn\u00fcn Ayeti',
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
@@ -266,7 +493,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Ramazan ayına hazırlık zamanı',
+              'Ramazan ay\u0131na haz\u0131rl\u0131k zaman\u0131',
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 14,
@@ -282,29 +509,39 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   Widget _buildReadingEntry(BuildContext context) {
-    final hasProgress = ReadingProgressService.hasHistory();
-    final surahNumber = hasProgress ? ReadingProgressService.getLastSurah() : 1;
-    final surahName = QuranData.instance.getSurahName(surahNumber);
-    final ayahNumber = hasProgress ? ReadingProgressService.getLastAyah() : 1;
+    const ctx = ReadingContext.explore();
+    final progress = ReadingProgressService.getContextProgress(ctx);
+    final globalSurah = ReadingProgressService.getGlobalLastSurah();
+    final globalAyah = ReadingProgressService.getGlobalLastAyah();
+    final hasGlobal = globalSurah != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
           onTap: () {
-            if (hasProgress) {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (_) => AyahReadingScreen(
-                    surahNumber: surahNumber,
-                    surahName: surahName,
-                  ),
-                ),
-              ).then((_) => _refresh());
+            if (progress != null) {
+              final surahName =
+                  QuranData.instance.getSurahName(progress.surah);
+              Navigator.of(context)
+                  .push(
+                    MaterialPageRoute(
+                      builder: (_) => AyahReadingScreen(
+                        surahNumber: progress.surah,
+                        surahName: surahName,
+                        readingContext: ctx,
+                      ),
+                    ),
+                  )
+                  .then((_) => _refresh());
             } else {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SurahListScreen()),
-              ).then((_) => _refresh());
+              Navigator.of(context)
+                  .push(
+                    MaterialPageRoute(
+                      builder: (_) => const SurahListScreen(),
+                    ),
+                  )
+                  .then((_) => _refresh());
             }
           },
           child: Container(
@@ -319,7 +556,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               children: [
                 Expanded(
                   child: Text(
-                    'Okumaya başla',
+                    'Okumaya ba\u015fla',
                     style: TextStyle(
                       fontFamily: 'Merriweather',
                       fontSize: 15,
@@ -338,11 +575,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             ),
           ),
         ),
-        if (hasProgress)
+        if (hasGlobal)
           Padding(
             padding: const EdgeInsets.only(left: 4, top: 8),
             child: Text(
-              '$surahName Suresi · $ayahNumber. Ayet',
+              '${QuranData.instance.getSurahName(globalSurah)} Suresi \u00b7 $globalAyah. Ayet',
               style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
@@ -356,12 +593,44 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  Widget _buildCollectiveReadingEntry(BuildContext context) {
+  Widget _buildHatimEntry(BuildContext context) {
+    const ctx = ReadingContext.hatim();
+    final progress = ReadingProgressService.getContextProgress(ctx);
+
+    String subtitle;
+    if (progress != null) {
+      final surahName = QuranData.instance.getSurahName(progress.surah);
+      subtitle = '$surahName \u00b7 ${progress.ayah}. Ayet';
+    } else {
+      subtitle = 'Ba\u015ftan sona okuma niyeti';
+    }
+
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const CollectiveReadingScreen()),
-        );
+        if (progress != null) {
+          final surahName = QuranData.instance.getSurahName(progress.surah);
+          Navigator.of(context)
+              .push(
+                MaterialPageRoute(
+                  builder: (_) => AyahReadingScreen(
+                    surahNumber: progress.surah,
+                    surahName: surahName,
+                    readingContext: ctx,
+                  ),
+                ),
+              )
+              .then((_) => _refresh());
+        } else {
+          Navigator.of(context)
+              .push(
+                MaterialPageRoute(
+                  builder: (_) => const SurahListScreen(
+                    readingContext: ctx,
+                  ),
+                ),
+              )
+              .then((_) => _refresh());
+        }
       },
       child: Container(
         width: double.infinity,
@@ -371,14 +640,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           borderRadius: BorderRadius.circular(10),
           border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
         ),
-        child: const Row(
+        child: Row(
           children: [
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    'Cüz Niyeti',
+                  const Text(
+                    'Hatim Niyeti',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 14,
@@ -387,10 +656,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                       height: 1.4,
                     ),
                   ),
-                  SizedBox(height: 2),
+                  const SizedBox(height: 2),
                   Text(
-                    'Birlikte okuma için niyet et',
-                    style: TextStyle(
+                    subtitle,
+                    style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
@@ -400,7 +669,82 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 ],
               ),
             ),
-            Icon(
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 12,
+              color: Color(0xFFB5AEA8),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCollectiveReadingEntry(BuildContext context) {
+    final selectedJuz = CollectiveReadingService.getSelectedJuz();
+    final isCompleted = CollectiveReadingService.isCompleted();
+
+    String subtitle;
+    if (selectedJuz != null && !isCompleted) {
+      final ctx = ReadingContext.juz(selectedJuz);
+      final progress = ReadingProgressService.getContextProgress(ctx);
+      if (progress != null) {
+        final surahName = QuranData.instance.getSurahName(progress.surah);
+        subtitle = '$selectedJuz. C\u00fcz \u00b7 $surahName ${progress.ayah}. Ayet';
+      } else {
+        subtitle = '$selectedJuz. C\u00fcz se\u00e7ildi';
+      }
+    } else {
+      subtitle = 'Birlikte okuma i\u00e7in niyet et';
+    }
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(
+                  builder: (_) => const CollectiveReadingScreen()),
+            )
+            .then((_) => _refresh());
+      },
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFDF9F6),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'C\u00fcz Niyeti',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF7A746F),
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFFB5AEA8),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
               Icons.arrow_forward_ios_rounded,
               size: 12,
               color: Color(0xFFB5AEA8),
@@ -411,3 +755,4 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 }
+

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/quran_data.dart';
+import '../../models/reading_context.dart';
 import '../../models/surah.dart';
 import '../bookmarks/bookmark_screen.dart';
 import '../reading/ayah_reading_screen.dart';
@@ -7,7 +8,12 @@ import '../reading/ayah_reading_screen.dart';
 /// Displays the list of 114 surahs in a calm, readable format.
 /// No icons, no gamification — just a quiet list for browsing.
 class SurahListScreen extends StatelessWidget {
-  const SurahListScreen({super.key});
+  final ReadingContext readingContext;
+
+  const SurahListScreen({
+    super.key,
+    this.readingContext = const ReadingContext.explore(),
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -56,7 +62,10 @@ class SurahListScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         itemCount: surahs.length,
         separatorBuilder: (_, __) => const SizedBox(height: 8),
-        itemBuilder: (context, index) => _SurahListItem(surah: surahs[index]),
+        itemBuilder: (context, index) => _SurahListItem(
+          surah: surahs[index],
+          readingContext: readingContext,
+        ),
       ),
     );
   }
@@ -66,8 +75,12 @@ class SurahListScreen extends StatelessWidget {
 /// Shows surah number, Turkish name, and ayah count.
 class _SurahListItem extends StatelessWidget {
   final Surah surah;
+  final ReadingContext readingContext;
 
-  const _SurahListItem({required this.surah});
+  const _SurahListItem({
+    required this.surah,
+    required this.readingContext,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -78,6 +91,7 @@ class _SurahListItem extends StatelessWidget {
             builder: (_) => AyahReadingScreen(
               surahNumber: surah.id,
               surahName: surah.nameTurkish,
+              readingContext: readingContext,
             ),
           ),
           (route) => route.isFirst,

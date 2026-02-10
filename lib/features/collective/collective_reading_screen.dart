@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/collective_reading_service.dart';
-import '../../data/quran_data.dart';
-import '../../data/reading_progress_service.dart';
+import '../../models/reading_context.dart';
 import '../reading/ayah_reading_screen.dart';
-import '../surah/surah_list_screen.dart';
 
 /// Screen for selecting a Juz intention for collective reading.
 /// This is NOT a reading screen — Juz is a background intention only.
@@ -53,23 +51,16 @@ class _CollectiveReadingScreenState extends State<CollectiveReadingScreen> {
   }
 
   void _navigateToReading() {
-    final hasProgress = ReadingProgressService.hasHistory();
-    if (hasProgress) {
-      final surahNumber = ReadingProgressService.getLastSurah();
-      final surahName = QuranData.instance.getSurahName(surahNumber);
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (_) => AyahReadingScreen(
-            surahNumber: surahNumber,
-            surahName: surahName,
-          ),
+    if (_selectedJuz == null) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AyahReadingScreen(
+          surahNumber: 0, // unused in juz mode
+          surahName: '',  // unused in juz mode
+          readingContext: ReadingContext.juz(_selectedJuz!),
         ),
-      );
-    } else {
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const SurahListScreen()),
-      );
-    }
+      ),
+    );
   }
 
   @override

@@ -59,4 +59,17 @@ class QuranData {
     if (_ayahs == null) return [];
     return _ayahs!.where((a) => a.surah == surahNumber).toList();
   }
+
+  /// Returns all ayahs within a surah:ayah range (inclusive).
+  /// Used for Juz-filtered reading across multiple surahs.
+  List<Ayah> getAyahsInRange(
+      int startSurah, int startAyah, int endSurah, int endAyah) {
+    if (_ayahs == null) return [];
+    return _ayahs!.where((a) {
+      if (a.surah < startSurah || a.surah > endSurah) return false;
+      if (a.surah == startSurah && a.ayahNumber < startAyah) return false;
+      if (a.surah == endSurah && a.ayahNumber > endAyah) return false;
+      return true;
+    }).toList();
+  }
 }
