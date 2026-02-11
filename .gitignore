@@ -1,3 +1,13 @@
+# Windows reserved device names
+nul
+**/nul
+
+# Flutter / Dart generated
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
 # Large source files
 tools/quran.sql
 
@@ -8,21 +18,15 @@ assets/quran/raw/*.json
 .DS_Store
 Thumbs.db
 
-
 # Node / JS
 node_modules/
 .next/
 dist/
-build/
 
 # Python
 __pycache__/
 *.pyc
 *.pyo
-
-# OS
-.DS_Store
-Thumbs.db
 
 # Editor
 .vscode/
@@ -37,4 +41,3 @@ Thumbs.db
 
 # Large raw sources (optional)
 assets/quran/source/
-tools/quran.sql

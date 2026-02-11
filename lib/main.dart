@@ -3,6 +3,7 @@ import 'data/quran_data.dart';
 import 'data/reading_progress_service.dart';
 import 'data/bookmark_service.dart';
 import 'data/collective_reading_service.dart';
+import 'data/adhan_notification_service.dart';
 import 'data/local_preferences_service.dart';
 import 'data/notes_service.dart';
 import 'features/home/home_screen.dart';
@@ -62,7 +63,12 @@ class _AppLoader extends StatelessWidget {
       CollectiveReadingService.init(),
       NotesService.init(),
       LocalPreferencesService.init(),
+      AdhanNotificationService.init(),
     ]);
+    // Re-schedule prayer notifications on every app launch (rolling 7-day window).
+    if (LocalPreferencesService.adhanEnabled.value) {
+      AdhanNotificationService.schedulePrayerNotifications();
+    }
   }
 
   @override

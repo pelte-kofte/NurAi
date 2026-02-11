@@ -3,6 +3,7 @@ import '../../data/quran_data.dart';
 import '../../data/collective_reading_service.dart';
 import '../../data/daily_ayah_service.dart';
 import '../../data/daily_wisdom_service.dart';
+import '../../data/adhan_notification_service.dart';
 import '../../data/local_preferences_service.dart';
 import '../../data/notes_service.dart';
 import '../../data/reading_progress_service.dart';
@@ -148,7 +149,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final overlay = Overlay.of(context);
     final renderBox =
         _quickActionsKey.currentContext?.findRenderObject() as RenderBox?;
-    if (overlay == null || renderBox == null) {
+    if (renderBox == null) {
       return;
     }
 
@@ -199,11 +200,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                               );
                             },
                             behavior: HitTestBehavior.opaque,
-                            child: Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 8),
+                            child: const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 8),
                               child: Row(
-                                children: const [
+                                children: [
                                   Icon(
                                     Icons.explore_rounded,
                                     size: 18,
@@ -255,13 +255,24 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                                   child: Switch.adaptive(
                                     value: LocalPreferencesService
                                         .adhanEnabled.value,
-                                    onChanged: (v) {
-                                      LocalPreferencesService
-                                          .setAdhanEnabled(v);
-                                      setPopoverState(() {});
+                                    onChanged: (v) async {
+                                      if (v) {
+                                        final granted = await AdhanNotificationService.requestPermissions();
+                                        if (granted) {
+                                          await LocalPreferencesService.setAdhanEnabled(true);
+                                          await AdhanNotificationService.schedulePrayerNotifications();
+                                          setPopoverState(() {});
+                                        } else {
+                                          _removeQuickActionsPopover();
+                                          _showNotificationPermissionDialog();
+                                        }
+                                      } else {
+                                        await LocalPreferencesService.setAdhanEnabled(false);
+                                        await AdhanNotificationService.cancelAll();
+                                        setPopoverState(() {});
+                                      }
                                     },
-                                    activeTrackColor:
-                                        const Color(0xFFB57A5A),
+                                    activeTrackColor: const Color(0xFFB57A5A),
                                   ),
                                 ),
                               ],
@@ -287,6 +298,49 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     _quickActionsEntry = null;
   }
 
+  void _showNotificationPermissionDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFFFDF9F6),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        title: const Text(
+          'Bildirim \u0130zni',
+          style: TextStyle(
+            fontFamily: 'Merriweather',
+            fontSize: 18,
+            fontWeight: FontWeight.w400,
+            color: Color(0xFF2B2725),
+          ),
+        ),
+        content: const Text(
+          'Ezan vakitlerini bildirebilmemiz i\u00e7in bildirim iznine ihtiyac\u0131m\u0131z var.\n\nCihaz ayarlar\u0131ndan bildirimleri etkinle\u015ftirebilirsiniz.',
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: Color(0xFF7A746F),
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text(
+              'Tamam',
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFFB57A5A),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _openSettingsModal() {
     showModalBottomSheet(
       context: context,
@@ -295,8 +349,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       backgroundColor: Colors.transparent,
       builder: (ctx) {
         return ClipRRect(
-          borderRadius:
-              const BorderRadius.vertical(top: Radius.circular(24)),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
           child: SizedBox(
             height: MediaQuery.of(ctx).size.height * 0.95,
             child: Column(
@@ -320,7 +373,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       },
     ).then((_) => _refresh());
   }
-
 
   Widget _buildNotesEntry(BuildContext context) {
     final preview = NotesService.getFirstLinePreview();
@@ -521,8 +573,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         GestureDetector(
           onTap: () {
             if (progress != null) {
-              final surahName =
-                  QuranData.instance.getSurahName(progress.surah);
+              final surahName = QuranData.instance.getSurahName(progress.surah);
               Navigator.of(context)
                   .push(
                     MaterialPageRoute(
@@ -690,7 +741,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       final progress = ReadingProgressService.getContextProgress(ctx);
       if (progress != null) {
         final surahName = QuranData.instance.getSurahName(progress.surah);
-        subtitle = '$selectedJuz. C\u00fcz \u00b7 $surahName ${progress.ayah}. Ayet';
+        subtitle =
+            '$selectedJuz. C\u00fcz \u00b7 $surahName ${progress.ayah}. Ayet';
       } else {
         subtitle = '$selectedJuz. C\u00fcz se\u00e7ildi';
       }
@@ -755,4 +807,3 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 }
-
