@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../data/collective_reading_service.dart';
 import '../../models/reading_context.dart';
 import '../reading/ayah_reading_screen.dart';
 
 /// Screen for selecting a Juz intention for collective reading.
-/// This is NOT a reading screen — Juz is a background intention only.
+/// This is NOT a reading screen - Juz is a background intention only.
 class CollectiveReadingScreen extends StatefulWidget {
   const CollectiveReadingScreen({super.key});
 
@@ -55,8 +55,8 @@ class _CollectiveReadingScreenState extends State<CollectiveReadingScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => AyahReadingScreen(
-          surahNumber: 0, // unused in juz mode
-          surahName: '',  // unused in juz mode
+          surahNumber: 0,
+          surahName: '',
           readingContext: ReadingContext.juz(_selectedJuz!),
         ),
       ),
@@ -80,7 +80,7 @@ class _CollectiveReadingScreenState extends State<CollectiveReadingScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'Cüz Niyeti',
+          'C\u00fcz Niyeti',
           style: TextStyle(
             fontFamily: 'Merriweather',
             fontSize: 20,
@@ -117,8 +117,8 @@ class _CollectiveReadingScreenState extends State<CollectiveReadingScreen> {
 
   Widget _buildExplanation() {
     return const Text(
-      'Bir cüz seçerek sessiz bir niyet edinebilirsiniz. '
-      'Okumalarınız bu niyetle birlikte kaydedilir.',
+      'Bir c\u00fcz se\u00e7erek sessiz bir niyet edinebilirsiniz. '
+      'Okumalar\u0131n\u0131z bu niyetle birlikte kaydedilir.',
       style: TextStyle(
         fontFamily: 'Merriweather',
         fontSize: 15,
@@ -141,7 +141,7 @@ class _CollectiveReadingScreenState extends State<CollectiveReadingScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '$_selectedJuz. Cüz',
+            '$_selectedJuz. C\u00fcz',
             style: const TextStyle(
               fontFamily: 'Merriweather',
               fontSize: 18,
@@ -190,7 +190,7 @@ class _CollectiveReadingScreenState extends State<CollectiveReadingScreen> {
             GestureDetector(
               onTap: _markCompleted,
               child: const Text(
-                'Tamamladım',
+                'Tamamlad\u0131m',
                 style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 13,
@@ -224,7 +224,7 @@ class _CollectiveReadingScreenState extends State<CollectiveReadingScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Okumaya başla',
+                    'Okumaya ba\u015fla',
                     style: TextStyle(
                       fontFamily: 'Merriweather',
                       fontSize: 15,
@@ -235,8 +235,8 @@ class _CollectiveReadingScreenState extends State<CollectiveReadingScreen> {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Dilediğiniz yerden okuyabilirsiniz.\n'
-                    'Bu cüz niyeti okumanıza sessizce eşlik eder.',
+                    'Diledi\u011finiz yerden okuyabilirsiniz.\n'
+                    'Bu c\u00fcz niyeti okuman\u0131za sessizce e\u015flik eder.',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
@@ -264,7 +264,7 @@ class _CollectiveReadingScreenState extends State<CollectiveReadingScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          _selectedJuz == null ? 'Cüz Seçin' : 'Değiştir',
+          _selectedJuz == null ? 'C\u00fcz Se\u00e7in' : 'De\u011fi\u015ftir',
           style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 12,
@@ -313,8 +313,8 @@ class _CollectiveReadingScreenState extends State<CollectiveReadingScreen> {
 
   Widget _buildMicroCopy() {
     return const Text(
-      'Dilediğiniz sureden okuyabilirsiniz.\n'
-      'Niyetiniz, okumalarınıza sessizce eşlik eder.',
+      'Diledi\u011finiz sureden okuyabilirsiniz.\n'
+      'Niyetiniz, okumalar\u0131n\u0131za sessizce e\u015flik eder.',
       style: TextStyle(
         fontFamily: 'Inter',
         fontSize: 12,

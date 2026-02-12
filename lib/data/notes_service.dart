@@ -1,15 +1,23 @@
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/material.dart';
 
 /// Simple local notes service for personal reflections.
 /// Fully private, no tracking, no sync.
 class NotesService {
   static const _noteKey = 'personal_note';
   static const _lastEditedKey = 'note_last_edited';
+  static const _dailyMoodTextKey = 'dailyMoodText';
+  static const _dailyMoodDateKey = 'dailyMoodDate';
+  static const _dailyReflectionIdKey = 'dailyReflectionId';
 
   static SharedPreferences? _prefs;
+  static final ValueNotifier<String> noteNotifier = ValueNotifier<String>('');
+  static final ValueNotifier<int> dailyMoodRevision = ValueNotifier<int>(0);
 
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
+    noteNotifier.value = getNote();
+    _emitDailyMoodState();
   }
 
   /// Get the current note content.
@@ -21,6 +29,53 @@ class NotesService {
   static Future<void> saveNote(String content) async {
     await _prefs?.setString(_noteKey, content);
     await _prefs?.setString(_lastEditedKey, DateTime.now().toIso8601String());
+    noteNotifier.value = content;
+  }
+
+  static String _todayKey() {
+    final now = DateTime.now();
+    final month = now.month.toString().padLeft(2, '0');
+    final day = now.day.toString().padLeft(2, '0');
+    return '${now.year}-$month-$day';
+  }
+
+  static bool isDailyMoodLockedToday() {
+    final date = _prefs?.getString(_dailyMoodDateKey);
+    final text = (_prefs?.getString(_dailyMoodTextKey) ?? '').trim();
+    return date == _todayKey() && text.isNotEmpty;
+  }
+
+  static String getTodayMoodText() {
+    if (!isDailyMoodLockedToday()) return '';
+    return _prefs?.getString(_dailyMoodTextKey) ?? '';
+  }
+
+  static int? getTodayReflectionId() {
+    if (!isDailyMoodLockedToday()) return null;
+    return _prefs?.getInt(_dailyReflectionIdKey);
+  }
+
+  static Future<bool> submitDailyMood({
+    required String text,
+    required int reflectionId,
+  }) async {
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return false;
+    if (isDailyMoodLockedToday()) return false;
+
+    await _prefs?.setString(_dailyMoodDateKey, _todayKey());
+    await _prefs?.setString(_dailyMoodTextKey, trimmed);
+    await _prefs?.setInt(_dailyReflectionIdKey, reflectionId);
+    _emitDailyMoodState();
+    return true;
+  }
+
+  static void refreshDailyMoodState() {
+    _emitDailyMoodState();
+  }
+
+  static void _emitDailyMoodState() {
+    dailyMoodRevision.value = dailyMoodRevision.value + 1;
   }
 
   /// Check if user has written anything.

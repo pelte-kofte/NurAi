@@ -1,11 +1,14 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'data/quran_data.dart';
 import 'data/reading_progress_service.dart';
 import 'data/bookmark_service.dart';
 import 'data/collective_reading_service.dart';
 import 'data/adhan_notification_service.dart';
 import 'data/local_preferences_service.dart';
+import 'data/user_profile_service.dart';
 import 'data/notes_service.dart';
+import 'l10n/app_strings.dart';
 import 'features/home/home_screen.dart';
 
 /// Global route observer for lifecycle-aware screens.
@@ -26,24 +29,36 @@ class NurAIApp extends StatelessWidget {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: LocalPreferencesService.themeMode,
       builder: (context, currentMode, _) {
-        return MaterialApp(
-          title: 'NurAI',
-          debugShowCheckedModeBanner: false,
-          navigatorObservers: [routeObserver],
-          themeMode: currentMode,
-          theme: ThemeData(
-            useMaterial3: true,
-            fontFamily: 'Inter',
-            scaffoldBackgroundColor: const Color(0xFFFBF6F2),
-            brightness: Brightness.light,
-          ),
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            fontFamily: 'Inter',
-            scaffoldBackgroundColor: const Color(0xFF1C1A19),
-            brightness: Brightness.dark,
-          ),
-          home: const _AppLoader(),
+        return ValueListenableBuilder<String>(
+          valueListenable: LocalPreferencesService.language,
+          builder: (context, langCode, _) {
+            return MaterialApp(
+              title: 'NurAI',
+              debugShowCheckedModeBanner: false,
+              navigatorObservers: [routeObserver],
+              locale: Locale(langCode),
+              supportedLocales: const [Locale('tr'), Locale('en')],
+              localizationsDelegates: const [
+                GlobalMaterialLocalizations.delegate,
+                GlobalWidgetsLocalizations.delegate,
+                GlobalCupertinoLocalizations.delegate,
+              ],
+              themeMode: currentMode,
+              theme: ThemeData(
+                useMaterial3: true,
+                fontFamily: 'Inter',
+                scaffoldBackgroundColor: const Color(0xFFFBF6F2),
+                brightness: Brightness.light,
+              ),
+              darkTheme: ThemeData(
+                useMaterial3: true,
+                fontFamily: 'Inter',
+                scaffoldBackgroundColor: const Color(0xFF1C1A19),
+                brightness: Brightness.dark,
+              ),
+              home: const _AppLoader(),
+            );
+          },
         );
       },
     );
@@ -63,6 +78,7 @@ class _AppLoader extends StatelessWidget {
       CollectiveReadingService.init(),
       NotesService.init(),
       LocalPreferencesService.init(),
+      UserProfileService.init(),
       AdhanNotificationService.init(),
     ]);
     // Re-schedule prayer notifications on every app launch (rolling 7-day window).
@@ -96,12 +112,12 @@ class _LoadingScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFFFBF6F2),
+    return Scaffold(
+      backgroundColor: const Color(0xFFFBF6F2),
       body: Center(
         child: Text(
-          'Bismillah',
-          style: TextStyle(
+          S.get('loading'),
+          style: const TextStyle(
             fontFamily: 'Amiri',
             fontSize: 28,
             color: Color(0xFF7A746F),
@@ -118,15 +134,15 @@ class _ErrorScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      backgroundColor: Color(0xFFFBF6F2),
+    return Scaffold(
+      backgroundColor: const Color(0xFFFBF6F2),
       body: Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
+          padding: const EdgeInsets.all(32),
           child: Text(
-            'Veriler yüklenemedi.\nLütfen uygulamayı yeniden başlatın.',
+            S.get('load_error'),
             textAlign: TextAlign.center,
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 16,
               color: Color(0xFF7A746F),

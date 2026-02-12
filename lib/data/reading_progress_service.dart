@@ -89,6 +89,14 @@ class ReadingProgressService {
     return (surah: surah, ayah: ayah ?? 1);
   }
 
+  /// Returns the last ayah for [targetSurah] inside the given context.
+  /// If context progress points to a different surah, returns null.
+  static int? getLastAyahForContext(ReadingContext ctx, int targetSurah) {
+    final progress = getContextProgress(ctx);
+    if (progress == null || progress.surah != targetSurah) return null;
+    return progress.ayah;
+  }
+
   /// Returns true if a specific context has saved progress.
   static bool hasContextProgress(ReadingContext ctx) {
     return _prefs?.containsKey(ctx.surahKey) ?? false;

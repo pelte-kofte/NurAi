@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../data/quran_data.dart';
 import '../../data/reading_progress_service.dart';
@@ -159,6 +159,29 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
     return widget.surahName;
   }
 
+  bool get _canGoPreviousSurah => !_isJuzMode && widget.surahNumber > 1;
+
+  bool get _canGoNextSurah =>
+      !_isJuzMode && widget.surahNumber < QuranData.instance.getSurahCount();
+
+  void _openAdjacentSurah(int surahNumber) {
+    final initialAyah = ReadingProgressService.getLastAyahForContext(
+          widget.readingContext,
+          surahNumber,
+        ) ??
+        1;
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) => AyahReadingScreen(
+          surahNumber: surahNumber,
+          surahName: QuranData.instance.getSurahName(surahNumber),
+          initialAyah: initialAyah,
+          readingContext: widget.readingContext,
+        ),
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _scrollController.dispose();
@@ -192,7 +215,27 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
           ),
         ),
         actions: [
-          if (!_isJuzMode)
+          if (!_isJuzMode) ...[
+            IconButton(
+              icon: const Icon(
+                Icons.chevron_left_rounded,
+                size: 24,
+                color: Color(0xFF7A746F),
+              ),
+              onPressed: _canGoPreviousSurah
+                  ? () => _openAdjacentSurah(widget.surahNumber - 1)
+                  : null,
+            ),
+            IconButton(
+              icon: const Icon(
+                Icons.chevron_right_rounded,
+                size: 24,
+                color: Color(0xFF7A746F),
+              ),
+              onPressed: _canGoNextSurah
+                  ? () => _openAdjacentSurah(widget.surahNumber + 1)
+                  : null,
+            ),
             IconButton(
               icon: const Icon(
                 Icons.list_rounded,
@@ -205,6 +248,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
                 );
               },
             ),
+          ],
         ],
       ),
       body: ListView.builder(
@@ -394,3 +438,4 @@ class _AyahBlockState extends State<_AyahBlock> {
     );
   }
 }
+

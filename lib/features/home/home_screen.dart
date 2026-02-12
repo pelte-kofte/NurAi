@@ -3,18 +3,35 @@ import '../../data/quran_data.dart';
 import '../../data/collective_reading_service.dart';
 import '../../data/daily_ayah_service.dart';
 import '../../data/daily_wisdom_service.dart';
-import '../../data/adhan_notification_service.dart';
-import '../../data/local_preferences_service.dart';
+import '../../l10n/app_strings.dart';
 import '../../data/notes_service.dart';
 import '../../data/reading_progress_service.dart';
+import '../../data/user_profile_service.dart';
 import '../../models/reading_context.dart';
+import '../../widgets/quick_actions_popover.dart';
 import '../../main.dart';
 import '../collective/collective_reading_screen.dart';
-import '../notes/note_editor_screen.dart';
 import '../qibla/qibla_screen.dart';
+import '../ramadan/ramadan_hub_screen.dart';
 import '../reading/ayah_reading_screen.dart';
 import '../settings/settings_screen.dart';
 import '../surah/surah_list_screen.dart';
+
+enum _Mood { gratitude, calm, anxious, sad, tired, neutral }
+
+enum _SuggestionType { ayah, hadith }
+
+class _SuggestionItem {
+  final _SuggestionType type;
+  final String text;
+  final String source;
+
+  const _SuggestionItem({
+    required this.type,
+    required this.text,
+    required this.source,
+  });
+}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,8 +42,119 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> with RouteAware {
   final GlobalKey _quickActionsKey = GlobalKey();
-  OverlayEntry? _quickActionsEntry;
+  bool _checkedNamePrompt = false;
+  static const Map<_Mood, List<_SuggestionItem>> _suggestionPool = {
+    _Mood.gratitude: [
+      _SuggestionItem(
+        type: _SuggestionType.ayah,
+        text: 'Eğer şükrederseniz elbette size artırırım.',
+        source: 'İbrahim 14:7',
+      ),
+      _SuggestionItem(
+        type: _SuggestionType.hadith,
+        text: 'Allah kulunun şükründen razı olur.',
+        source: 'Müslim',
+      ),
+      _SuggestionItem(
+        type: _SuggestionType.ayah,
+        text: 'Öyleyse Rabbinizin hangi nimetini yalanlarsınız?',
+        source: 'Rahman 55:13',
+      ),
+    ],
+    _Mood.calm: [
+      _SuggestionItem(
+        type: _SuggestionType.ayah,
+        text: 'Kalpler ancak Allah’ı anmakla huzur bulur.',
+        source: 'Ra’d 13:28',
+      ),
+      _SuggestionItem(
+        type: _SuggestionType.hadith,
+        text: 'Kolaylaştırın, zorlaştırmayın.',
+        source: 'Buhârî',
+      ),
+      _SuggestionItem(
+        type: _SuggestionType.ayah,
+        text: 'Rabbinin adını an ve tüm kalbinle O’na yönel.',
+        source: 'Müzzemmil 73:8',
+      ),
+    ],
+    _Mood.anxious: [
+      _SuggestionItem(
+        type: _SuggestionType.ayah,
+        text: 'Allah bize yeter, O ne güzel vekildir.',
+        source: 'Âl-i İmrân 3:173',
+      ),
+      _SuggestionItem(
+        type: _SuggestionType.ayah,
+        text: 'Allah’ın rahmetinden ümit kesmeyin.',
+        source: 'Zümer 39:53',
+      ),
+      _SuggestionItem(
+        type: _SuggestionType.hadith,
+        text: 'Dua, müminin dayanağıdır.',
+        source: 'Tirmizî',
+      ),
+    ],
+    _Mood.sad: [
+      _SuggestionItem(
+        type: _SuggestionType.ayah,
+        text: 'Şüphesiz zorlukla beraber bir kolaylık vardır.',
+        source: 'İnşirah 94:6',
+      ),
+      _SuggestionItem(
+        type: _SuggestionType.ayah,
+        text: 'Rabbin seni terk etmedi ve sana darılmadı.',
+        source: 'Duha 93:3',
+      ),
+      _SuggestionItem(
+        type: _SuggestionType.hadith,
+        text: 'Müminin hali hayırdır.',
+        source: 'Müslim',
+      ),
+    ],
+    _Mood.tired: [
+      _SuggestionItem(
+        type: _SuggestionType.ayah,
+        text: 'Biz insanı en güzel biçimde yarattık.',
+        source: 'Tin 95:4',
+      ),
+      _SuggestionItem(
+        type: _SuggestionType.hadith,
+        text: 'Bedeninin de senin üzerinde hakkı vardır.',
+        source: 'Buhârî',
+      ),
+      _SuggestionItem(
+        type: _SuggestionType.ayah,
+        text: 'Her nefse ancak gücünün yettiği kadar yük yüklenir.',
+        source: 'Bakara 2:286',
+      ),
+    ],
+    _Mood.neutral: [
+      _SuggestionItem(
+        type: _SuggestionType.ayah,
+        text: 'Rabbiniz buyurdu: Bana dua edin, size cevap vereyim.',
+        source: 'Mü’min 40:60',
+      ),
+      _SuggestionItem(
+        type: _SuggestionType.hadith,
+        text: 'Amellerin en hayırlısı az da olsa devamlı olandır.',
+        source: 'Buhârî',
+      ),
+      _SuggestionItem(
+        type: _SuggestionType.ayah,
+        text: 'Kim Allah’a dayanırsa O kendisine yeter.',
+        source: 'Talâk 65:3',
+      ),
+    ],
+  };
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _maybeShowNamePrompt();
+    });
+  }
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -35,7 +163,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   void dispose() {
-    _removeQuickActionsPopover();
+    QuickActionsPopover.hide();
     routeObserver.unsubscribe(this);
     super.dispose();
   }
@@ -47,11 +175,310 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   String _getGreeting() {
     final hour = DateTime.now().hour;
-    if (hour < 6) return 'Hay\u0131rl\u0131 geceler';
-    if (hour < 12) return 'Hay\u0131rl\u0131 sabahlar';
-    if (hour < 17) return 'Hay\u0131rl\u0131 g\u00fcnler';
-    if (hour < 21) return 'Hay\u0131rl\u0131 ak\u015famlar';
-    return 'Hay\u0131rl\u0131 geceler';
+    if (hour < 6) return S.get('greeting_night');
+    if (hour < 12) return S.get('greeting_morning');
+    if (hour < 17) return S.get('greeting_day');
+    if (hour < 21) return S.get('greeting_evening');
+    return S.get('greeting_night');
+  }
+
+  String _buildGreetingText(String? displayName) {
+    final name = displayName?.trim();
+    if (name == null || name.isEmpty) return _getGreeting();
+    return '${_getGreeting()}, $name';
+  }
+
+  Future<void> _maybeShowNamePrompt() async {
+    if (_checkedNamePrompt || !mounted) return;
+    _checkedNamePrompt = true;
+
+    if (!UserProfileService.shouldShowNamePrompt) return;
+
+    final controller = TextEditingController(
+      text: UserProfileService.displayName ?? '',
+    );
+    var completed = false;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: const Color(0xFFFDF9F6),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            8,
+            24,
+            MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Size nasıl hitap edelim?',
+                style: TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF2B2725),
+                ),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: controller,
+                textInputAction: TextInputAction.done,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF2B2725),
+                ),
+                decoration: InputDecoration(
+                  hintText: 'İsminiz (isteğe bağlı)',
+                  hintStyle: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFFB5AEA8),
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFFBF6F2),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFB57A5A),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () async {
+                    completed = true;
+                    await UserProfileService.setDisplayName(controller.text);
+                    await UserProfileService.markNamePromptShown();
+                    if (ctx.mounted) {
+                      Navigator.of(ctx).pop();
+                    }
+                  },
+                  child: const Text(
+                    'Devam et',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Center(
+                child: TextButton(
+                  onPressed: () async {
+                    completed = true;
+                    await UserProfileService.markNamePromptShown();
+                    if (ctx.mounted) {
+                      Navigator.of(ctx).pop();
+                    }
+                  },
+                  child: const Text(
+                    'Atla',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF7A746F),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    ).whenComplete(() async {
+      if (!completed) {
+        await UserProfileService.markNamePromptShown();
+      }
+    });
+
+    controller.dispose();
+  }
+
+  Future<void> _openTodayNoteSheet() async {
+    if (NotesService.isDailyMoodLockedToday()) return;
+    final controller = TextEditingController();
+    var submitted = false;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      useSafeArea: true,
+      backgroundColor: const Color(0xFFFDF9F6),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            8,
+            24,
+            MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Bugün nasılsınız?',
+                style: TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF2B2725),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                minLines: 1,
+                maxLines: 4,
+                textInputAction: TextInputAction.newline,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF2B2725),
+                  height: 1.5,
+                ),
+                decoration: InputDecoration(
+                  hintText: 'İçinizden geçenleri yazabilirsiniz',
+                  hintStyle: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFFB5AEA8),
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFFBF6F2),
+                  contentPadding: const EdgeInsets.all(14),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFB57A5A),
+                    foregroundColor: Colors.white,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onPressed: () async {
+                    final text = controller.text.trim();
+                    if (text.isEmpty) return;
+                    final reflectionId = _generateDailyReflectionId(text);
+                    final saved = await NotesService.submitDailyMood(
+                      text: text,
+                      reflectionId: reflectionId,
+                    );
+                    if (!saved) return;
+                    submitted = true;
+                    if (ctx.mounted) {
+                      Navigator.of(ctx).pop();
+                    }
+                  },
+                  child: const Text(
+                    'Kaydet',
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (submitted) {
+      NotesService.refreshDailyMoodState();
+    }
+    controller.dispose();
+  }
+
+  _Mood _classifyMood(String note) {
+    final text = note.toLowerCase();
+
+    const gratitudeKeywords = [
+      'şükür',
+      'elhamdülillah',
+      'hamdolsun',
+      'minnettar',
+    ];
+    const calmKeywords = ['huzur', 'sakin', 'dingin', 'rahat', 'ferah'];
+    const anxiousKeywords = ['kaygı', 'stres', 'korku', 'endişe', 'panik'];
+    const sadKeywords = ['üzgün', 'ağladım', 'kırgın', 'yalnız', 'moralim bozuk'];
+    const tiredKeywords = ['yorgun', 'bitkin', 'uykusuz', 'tükendim', 'halsiz'];
+
+    bool containsAny(List<String> keywords) =>
+        keywords.any((k) => text.contains(k));
+
+    if (containsAny(gratitudeKeywords)) return _Mood.gratitude;
+    if (containsAny(calmKeywords)) return _Mood.calm;
+    if (containsAny(anxiousKeywords)) return _Mood.anxious;
+    if (containsAny(sadKeywords)) return _Mood.sad;
+    if (containsAny(tiredKeywords)) return _Mood.tired;
+    return _Mood.neutral;
+  }
+
+  int _generateDailyReflectionId(String note) {
+    final mood = _classifyMood(note);
+    final items = _suggestionPool[mood] ?? const <_SuggestionItem>[];
+    if (items.isEmpty) return mood.index * 100;
+    final today = DateTime.now();
+    final seed = today.year * 10000 + today.month * 100 + today.day + mood.index;
+    final index = seed % items.length;
+    return mood.index * 100 + index;
+  }
+
+  _SuggestionItem? _suggestionFromId(int? id) {
+    if (id == null) return null;
+    final moodIndex = id ~/ 100;
+    final index = id % 100;
+    if (moodIndex < 0 || moodIndex >= _Mood.values.length) return null;
+    final mood = _Mood.values[moodIndex];
+    final items = _suggestionPool[mood];
+    if (items == null || index < 0 || index >= items.length) return null;
+    return items[index];
   }
 
   void _refresh() {
@@ -103,7 +530,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       children: [
         GestureDetector(
           key: _quickActionsKey,
-          onTap: _showQuickActionsPopover,
+          onTap: _toggleQuickActions,
           child: const Padding(
             padding: EdgeInsets.only(top: 6, right: 12),
             child: Icon(
@@ -114,15 +541,20 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           ),
         ),
         Expanded(
-          child: Text(
-            _getGreeting(),
-            style: const TextStyle(
-              fontFamily: 'Merriweather',
-              fontSize: 28,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF2B2725),
-              height: 1.3,
-            ),
+          child: ValueListenableBuilder<String?>(
+            valueListenable: UserProfileService.displayNameNotifier,
+            builder: (context, displayName, _) {
+              return Text(
+                _buildGreetingText(displayName),
+                style: const TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 28,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF2B2725),
+                  height: 1.3,
+                ),
+              );
+            },
           ),
         ),
         GestureDetector(
@@ -140,162 +572,17 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  void _showQuickActionsPopover() {
-    if (_quickActionsEntry != null) {
-      _removeQuickActionsPopover();
-      return;
-    }
-
-    final overlay = Overlay.of(context);
-    final renderBox =
-        _quickActionsKey.currentContext?.findRenderObject() as RenderBox?;
-    if (renderBox == null) {
-      return;
-    }
-
-    final origin = renderBox.localToGlobal(Offset.zero);
-    final size = renderBox.size;
-
-    _quickActionsEntry = OverlayEntry(
-      builder: (ctx) {
-        return Stack(
-          children: [
-            Positioned.fill(
-              child: GestureDetector(
-                behavior: HitTestBehavior.translucent,
-                onTap: _removeQuickActionsPopover,
-              ),
-            ),
-            Positioned(
-              left: origin.dx,
-              top: origin.dy + size.height + 8,
-              child: Material(
-                color: Colors.transparent,
-                child: StatefulBuilder(
-                  builder: (ctx, setPopoverState) {
-                    return Container(
-                      width: 220,
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFFDF9F6),
-                        borderRadius: BorderRadius.circular(14),
-                        boxShadow: const [
-                          BoxShadow(
-                            color: Color(0x1A2B2725),
-                            blurRadius: 12,
-                            offset: Offset(0, 6),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          GestureDetector(
-                            onTap: () {
-                              _removeQuickActionsPopover();
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => const QiblaScreen(),
-                                ),
-                              );
-                            },
-                            behavior: HitTestBehavior.opaque,
-                            child: const Padding(
-                              padding: EdgeInsets.symmetric(vertical: 8),
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.explore_rounded,
-                                    size: 18,
-                                    color: Color(0xFF7A746F),
-                                  ),
-                                  SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      'Kıble',
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w400,
-                                        color: Color(0xFF2B2725),
-                                      ),
-                                    ),
-                                  ),
-                                  Icon(
-                                    Icons.chevron_right_rounded,
-                                    size: 16,
-                                    color: Color(0xFFB5AEA8),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          Container(
-                            height: 1,
-                            margin: const EdgeInsets.symmetric(vertical: 6),
-                            color: const Color(0xFFEDE6E1),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 6),
-                            child: Row(
-                              children: [
-                                const Expanded(
-                                  child: Text(
-                                    'Ezan alarmları',
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w400,
-                                      color: Color(0xFF2B2725),
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  height: 26,
-                                  child: Switch.adaptive(
-                                    value: LocalPreferencesService
-                                        .adhanEnabled.value,
-                                    onChanged: (v) async {
-                                      if (v) {
-                                        final granted = await AdhanNotificationService.requestPermissions();
-                                        if (granted) {
-                                          await LocalPreferencesService.setAdhanEnabled(true);
-                                          await AdhanNotificationService.schedulePrayerNotifications();
-                                          setPopoverState(() {});
-                                        } else {
-                                          _removeQuickActionsPopover();
-                                          _showNotificationPermissionDialog();
-                                        }
-                                      } else {
-                                        await LocalPreferencesService.setAdhanEnabled(false);
-                                        await AdhanNotificationService.cancelAll();
-                                        setPopoverState(() {});
-                                      }
-                                    },
-                                    activeTrackColor: const Color(0xFFB57A5A),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
+  void _toggleQuickActions() {
+    QuickActionsPopover.toggle(
+      context: context,
+      anchorKey: _quickActionsKey,
+      onQibla: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const QiblaScreen()),
         );
       },
+      onPermissionDenied: _showNotificationPermissionDialog,
     );
-
-    overlay.insert(_quickActionsEntry!);
-  }
-
-  void _removeQuickActionsPopover() {
-    _quickActionsEntry?.remove();
-    _quickActionsEntry = null;
   }
 
   void _showNotificationPermissionDialog() {
@@ -304,18 +591,18 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFFFDF9F6),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: const Text(
-          'Bildirim \u0130zni',
-          style: TextStyle(
+        title: Text(
+          S.get('notif_title'),
+          style: const TextStyle(
             fontFamily: 'Merriweather',
             fontSize: 18,
             fontWeight: FontWeight.w400,
             color: Color(0xFF2B2725),
           ),
         ),
-        content: const Text(
-          'Ezan vakitlerini bildirebilmemiz i\u00e7in bildirim iznine ihtiyac\u0131m\u0131z var.\n\nCihaz ayarlar\u0131ndan bildirimleri etkinle\u015ftirebilirsiniz.',
-          style: TextStyle(
+        content: Text(
+          S.get('notif_body'),
+          style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
             fontWeight: FontWeight.w400,
@@ -326,9 +613,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text(
-              'Tamam',
-              style: TextStyle(
+            child: Text(
+              S.get('ok'),
+              style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
@@ -345,78 +632,129 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      enableDrag: true,
+      useSafeArea: true,
+      showDragHandle: true,
       backgroundColor: Colors.transparent,
       builder: (ctx) {
-        return ClipRRect(
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-          child: SizedBox(
-            height: MediaQuery.of(ctx).size.height * 0.95,
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 10, bottom: 6),
-                  child: Container(
-                    width: 48,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE0D7D0),
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                  ),
-                ),
-                const Expanded(child: SettingsScreen()),
-              ],
-            ),
-          ),
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.85,
+          minChildSize: 0.55,
+          maxChildSize: 0.95,
+          builder: (sheetContext, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFFFDF9F6),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+              ),
+              child: SettingsScreen(scrollController: scrollController),
+            );
+          },
         );
       },
     ).then((_) => _refresh());
   }
 
-  Widget _buildNotesEntry(BuildContext context) {
-    final preview = NotesService.getFirstLinePreview();
+  void _openRamadanHub() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const RamadanHubScreen()),
+    );
+  }
 
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context)
-            .push(
-              MaterialPageRoute(builder: (_) => const NoteEditorScreen()),
-            )
-            .then((_) => _refresh());
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFDF9F6),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
-        ),
-        child: Row(
+  Widget _buildNotesEntry(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: NotesService.dailyMoodRevision,
+      builder: (context, _, __) {
+        final isLocked = NotesService.isDailyMoodLockedToday();
+        final todayText = NotesService.getTodayMoodText();
+        final suggestion = _suggestionFromId(NotesService.getTodayReflectionId());
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Expanded(
-              child: Text(
-                preview ?? 'Bug\u00fcn nas\u0131ls\u0131n\u0131z?',
-                style: TextStyle(
-                  fontFamily: preview != null ? 'Merriweather' : 'Inter',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  fontStyle:
-                      preview != null ? FontStyle.italic : FontStyle.normal,
-                  color: const Color(0xFF7A746F),
-                  height: 1.4,
+            GestureDetector(
+              onTap: isLocked ? null : _openTodayNoteSheet,
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFDF9F6),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        isLocked ? todayText : S.get('notes_placeholder'),
+                        style: TextStyle(
+                          fontFamily: isLocked ? 'Merriweather' : 'Inter',
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          fontStyle:
+                              isLocked ? FontStyle.italic : FontStyle.normal,
+                          color: const Color(0xFF7A746F),
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                    const Icon(
+                      Icons.edit_outlined,
+                      size: 16,
+                      color: Color(0xFFB5AEA8),
+                    ),
+                  ],
                 ),
               ),
             ),
-            const Icon(
-              Icons.edit_outlined,
-              size: 16,
-              color: Color(0xFFB5AEA8),
-            ),
+            if (isLocked) ...[
+              const SizedBox(height: 8),
+              const Text(
+                'Bugün için niyetiniz kaydedildi.',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFFB5AEA8),
+                ),
+              ),
+            ],
+            if (suggestion != null) ...[
+              const SizedBox(height: 10),
+              const Text(
+                'Bugün için',
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF7A746F),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                suggestion.text,
+                style: const TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF2B2725),
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '${suggestion.type == _SuggestionType.ayah ? 'Ayet' : 'Hadis'} · ${suggestion.source}',
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFFB5AEA8),
+                ),
+              ),
+            ],
           ],
-        ),
-      ),
+        );
+      },
     );
   }
 
@@ -476,9 +814,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'G\u00fcn\u00fcn Ayeti',
-            style: TextStyle(
+          Text(
+            S.get('daily_ayah'),
+            style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
               fontWeight: FontWeight.w500,
@@ -531,31 +869,34 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   Widget _buildRamadanInfo() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFDF9F6),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.nights_stay_outlined, size: 18, color: Color(0xFF7A746F)),
-          SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              'Ramazan ay\u0131na haz\u0131rl\u0131k zaman\u0131',
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF7A746F),
-                height: 1.4,
+    return GestureDetector(
+      onTap: _openRamadanHub,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFDF9F6),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.nights_stay_outlined, size: 18, color: Color(0xFF7A746F)),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                S.get('ramadan_prep'),
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF7A746F),
+                  height: 1.4,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -603,12 +944,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               borderRadius: BorderRadius.circular(10),
               border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
             ),
-            child: const Row(
+            child: Row(
               children: [
                 Expanded(
                   child: Text(
-                    'Okumaya ba\u015fla',
-                    style: TextStyle(
+                    S.get('start_reading'),
+                    style: const TextStyle(
                       fontFamily: 'Merriweather',
                       fontSize: 15,
                       fontWeight: FontWeight.w400,
@@ -617,7 +958,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     ),
                   ),
                 ),
-                Icon(
+                const Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 14,
                   color: Color(0xFF7A746F),
@@ -630,7 +971,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           Padding(
             padding: const EdgeInsets.only(left: 4, top: 8),
             child: Text(
-              '${QuranData.instance.getSurahName(globalSurah)} Suresi \u00b7 $globalAyah. Ayet',
+              '${QuranData.instance.getSurahName(globalSurah)} ${S.get('surah_label')} \u00b7 $globalAyah. ${S.get('ayah_label')}',
               style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
@@ -651,9 +992,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     String subtitle;
     if (progress != null) {
       final surahName = QuranData.instance.getSurahName(progress.surah);
-      subtitle = '$surahName \u00b7 ${progress.ayah}. Ayet';
+      subtitle = '$surahName \u00b7 ${progress.ayah}. ${S.get('ayah_label')}';
     } else {
-      subtitle = 'Ba\u015ftan sona okuma niyeti';
+      subtitle = S.get('hatim_subtitle');
     }
 
     return GestureDetector(
@@ -697,9 +1038,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Hatim Niyeti',
-                    style: TextStyle(
+                  Text(
+                    S.get('hatim_title'),
+                    style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
@@ -742,12 +1083,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       if (progress != null) {
         final surahName = QuranData.instance.getSurahName(progress.surah);
         subtitle =
-            '$selectedJuz. C\u00fcz \u00b7 $surahName ${progress.ayah}. Ayet';
+            '$selectedJuz. Juz \u00b7 $surahName ${progress.ayah}. ${S.get('ayah_label')}';
       } else {
-        subtitle = '$selectedJuz. C\u00fcz se\u00e7ildi';
+        subtitle = '$selectedJuz. ${S.get('juz_selected')}';
       }
     } else {
-      subtitle = 'Birlikte okuma i\u00e7in niyet et';
+      subtitle = S.get('juz_subtitle');
     }
 
     return GestureDetector(
@@ -773,9 +1114,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'C\u00fcz Niyeti',
-                    style: TextStyle(
+                  Text(
+                    S.get('juz_title'),
+                    style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
@@ -807,3 +1148,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 }
+
+
+
+
+
+

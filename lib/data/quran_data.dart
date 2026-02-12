@@ -42,6 +42,8 @@ class QuranData {
     return _surahs?[surahNumber - 1].nameTurkish ?? '';
   }
 
+  int getSurahCount() => 114;
+
   /// Returns a daily ayah based on the current date.
   /// Uses a simple hash of the date to pick a consistent ayah for each day.
   Ayah? getDailyAyah() {

@@ -1,8 +1,12 @@
 ﻿import 'package:flutter/material.dart';
 import '../../data/local_preferences_service.dart';
+import '../../data/user_profile_service.dart';
+import '../../l10n/app_strings.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({super.key});
+  const SettingsScreen({super.key, this.scrollController});
+
+  final ScrollController? scrollController;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -11,46 +15,48 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFBF6F2),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF6F2),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_rounded,
-            size: 20,
-            color: Color(0xFF7A746F),
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: const Text(
-          'Ayarlar',
-          style: TextStyle(
-            fontFamily: 'Merriweather',
-            fontSize: 20,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF2B2725),
-          ),
-        ),
-        centerTitle: false,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+    return Material(
+      color: const Color(0xFFFDF9F6),
+      child: ListView(
+        controller: widget.scrollController,
+        padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
         children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              S.get('settings'),
+              style: const TextStyle(
+                fontFamily: 'Merriweather',
+                fontSize: 20,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF2B2725),
+              ),
+            ),
+          ),
+          _buildSectionTitle('Profil'),
+          ValueListenableBuilder<String?>(
+            valueListenable: UserProfileService.displayNameNotifier,
+            builder: (context, displayName, _) {
+              return _buildRow(
+                title: 'Hitap İsmi',
+                value: _profileNameLabel(displayName),
+                onTap: _showNameEditorSheet,
+              );
+            },
+          ),
+          const SizedBox(height: 14),
           _buildRow(
-            title: 'Dil',
+            title: S.get('language'),
             value: _languageLabel(LocalPreferencesService.language.value),
             onTap: () => _showLanguagePicker(),
           ),
           _buildRow(
-            title: 'Görünüş',
+            title: S.get('appearance'),
             value: _themeModeLabel(LocalPreferencesService.themeMode.value),
             onTap: () => _showThemePicker(),
           ),
           _buildSwitchRow(
-            title: 'Haptik geri bildirim',
+            title: S.get('haptics'),
             value: LocalPreferencesService.hapticsEnabled.value,
             onChanged: (v) {
               LocalPreferencesService.setHapticsEnabled(v);
@@ -59,18 +65,34 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(height: 24),
           _buildRow(
-            title: 'Geri bildirim gönder',
-            onTap: () => _showStubDialog('Geri bildirim özelliği yakında eklenecek.'),
+            title: S.get('send_feedback'),
+            onTap: () => _showStubDialog(S.get('stub_feedback')),
           ),
           _buildRow(
-            title: 'Gizlilik Politikası',
-            onTap: () => _showStubDialog('Bağlantı eklenecek.'),
+            title: S.get('privacy_policy'),
+            onTap: () => _showStubDialog(S.get('stub_link')),
           ),
           _buildRow(
-            title: 'Kullanım Şartları',
-            onTap: () => _showStubDialog('Bağlantı eklenecek.'),
+            title: S.get('terms'),
+            onTap: () => _showStubDialog(S.get('stub_link')),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 4),
+      child: Text(
+        title,
+        style: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+          color: Color(0xFF7A746F),
+          letterSpacing: 0.5,
+        ),
       ),
     );
   }
@@ -153,6 +175,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  String _profileNameLabel(String? value) {
+    final trimmed = value?.trim();
+    if (trimmed == null || trimmed.isEmpty) return 'Belirtilmedi';
+    return trimmed;
+  }
+
   String _languageLabel(String code) {
     switch (code) {
       case 'en':
@@ -165,17 +193,128 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String _themeModeLabel(ThemeMode mode) {
     switch (mode) {
       case ThemeMode.light:
-        return 'Açık';
+        return S.get('theme_light');
       case ThemeMode.dark:
-        return 'Koyu';
+        return S.get('theme_dark');
       default:
-        return 'Sistem';
+        return S.get('theme_system');
     }
+  }
+
+  void _showNameEditorSheet() {
+    final controller = TextEditingController(
+      text: UserProfileService.displayName ?? '',
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: const Color(0xFFFBF6F2),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.fromLTRB(
+            24,
+            8,
+            24,
+            MediaQuery.of(ctx).viewInsets.bottom + 20,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Hitap İsmi',
+                style: TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF2B2725),
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                textInputAction: TextInputAction.done,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF2B2725),
+                ),
+                decoration: InputDecoration(
+                  hintText: 'İsminiz (isteğe bağlı)',
+                  hintStyle: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w400,
+                    color: Color(0xFFB5AEA8),
+                  ),
+                  filled: true,
+                  fillColor: const Color(0xFFFDF9F6),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () async {
+                      await UserProfileService.setDisplayName(null);
+                      if (ctx.mounted) {
+                        Navigator.of(ctx).pop();
+                      }
+                    },
+                    child: const Text(
+                      'Temizle',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF7A746F),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: () async {
+                      await UserProfileService.setDisplayName(controller.text);
+                      if (ctx.mounted) {
+                        Navigator.of(ctx).pop();
+                      }
+                    },
+                    child: const Text(
+                      'Kaydet',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w500,
+                        color: Color(0xFFB57A5A),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
+    ).whenComplete(controller.dispose);
   }
 
   void _showLanguagePicker() {
     _showOptionSheet(
-      title: 'Dil',
+      title: S.get('language'),
       options: const [
         _Option('Türkçe', 'tr'),
         _Option('English', 'en'),
@@ -190,11 +329,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   void _showThemePicker() {
     _showOptionSheet(
-      title: 'Görünüş',
-      options: const [
-        _Option('Sistem', 'system'),
-        _Option('Açık', 'light'),
-        _Option('Koyu', 'dark'),
+      title: S.get('appearance'),
+      options: [
+        _Option(S.get('theme_system'), 'system'),
+        _Option(S.get('theme_light'), 'light'),
+        _Option(S.get('theme_dark'), 'dark'),
       ],
       current: switch (LocalPreferencesService.themeMode.value) {
         ThemeMode.light => 'light',
@@ -309,9 +448,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text(
-                'Tamam',
-                style: TextStyle(
+              child: Text(
+                S.get('ok'),
+                style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -331,4 +470,3 @@ class _Option {
   final String label;
   final String value;
 }
-
