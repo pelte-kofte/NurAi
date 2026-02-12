@@ -1,6 +1,5 @@
 ﻿import 'package:flutter/material.dart';
 import '../../data/quran_data.dart';
-import '../../data/collective_reading_service.dart';
 import '../../data/daily_ayah_service.dart';
 import '../../data/daily_wisdom_service.dart';
 import '../../l10n/app_strings.dart';
@@ -10,7 +9,6 @@ import '../../data/user_profile_service.dart';
 import '../../models/reading_context.dart';
 import '../../widgets/quick_actions_popover.dart';
 import '../../main.dart';
-import '../collective/collective_reading_screen.dart';
 import '../qibla/qibla_screen.dart';
 import '../ramadan/ramadan_hub_screen.dart';
 import '../reading/ayah_reading_screen.dart';
@@ -509,14 +507,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 const SizedBox(height: 20),
                 _buildWisdomCard(DailyWisdomService.getTodayWisdom()!),
               ],
-              const SizedBox(height: 24),
-              _buildRamadanInfo(),
+              if (DailyAyahService.isRamadanActive) ...[
+                const SizedBox(height: 24),
+                _buildRamadanInfo(),
+              ],
               const SizedBox(height: 24),
               _buildReadingEntry(context),
               const SizedBox(height: 16),
               _buildHatimEntry(context),
-              const SizedBox(height: 16),
-              _buildCollectiveReadingEntry(context),
             ],
           ),
         ),
@@ -1072,85 +1070,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  Widget _buildCollectiveReadingEntry(BuildContext context) {
-    final selectedJuz = CollectiveReadingService.getSelectedJuz();
-    final isCompleted = CollectiveReadingService.isCompleted();
-
-    String subtitle;
-    if (selectedJuz != null && !isCompleted) {
-      final ctx = ReadingContext.juz(selectedJuz);
-      final progress = ReadingProgressService.getContextProgress(ctx);
-      if (progress != null) {
-        final surahName = QuranData.instance.getSurahName(progress.surah);
-        subtitle =
-            '$selectedJuz. Juz \u00b7 $surahName ${progress.ayah}. ${S.get('ayah_label')}';
-      } else {
-        subtitle = '$selectedJuz. ${S.get('juz_selected')}';
-      }
-    } else {
-      subtitle = S.get('juz_subtitle');
-    }
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context)
-            .push(
-              MaterialPageRoute(
-                  builder: (_) => const CollectiveReadingScreen()),
-            )
-            .then((_) => _refresh());
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFDF9F6),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    S.get('juz_title'),
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFF7A746F),
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFFB5AEA8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 12,
-              color: Color(0xFFB5AEA8),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
-
-
-
 
 
 

@@ -331,6 +331,7 @@ class _AyahBlockState extends State<_AyahBlock> {
 
   @override
   Widget build(BuildContext context) {
+    const readAccent = Color(0xFF7BAEAC);
     // Subtle color variations for Juz range
     final arabicColor = widget.isWithinJuzRange
         ? const Color(0xFF1F1D1C) // Slightly darker
@@ -344,7 +345,7 @@ class _AyahBlockState extends State<_AyahBlock> {
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
           color: widget.isLastRead
-              ? const Color(0xFFF4EFEA)
+              ? readAccent.withOpacity(0.10)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
@@ -375,7 +376,7 @@ class _AyahBlockState extends State<_AyahBlock> {
                         alignment: Alignment.centerRight,
                         child: DecoratedBox(
                           decoration: BoxDecoration(
-                            color: Color(0xFFB57A5A),
+                            color: readAccent,
                             shape: BoxShape.circle,
                           ),
                           child: SizedBox(width: 6, height: 6),
@@ -438,4 +439,3 @@ class _AyahBlockState extends State<_AyahBlock> {
     );
   }
 }
-
