@@ -1,0 +1,28 @@
+[
+  { "id": "tr_ist", "name": "Istanbul", "country": "Türkiye", "lat": 41.0082, "lng": 28.9784, "tz": "Europe/Istanbul" },
+  { "id": "tr_ank", "name": "Ankara", "country": "Türkiye", "lat": 39.9334, "lng": 32.8597, "tz": "Europe/Istanbul" },
+  { "id": "tr_izm", "name": "Izmir", "country": "Türkiye", "lat": 38.4237, "lng": 27.1428, "tz": "Europe/Istanbul" },
+
+  { "id": "sa_mak", "name": "Makkah", "country": "Saudi Arabia", "lat": 21.3891, "lng": 39.8579, "tz": "Asia/Riyadh" },
+  { "id": "sa_med", "name": "Madinah", "country": "Saudi Arabia", "lat": 24.5247, "lng": 39.5692, "tz": "Asia/Riyadh" },
+  { "id": "ae_dub", "name": "Dubai", "country": "United Arab Emirates", "lat": 25.2048, "lng": 55.2708, "tz": "Asia/Dubai" },
+  { "id": "qa_doh", "name": "Doha", "country": "Qatar", "lat": 25.2854, "lng": 51.5310, "tz": "Asia/Qatar" },
+  { "id": "kw_kwi", "name": "Kuwait City", "country": "Kuwait", "lat": 29.3759, "lng": 47.9774, "tz": "Asia/Kuwait" },
+
+  { "id": "eg_cai", "name": "Cairo", "country": "Egypt", "lat": 30.0444, "lng": 31.2357, "tz": "Africa/Cairo" },
+  { "id": "ma_cas", "name": "Casablanca", "country": "Morocco", "lat": 33.5731, "lng": -7.5898, "tz": "Africa/Casablanca" },
+
+  { "id": "gb_lon", "name": "London", "country": "United Kingdom", "lat": 51.5074, "lng": -0.1278, "tz": "Europe/London" },
+  { "id": "fr_par", "name": "Paris", "country": "France", "lat": 48.8566, "lng": 2.3522, "tz": "Europe/Paris" },
+  { "id": "de_ber", "name": "Berlin", "country": "Germany", "lat": 52.5200, "lng": 13.4050, "tz": "Europe/Berlin" },
+
+  { "id": "us_nyc", "name": "New York", "country": "United States", "lat": 40.7128, "lng": -74.0060, "tz": "America/New_York" },
+  { "id": "us_lax", "name": "Los Angeles", "country": "United States", "lat": 34.0522, "lng": -118.2437, "tz": "America/Los_Angeles" },
+  { "id": "ca_tor", "name": "Toronto", "country": "Canada", "lat": 43.6532, "lng": -79.3832, "tz": "America/Toronto" },
+
+  { "id": "sg_sin", "name": "Singapore", "country": "Singapore", "lat": 1.3521, "lng": 103.8198, "tz": "Asia/Singapore" },
+  { "id": "my_kul", "name": "Kuala Lumpur", "country": "Malaysia", "lat": 3.1390, "lng": 101.6869, "tz": "Asia/Kuala_Lumpur" },
+  { "id": "id_jkt", "name": "Jakarta", "country": "Indonesia", "lat": -6.2088, "lng": 106.8456, "tz": "Asia/Jakarta" },
+
+  { "id": "au_syd", "name": "Sydney", "country": "Australia", "lat": -33.8688, "lng": 151.2093, "tz": "Australia/Sydney" }
+]
