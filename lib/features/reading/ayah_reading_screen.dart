@@ -415,7 +415,7 @@ class _AyahBlockState extends State<_AyahBlock> {
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
           color: widget.isLastRead
-              ? readAccent.withOpacity(0.10)
+              ? readAccent.withValues(alpha: 0.10)
               : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
         ),
@@ -534,7 +534,6 @@ class _AyahBlockState extends State<_AyahBlock> {
     );
   }
 }
-<<<<<<< HEAD
 
 Future<void> showAyahNoteEditorSheet({
   required BuildContext context,
@@ -641,6 +640,3 @@ Future<void> showAyahNoteEditorSheet({
 
   controller.dispose();
 }
-
-=======
->>>>>>> b0bb772ef4b891d4bdef00424329d243384adf2c

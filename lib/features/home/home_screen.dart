@@ -2,6 +2,7 @@
 import '../../data/quran_data.dart';
 import '../../data/daily_ayah_service.dart';
 import '../../data/daily_content_service.dart';
+import '../../data/collective_reading_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../data/notes_service.dart';
 import '../../data/reading_progress_service.dart';
@@ -9,11 +10,8 @@ import '../../data/user_profile_service.dart';
 import '../../models/reading_context.dart';
 import '../../widgets/quick_actions_popover.dart';
 import '../../main.dart';
-<<<<<<< HEAD
 import '../collective/collective_reading_screen.dart';
 import '../adhan/adhan_times_screen.dart';
-=======
->>>>>>> b0bb772ef4b891d4bdef00424329d243384adf2c
 import '../qibla/qibla_screen.dart';
 import '../ramadan/ramadan_hub_screen.dart';
 import '../reading/ayah_reading_screen.dart';
@@ -513,7 +511,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               _buildNotesEntry(context),
               const SizedBox(height: 32),
               _buildDailyAyahCard(dailyAyah),
-<<<<<<< HEAD
               const SizedBox(height: 20),
               ValueListenableBuilder<int>(
                 valueListenable: DailyContentService.revision,
@@ -526,20 +523,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               ),
               const SizedBox(height: 24),
               _buildRamadanInfo(),
-=======
-              if (DailyWisdomService.getTodayWisdom() != null) ...[
-                const SizedBox(height: 20),
-                _buildWisdomCard(DailyWisdomService.getTodayWisdom()!),
-              ],
-              if (DailyAyahService.isRamadanActive) ...[
-                const SizedBox(height: 24),
-                _buildRamadanInfo(),
-              ],
->>>>>>> b0bb772ef4b891d4bdef00424329d243384adf2c
               const SizedBox(height: 24),
               _buildReadingEntry(context),
               const SizedBox(height: 16),
               _buildHatimEntry(context),
+              const SizedBox(height: 16),
+              _buildCollectiveReadingEntry(context),
             ],
           ),
         ),
@@ -1111,7 +1100,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-<<<<<<< HEAD
   Widget _buildCollectiveReadingEntry(BuildContext context) {
     final selectedJuz = CollectiveReadingService.getSelectedJuz();
     final isCompleted = CollectiveReadingService.isCompleted();
@@ -1187,9 +1175,5 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       ),
     );
   }
-=======
->>>>>>> b0bb772ef4b891d4bdef00424329d243384adf2c
 }
-
-
 
