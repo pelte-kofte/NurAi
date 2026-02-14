@@ -41,3 +41,35 @@ __pycache__/
 
 # Large raw sources (optional)
 assets/quran/source/
+
+
+# Flutter / Dart
+.dart_tool/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# iOS / macOS CocoaPods
+ios/Pods/
+ios/Podfile
+ios/Podfile.lock
+macos/Pods/
+macos/Podfile
+macos/Podfile.lock
+
+# Xcode
+*.xcuserstate
+*.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+
+# Android
+android/.gradle/
+android/local.properties
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
