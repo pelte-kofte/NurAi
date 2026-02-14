@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import '../data/local_preferences_service.dart';
 
 /// Lightweight localization using a static dictionary.
@@ -8,7 +9,7 @@ class S {
   S._();
 
   static String get _lang => LocalPreferencesService.language.value;
-  static const supportedLanguageCodes = <String>['tr', 'en', 'ar', 'de'];
+  static const supportedLanguageCodes = <String>['tr', 'en', 'ar', 'de', 'fr'];
 
   /// Look up a key with fallback chain:
   /// selected language -> English -> Turkish -> raw key.
@@ -17,6 +18,14 @@ class S {
       _strings['en']?[key] ??
       _strings['tr']?[key] ??
       key;
+
+  static String t(BuildContext context, String key) {
+    final languageCode = Localizations.localeOf(context).languageCode;
+    return _strings[languageCode]?[key] ??
+        _strings['en']?[key] ??
+        _strings['tr']?[key] ??
+        key;
+  }
 
   static const _strings = <String, Map<String, String>>{
     'tr': {
@@ -43,12 +52,69 @@ class S {
       'ayah_label': 'Ayet',
       'juz_selected': 'Cuz secildi',
       'juz_label': 'Cuz',
+      'ramadan_hub_title': 'Ramazan Rehberi',
+      'ramadan_intro': 'Ramazan, kalbi sadelestirip niyeti tazeleyen bir yolculuktur.',
+      'ramadan_section_reading': 'Okuma',
+      'ramadan_section_daily_note': 'Bugun icin kucuk not',
+      'ramadan_section_duas': 'Dualar',
+      'ramadan_section_iftar_adhan': 'Iftar & Ezan',
+      'ramadan_hatim_subtitle': 'Hatim niyetiyle sakin bir baslangic yapin',
+      'ramadan_start': 'Basla',
+      'ramadan_short_duas': 'Kisa Dualar',
+      'ramadan_adhan_notifications': 'Ezan & Bildirimler',
+      'ramadan_adhan_notifications_subtitle':
+          'Ezan alarmlari ayarlardan yonetilir',
+      'ramadan_juz_select': 'Cuz Sec',
+      'ramadan_juz_select_subtitle': 'Bir cuz secerek niyetinizi belirleyin',
+      'ramadan_selected_juz': 'Secili Cuz',
+      'ramadan_continue_juz': 'Cuze Devam Et',
+      'ramadan_change_juz': 'Cuzu Degistir',
+      'ramadan_completed': 'Tamamlandi',
+      'ramadan_mark_completed': 'Tamamladim',
+      'ramadan_note_title': 'Ramazan Notu',
+      'duas_title': 'Kisa Dualar',
+      'coming_soon': 'Yakinda eklenecek',
+      'note_editor_hint': 'Dusuncelerinizi yazin...',
+      'qibla_title': 'Kible',
+      'qibla_web_unsupported': 'Bu ozellik web\'de desteklenmiyor.',
+      'qibla_permission_message':
+          'Kible yonunu belirlemek icin konum iznine ihtiyacimiz var.',
+      'qibla_open_settings': 'Ayarlari Ac',
+      'qibla_sensor_unavailable': 'Bu cihazda pusula sensoru tespit edilemedi.',
+      'qibla_compass_error':
+          'Pusula verisi alinamiyor.\nCihazinizi 8 seklinde hareket ettirerek kalibre etmeyi deneyin.',
+      'qibla_value': 'Kible: {degrees}°',
+      'qibla_calibration_hint':
+          'Kalibrasyon icin cihazinizi 8 seklinde hareket ettirin',
+      'qibla_location_services_disabled':
+          'Konum servisleri kapali.\nLutfen cihaz ayarlarindan acin.',
+      'qibla_location_read_failed':
+          'Konum bilgisi alinamadi.\nLutfen tekrar deneyin.',
+      'reading_juz_label': 'Cuz',
+      'reading_juz_companion_subtitle': '{juz}. Cuz · Sessizce eslik ediyorsunuz',
+      'bookmarks_title': 'Kaydedilenler',
+      'bookmarks_empty':
+          'Henuz kaydettiginiz ayet yok.\n\nOkurken bir ayeti kaydetmek icin yer imi simgesine dokunun.',
+      'verse_detail_meaning': 'Suphesiz her zorlugun yaninda bir kolaylik vardir.',
+      'verse_detail_reference': 'Insirah Suresi · 6. Ayet',
+      'verse_detail_reflection_prompt': 'Bu ayet sende hangi duyguyu uyandiriyor?',
+      'verse_detail_leave_note': 'Bir not birak',
 
       // Quick Actions
       'quick_actions': 'Hizli islemler',
       'qibla': 'Kible Bulucu',
       'adhan_alarms': 'Ezan bildirimleri',
       'adhan_times': 'Ezan Vakitleri',
+      'adhan_preview_subtitle_on': 'Bildirim bu saatlerde gidecek.',
+      'adhan_preview_subtitle_off': 'Bildirim kapali.',
+      'adhan_location_permission_fallback_note':
+          'Konum izni olmadan sehir secerek devam edebilirsiniz.',
+      'next_prayer_title': 'Next prayer',
+      'next_prayer_set_location_cta': 'Set location to see prayer times',
+      'next_prayer_in_prefix': 'in',
+      'next_prayer_hour_short': 'h',
+      'next_prayer_min_short': 'm',
+      'next_prayer_done_today': 'No upcoming prayer today',
 
       // Notification dialog
       'notif_title': 'Bildirim Izni',
@@ -111,10 +177,14 @@ class S {
       'language_en': 'English',
       'language_ar': 'Arapca',
       'language_de': 'Almanca',
+      'language_fr': 'Fransizca',
       'prayer_times': 'Namaz Vakitleri',
       'prayer_times_title': 'Namaz Vakitleri',
       'prayer_times_subtitle_current': 'Mevcut konum',
       'prayer_times_subtitle_city_prefix': 'Konum',
+      'prayer_times_current_prefix': 'Current',
+      'prayer_times_city_prefix': 'City',
+      'prayer_times_not_set': 'Not set',
       'prayer_times_enable_location_title': 'Namaz vakitleri hazir',
       'prayer_times_enable_location_body':
           'Konum izni vererek bulundugun yere gore bugunun vakitlerini gorebilirsin.',
@@ -123,6 +193,7 @@ class S {
       'prayer_times_permission_denied': 'Konum izni verilmedi.',
       'prayer_times_open_settings': 'Ayarlari ac',
       'prayer_times_loading': 'Yukleniyor...',
+      'prayer_times_next_line': 'Next: {prayer} {time}',
       'prayer_times_next_prayer': 'Siradaki vakit',
       'prayer_times_no_location': 'Konum secilmedi',
       'prayer_times_search_city': 'Sehir veya ulke ara',
@@ -243,12 +314,74 @@ class S {
       'ayah_label': 'Ayah',
       'juz_selected': 'Juz selected',
       'juz_label': 'Juz',
+      'ramadan_hub_title': 'Ramadan Guide',
+      'ramadan_intro':
+          'Ramadan is a journey that simplifies the heart and refreshes intention.',
+      'ramadan_section_reading': 'Reading',
+      'ramadan_section_daily_note': 'A small note for today',
+      'ramadan_section_duas': 'Duas',
+      'ramadan_section_iftar_adhan': 'Iftar & Adhan',
+      'ramadan_hatim_subtitle': 'Start gently with the intention of khatm',
+      'ramadan_start': 'Start',
+      'ramadan_short_duas': 'Short Duas',
+      'ramadan_adhan_notifications': 'Adhan & Notifications',
+      'ramadan_adhan_notifications_subtitle':
+          'Adhan alarms are managed in settings',
+      'ramadan_juz_select': 'Select Juz',
+      'ramadan_juz_select_subtitle': 'Set your intention by selecting a juz',
+      'ramadan_selected_juz': 'Selected Juz',
+      'ramadan_continue_juz': 'Continue Juz',
+      'ramadan_change_juz': 'Change Juz',
+      'ramadan_completed': 'Completed',
+      'ramadan_mark_completed': 'I completed it',
+      'ramadan_note_title': 'Ramadan Note',
+      'duas_title': 'Short Duas',
+      'coming_soon': 'Coming soon',
+      'note_editor_hint': 'Write your thoughts...',
+      'qibla_title': 'Qibla',
+      'qibla_web_unsupported': 'This feature is not supported on web.',
+      'qibla_permission_message':
+          'We need location permission to determine the Qibla direction.',
+      'qibla_open_settings': 'Open Settings',
+      'qibla_sensor_unavailable':
+          'Compass sensor could not be detected on this device.',
+      'qibla_compass_error':
+          'Compass data is unavailable.\nTry calibrating by moving your device in a figure 8.',
+      'qibla_value': 'Qibla: {degrees}°',
+      'qibla_calibration_hint':
+          'Move your device in a figure 8 for calibration',
+      'qibla_location_services_disabled':
+          'Location services are disabled.\nPlease enable them in device settings.',
+      'qibla_location_read_failed':
+          'Could not read location.\nPlease try again.',
+      'reading_juz_label': 'Juz',
+      'reading_juz_companion_subtitle':
+          '{juz}. Juz · You are accompanying silently',
+      'bookmarks_title': 'Bookmarks',
+      'bookmarks_empty':
+          'You do not have any saved ayahs yet.\n\nTap the bookmark icon while reading to save an ayah.',
+      'verse_detail_meaning':
+          'Indeed, with hardship comes ease.',
+      'verse_detail_reference': 'Ash-Sharh Surah · Ayah 6',
+      'verse_detail_reflection_prompt':
+          'What feeling does this ayah awaken in you?',
+      'verse_detail_leave_note': 'Leave a note',
 
       // Quick Actions
       'quick_actions': 'Quick actions',
       'qibla': 'Qibla Finder',
       'adhan_alarms': 'Adhan notifications',
       'adhan_times': 'Adhan Times',
+      'adhan_preview_subtitle_on': 'Notifications will be sent at these times.',
+      'adhan_preview_subtitle_off': 'Notifications are off.',
+      'adhan_location_permission_fallback_note':
+          'You can continue by selecting a city if location permission is denied.',
+      'next_prayer_title': 'Next prayer',
+      'next_prayer_set_location_cta': 'Set location to see prayer times',
+      'next_prayer_in_prefix': 'in',
+      'next_prayer_hour_short': 'h',
+      'next_prayer_min_short': 'm',
+      'next_prayer_done_today': 'No upcoming prayer today',
 
       // Notification dialog
       'notif_title': 'Notification Permission',
@@ -311,10 +444,14 @@ class S {
       'language_en': 'English',
       'language_ar': 'Arabic',
       'language_de': 'German',
+      'language_fr': 'French',
       'prayer_times': 'Prayer Times',
       'prayer_times_title': 'Prayer Times',
       'prayer_times_subtitle_current': 'Current location',
       'prayer_times_subtitle_city_prefix': 'Location',
+      'prayer_times_current_prefix': 'Current',
+      'prayer_times_city_prefix': 'City',
+      'prayer_times_not_set': 'Not set',
       'prayer_times_enable_location_title': 'Prayer times are ready',
       'prayer_times_enable_location_body':
           'Allow location access or choose a city to see today\'s prayer times.',
@@ -323,6 +460,7 @@ class S {
       'prayer_times_permission_denied': 'Location permission denied.',
       'prayer_times_open_settings': 'Open settings',
       'prayer_times_loading': 'Loading...',
+      'prayer_times_next_line': 'Next: {prayer} {time}',
       'prayer_times_next_prayer': 'Next prayer',
       'prayer_times_no_location': 'No location selected',
       'prayer_times_search_city': 'Search city or country',
@@ -422,18 +560,315 @@ class S {
       'load_error': 'Data could not be loaded.\nPlease restart the app.',
     },
     'ar': {
-      // Placeholder language map (falls back to English/Turkish when missing)
+      'settings': 'الإعدادات',
+      'profile': 'الملف الشخصي',
+      'display_name': 'الاسم المعروض',
+      'my_notes': 'ملاحظاتي',
+      'language': 'اللغة',
+      'appearance': 'المظهر',
+      'prayer_times': 'أوقات الصلاة',
+      'prayer_notifications': 'تنبيهات الصلاة',
+      'location': 'الموقع',
+      'location_privacy_note':
+          'يستخدم موقع الجهاز فقط. لا يتم إرسال البيانات إلى الخوادم.',
+      'send_feedback': 'إرسال ملاحظات',
+      'privacy_policy': 'سياسة الخصوصية',
+      'terms': 'شروط الاستخدام',
+      'haptics': 'الاهتزاز',
+      'system': 'النظام',
+      'light': 'فاتح',
+      'dark': 'داكن',
+      'name_not_set': 'غير محدد',
+      'name_hint': 'اسمك (اختياري)',
+      'name_prompt_title': 'كيف نُخاطبك؟',
+      'save': 'حفظ',
+      'clear': 'مسح',
+      'cancel': 'إلغاء',
+      'delete': 'حذف',
+      'continue': 'متابعة',
+      'skip': 'تخطي',
+      'today_title': 'كيف حالك اليوم؟',
+      'today_hint': 'يمكنك كتابة ما في خاطرك',
+      'today_intention_saved': 'تم حفظ نيتك لليوم.',
+      'today_for': 'لليوم',
+      'daily_ayah': 'آية اليوم',
+      'daily_hadith_title': 'حديث اليوم',
+      'daily_word_title': 'تذكير لطيف',
+      'daily_hadith_empty': 'لا يوجد حديث متاح اليوم.',
+      'daily_word_empty': 'لا يوجد تذكير متاح اليوم.',
+      'notes_placeholder': 'كيف تشعر اليوم؟',
+      'ramadan_prep': 'حان وقت الاستعداد لرمضان',
+      'start_reading': 'ابدأ القراءة',
+      'hatim_title': 'نية الختم',
+      'hatim_subtitle': 'قراءة من البداية إلى النهاية',
+      'juz_title': 'نية الجزء',
+      'juz_subtitle': 'حدّد نية للقراءة الجماعية',
+      'surah_label': 'سورة',
+      'ayah_label': 'آية',
+      'juz_selected': 'تم اختيار الجزء',
+      'juz_label': 'جزء',
+      'ramadan_hub_title': 'دليل رمضان',
+      'ramadan_intro': 'رمضان رحلة تُبسّط القلب وتجدد النية.',
+      'ramadan_section_reading': 'القراءة',
+      'ramadan_section_daily_note': 'ملاحظة قصيرة لليوم',
+      'ramadan_section_duas': 'الأدعية',
+      'ramadan_section_iftar_adhan': 'الإفطار والأذان',
+      'ramadan_hatim_subtitle': 'ابدأ بهدوء بنية الختم',
+      'ramadan_start': 'ابدأ',
+      'ramadan_short_duas': 'أدعية قصيرة',
+      'ramadan_adhan_notifications': 'الأذان والتنبيهات',
+      'ramadan_adhan_notifications_subtitle': 'يتم إدارة تنبيهات الأذان من الإعدادات',
+      'ramadan_juz_select': 'اختر جزءًا',
+      'ramadan_juz_select_subtitle': 'حدّد نيتك باختيار جزء',
+      'ramadan_selected_juz': 'الجزء المحدد',
+      'ramadan_continue_juz': 'متابعة الجزء',
+      'ramadan_change_juz': 'تغيير الجزء',
+      'ramadan_completed': 'مكتمل',
+      'ramadan_mark_completed': 'أنهيته',
+      'ramadan_note_title': 'ملاحظة رمضان',
+      'duas_title': 'أدعية قصيرة',
+      'coming_soon': 'قريبًا',
+      'note_editor_hint': 'اكتب أفكارك...',
+      'qibla_title': 'القبلة',
+      'qibla_web_unsupported': 'هذه الميزة غير مدعومة على الويب.',
+      'qibla_permission_message': 'نحتاج إذن الموقع لتحديد اتجاه القبلة.',
+      'qibla_open_settings': 'فتح الإعدادات',
+      'qibla_sensor_unavailable': 'تعذّر العثور على مستشعر البوصلة على هذا الجهاز.',
+      'qibla_compass_error':
+          'بيانات البوصلة غير متاحة.\nحاول المعايرة بتحريك الجهاز على شكل الرقم 8.',
+      'qibla_value': 'القبلة: {degrees}°',
+      'qibla_calibration_hint': 'حرّك جهازك على شكل 8 للمعايرة',
+      'qibla_location_services_disabled':
+          'خدمات الموقع متوقفة.\nيرجى تفعيلها من إعدادات الجهاز.',
+      'qibla_location_read_failed': 'تعذر قراءة الموقع.\nيرجى المحاولة مرة أخرى.',
+      'prayer_times_loading': 'جارٍ التحميل...',
+      'bookmarks_title': 'المحفوظات',
+      'bookmarks_empty':
+          'لا توجد آيات محفوظة بعد.\n\nأثناء القراءة اضغط على أيقونة الحفظ لحفظ آية.',
+      'verse_detail_meaning': 'إِنَّ مَعَ الْعُسْرِ يُسْرًا',
+      'verse_detail_reference': 'سورة الشرح · الآية 6',
+      'verse_detail_reflection_prompt': 'ما الشعور الذي توقظه هذه الآية فيك؟',
+      'verse_detail_leave_note': 'اترك ملاحظة',
       'language_tr': 'التركية',
-      'language_en': 'الانجليزية',
+      'language_en': 'الإنجليزية',
       'language_ar': 'العربية',
-      'language_de': 'الالمانية',
+      'language_de': 'الألمانية',
+      'language_fr': 'الفرنسية',
     },
     'de': {
-      // Placeholder language map (falls back to English/Turkish when missing)
-      'language_tr': 'Turkisch',
+      'settings': 'Einstellungen',
+      'profile': 'Profil',
+      'display_name': 'Anzeigename',
+      'my_notes': 'Meine Notizen',
+      'language': 'Sprache',
+      'appearance': 'Darstellung',
+      'prayer_times': 'Gebetszeiten',
+      'prayer_notifications': 'Gebetsbenachrichtigungen',
+      'location': 'Standort',
+      'location_privacy_note':
+          'Es wird nur der Gerätestandort verwendet. Es werden keine Daten an Server gesendet.',
+      'send_feedback': 'Feedback senden',
+      'privacy_policy': 'Datenschutzerklärung',
+      'terms': 'Nutzungsbedingungen',
+      'haptics': 'Haptisches Feedback',
+      'system': 'System',
+      'light': 'Hell',
+      'dark': 'Dunkel',
+      'name_not_set': 'Nicht festgelegt',
+      'name_hint': 'Dein Name (optional)',
+      'name_prompt_title': 'Wie sollen wir dich ansprechen?',
+      'save': 'Speichern',
+      'clear': 'Löschen',
+      'cancel': 'Abbrechen',
+      'delete': 'Löschen',
+      'continue': 'Weiter',
+      'skip': 'Überspringen',
+      'today_title': 'Wie geht es dir heute?',
+      'today_hint': 'Du kannst aufschreiben, was dich bewegt',
+      'today_intention_saved': 'Deine Absicht für heute wurde gespeichert.',
+      'today_for': 'Für heute',
+      'daily_ayah': 'Vers des Tages',
+      'daily_hadith_title': 'Hadith des Tages',
+      'daily_word_title': 'Sanfte Erinnerung',
+      'daily_hadith_empty': 'Für heute ist kein Hadith verfügbar.',
+      'daily_word_empty': 'Für heute ist keine Erinnerung verfügbar.',
+      'notes_placeholder': 'Wie geht es dir heute?',
+      'ramadan_prep': 'Zeit, sich auf Ramadan vorzubereiten',
+      'start_reading': 'Lesen beginnen',
+      'hatim_title': 'Khatm-Absicht',
+      'hatim_subtitle': 'Lesen von Anfang bis Ende',
+      'juz_title': 'Juz-Absicht',
+      'juz_subtitle': 'Eine Absicht für gemeinsames Lesen setzen',
+      'surah_label': 'Sure',
+      'ayah_label': 'Ayah',
+      'juz_selected': 'Juz ausgewählt',
+      'juz_label': 'Juz',
+      'ramadan_hub_title': 'Ramadan-Leitfaden',
+      'ramadan_intro':
+          'Ramadan ist eine Reise, die das Herz vereinfacht und die Absicht erneuert.',
+      'ramadan_section_reading': 'Lesen',
+      'ramadan_section_daily_note': 'Eine kurze Notiz für heute',
+      'ramadan_section_duas': 'Duas',
+      'ramadan_section_iftar_adhan': 'Iftar & Adhan',
+      'ramadan_hatim_subtitle': 'Beginne ruhig mit der Absicht des Khatm',
+      'ramadan_start': 'Starten',
+      'ramadan_short_duas': 'Kurze Duas',
+      'ramadan_adhan_notifications': 'Adhan & Benachrichtigungen',
+      'ramadan_adhan_notifications_subtitle':
+          'Adhan-Alarme werden in den Einstellungen verwaltet',
+      'ramadan_juz_select': 'Juz auswählen',
+      'ramadan_juz_select_subtitle': 'Lege deine Absicht fest, indem du einen Juz auswählst',
+      'ramadan_selected_juz': 'Ausgewählter Juz',
+      'ramadan_continue_juz': 'Juz fortsetzen',
+      'ramadan_change_juz': 'Juz ändern',
+      'ramadan_completed': 'Abgeschlossen',
+      'ramadan_mark_completed': 'Ich habe es abgeschlossen',
+      'ramadan_note_title': 'Ramadan-Notiz',
+      'duas_title': 'Kurze Duas',
+      'coming_soon': 'Kommt bald',
+      'note_editor_hint': 'Schreibe deine Gedanken...',
+      'qibla_title': 'Qibla',
+      'qibla_web_unsupported': 'Diese Funktion wird im Web nicht unterstützt.',
+      'qibla_permission_message':
+          'Wir benötigen Standortberechtigung, um die Qibla-Richtung zu bestimmen.',
+      'qibla_open_settings': 'Einstellungen öffnen',
+      'qibla_sensor_unavailable':
+          'Auf diesem Gerät wurde kein Kompasssensor gefunden.',
+      'qibla_compass_error':
+          'Kompassdaten sind nicht verfügbar.\nVersuche zu kalibrieren, indem du dein Gerät in einer 8 bewegst.',
+      'qibla_value': 'Qibla: {degrees}°',
+      'qibla_calibration_hint':
+          'Bewege dein Gerät zur Kalibrierung in einer 8',
+      'qibla_location_services_disabled':
+          'Standortdienste sind deaktiviert.\nBitte in den Geräteeinstellungen aktivieren.',
+      'qibla_location_read_failed':
+          'Standort konnte nicht gelesen werden.\nBitte erneut versuchen.',
+      'prayer_times_loading': 'Wird geladen...',
+      'bookmarks_title': 'Lesezeichen',
+      'bookmarks_empty':
+          'Du hast noch keine gespeicherten Ayahs.\n\nTippe beim Lesen auf das Lesezeichen-Symbol, um eine Ayah zu speichern.',
+      'verse_detail_meaning':
+          'Gewiss, mit der Erschwernis kommt Erleichterung.',
+      'verse_detail_reference': 'Sure Asch-Scharh · Ayah 6',
+      'verse_detail_reflection_prompt':
+          'Welche Gefühle weckt diese Ayah in dir?',
+      'verse_detail_leave_note': 'Notiz hinterlassen',
+      'language_tr': 'Türkisch',
       'language_en': 'Englisch',
       'language_ar': 'Arabisch',
       'language_de': 'Deutsch',
+      'language_fr': 'Französisch',
+    },
+    'fr': {
+      'settings': 'Parametres',
+      'profile': 'Profil',
+      'display_name': 'Nom affiche',
+      'my_notes': 'Mes notes',
+      'language': 'Langue',
+      'appearance': 'Apparence',
+      'prayer_times': 'Heures de priere',
+      'prayer_notifications': 'Notifications de priere',
+      'location': 'Localisation',
+      'location_privacy_note':
+          'Utilise uniquement la localisation de l\'appareil. Aucune donnee n\'est envoyee aux serveurs.',
+      'send_feedback': 'Envoyer un retour',
+      'privacy_policy': 'Politique de confidentialite',
+      'terms': 'Conditions d\'utilisation',
+      'haptics': 'Retour haptique',
+      'system': 'Systeme',
+      'light': 'Clair',
+      'dark': 'Sombre',
+      'name_not_set': 'Non defini',
+      'name_hint': 'Votre nom (optionnel)',
+      'name_prompt_title': 'Comment devons-nous vous appeler ?',
+      'save': 'Enregistrer',
+      'clear': 'Effacer',
+      'cancel': 'Annuler',
+      'delete': 'Supprimer',
+      'continue': 'Continuer',
+      'skip': 'Passer',
+      'today_title': 'Comment allez-vous aujourd\'hui ?',
+      'today_hint': 'Vous pouvez ecrire ce que vous ressentez',
+      'today_intention_saved': 'Votre intention pour aujourd\'hui a ete enregistree.',
+      'today_for': 'Pour aujourd\'hui',
+      'daily_ayah': 'Verset du jour',
+      'daily_hadith_title': 'Hadith du jour',
+      'daily_word_title': 'Rappel doux',
+      'daily_hadith_empty': 'Aucun hadith disponible aujourd\'hui.',
+      'daily_word_empty': 'Aucun rappel disponible aujourd\'hui.',
+      'notes_placeholder': 'Comment vous sentez-vous aujourd\'hui ?',
+      'ramadan_prep': 'Il est temps de se preparer pour Ramadan',
+      'start_reading': 'Commencer la lecture',
+      'hatim_title': 'Intention de Khatm',
+      'hatim_subtitle': 'Lecture du debut a la fin',
+      'juz_title': 'Intention de Juz',
+      'juz_subtitle': 'Fixez une intention pour la lecture collective',
+      'surah_label': 'Sourate',
+      'ayah_label': 'Ayah',
+      'juz_selected': 'Juz selectionne',
+      'juz_label': 'Juz',
+      'ramadan_hub_title': 'Guide de Ramadan',
+      'ramadan_intro':
+          'Ramadan est un voyage qui apaise le coeur et renouvelle l\'intention.',
+      'ramadan_section_reading': 'Lecture',
+      'ramadan_section_daily_note': 'Petite note du jour',
+      'ramadan_section_duas': 'Douas',
+      'ramadan_section_iftar_adhan': 'Iftar & Adhan',
+      'ramadan_hatim_subtitle': 'Commencez en douceur avec l\'intention de khatm',
+      'ramadan_start': 'Commencer',
+      'ramadan_short_duas': 'Douas courtes',
+      'ramadan_adhan_notifications': 'Adhan & Notifications',
+      'ramadan_adhan_notifications_subtitle':
+          'Les alarmes d\'adhan sont gerees dans les parametres',
+      'ramadan_juz_select': 'Selectionner un juz',
+      'ramadan_juz_select_subtitle':
+          'Definissez votre intention en selectionnant un juz',
+      'ramadan_selected_juz': 'Juz selectionne',
+      'ramadan_continue_juz': 'Continuer le juz',
+      'ramadan_change_juz': 'Changer de juz',
+      'ramadan_completed': 'Termine',
+      'ramadan_mark_completed': 'J\'ai termine',
+      'ramadan_note_title': 'Note de Ramadan',
+      'duas_title': 'Douas courtes',
+      'coming_soon': 'Bientot disponible',
+      'note_editor_hint': 'Ecrivez vos pensees...',
+      'qibla_title': 'Qibla',
+      'qibla_web_unsupported': 'Cette fonctionnalite n\'est pas prise en charge sur le web.',
+      'qibla_permission_message':
+          'Nous avons besoin de la permission de localisation pour determiner la direction de la Qibla.',
+      'qibla_open_settings': 'Ouvrir les parametres',
+      'qibla_sensor_unavailable':
+          'Le capteur de boussole n\'a pas ete detecte sur cet appareil.',
+      'qibla_compass_error':
+          'Les donnees de boussole sont indisponibles.\nEssayez de calibrer en bougeant l\'appareil en forme de 8.',
+      'qibla_value': 'Qibla : {degrees}°',
+      'qibla_calibration_hint':
+          'Bougez l\'appareil en forme de 8 pour calibrer',
+      'qibla_location_services_disabled':
+          'Les services de localisation sont desactives.\nVeuillez les activer dans les parametres de l\'appareil.',
+      'qibla_location_read_failed':
+          'Impossible de lire la localisation.\nVeuillez reessayer.',
+      'prayer_times_loading': 'Chargement...',
+      'bookmarks_title': 'Signets',
+      'bookmarks_empty':
+          'Vous n\'avez pas encore d\'ayah enregistree.\n\nPendant la lecture, appuyez sur l\'icone de signet pour enregistrer une ayah.',
+      'verse_detail_meaning':
+          'En verite, avec la difficulte vient la facilite.',
+      'verse_detail_reference': 'Sourate Ash-Sharh · Ayah 6',
+      'verse_detail_reflection_prompt':
+          'Quelle emotion cette ayah eveille-t-elle en vous ?',
+      'verse_detail_leave_note': 'Laisser une note',
+      'language_tr': 'Turc',
+      'language_en': 'Anglais',
+      'language_ar': 'Arabe',
+      'language_de': 'Allemand',
+      'language_fr': 'Francais',
     },
   };
+}
+
+class AppStrings {
+  AppStrings._();
+
+  static String t(BuildContext context, String key) => S.t(context, key);
 }

@@ -54,14 +54,14 @@ class DailyContentService {
     if (_isLoading) return;
     _isLoading = true;
     try {
-      final normalized = languageCode.toLowerCase() == 'en' ? 'en' : 'tr';
+      final normalized = _normalizeLanguageCode(languageCode);
       final hadith = await _loadLocalizedList(
         primaryPath: 'assets/content/hadith_$normalized.json',
-        fallbackPath: 'assets/content/hadith_tr.json',
+        fallbackPath: 'assets/content/hadith_en.json',
       );
       final words = await _loadLocalizedList(
         primaryPath: 'assets/content/daily_words_$normalized.json',
-        fallbackPath: 'assets/content/daily_words_tr.json',
+        fallbackPath: 'assets/content/daily_words_en.json',
       );
       _hadith = hadith;
       _words = words;
@@ -99,6 +99,18 @@ class DailyContentService {
           .toList(growable: false);
     } catch (_) {
       return const [];
+    }
+  }
+
+  static String _normalizeLanguageCode(String languageCode) {
+    switch (languageCode.toLowerCase()) {
+      case 'tr':
+      case 'en':
+      case 'ar':
+      case 'de':
+        return languageCode.toLowerCase();
+      default:
+        return 'en';
     }
   }
 

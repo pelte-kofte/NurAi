@@ -9,6 +9,7 @@ import '../../data/reading_progress_service.dart';
 import '../../data/user_profile_service.dart';
 import '../../models/reading_context.dart';
 import '../../widgets/quick_actions_popover.dart';
+import '../../widgets/next_prayer_pill.dart';
 import '../../main.dart';
 import '../collective/collective_reading_screen.dart';
 import '../adhan/adhan_times_screen.dart';
@@ -507,6 +508,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildGreeting(),
+              const SizedBox(height: 12),
+              NextPrayerPill(
+                onTap: () {
+                  Navigator.of(context)
+                      .push(
+                        MaterialPageRoute(builder: (_) => const AdhanTimesScreen()),
+                      )
+                      .then((_) => _refresh());
+                },
+              ),
               const SizedBox(height: 24),
               _buildNotesEntry(context),
               const SizedBox(height: 32),
@@ -929,6 +940,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
+
   Widget _buildReadingEntry(BuildContext context) {
     const ctx = ReadingContext.explore();
     final progress = ReadingProgressService.getContextProgress(ctx);
@@ -1176,4 +1188,3 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 }
-

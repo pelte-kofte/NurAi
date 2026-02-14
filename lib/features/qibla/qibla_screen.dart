@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_qiblah/flutter_qiblah.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../l10n/app_strings.dart';
 
 /// Full Qibla compass screen using device sensors.
 class QiblaScreen extends StatefulWidget {
@@ -61,7 +62,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
         setState(() {
-          _errorMessage = 'Konum servisleri kapalı.\nLütfen cihaz ayarlarından açın.';
+          _errorMessage = AppStrings.t(context, 'qibla_location_services_disabled');
           _loading = false;
         });
         return;
@@ -70,7 +71,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
       setState(() => _loading = false);
     } catch (e) {
       setState(() {
-        _errorMessage = 'Konum bilgisi alınamadı.\nLütfen tekrar deneyin.';
+        _errorMessage = AppStrings.t(context, 'qibla_location_read_failed');
         _loading = false;
       });
     }
@@ -94,9 +95,9 @@ class _QiblaScreenState extends State<QiblaScreen> {
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Kıble',
-          style: TextStyle(
+        title: Text(
+          AppStrings.t(context, 'qibla_title'),
+          style: const TextStyle(
             fontFamily: 'Merriweather',
             fontSize: 20,
             fontWeight: FontWeight.w400,
@@ -105,14 +106,14 @@ class _QiblaScreenState extends State<QiblaScreen> {
         ),
         centerTitle: true,
       ),
-      body: SafeArea(child: _buildBody()),
+      body: SafeArea(child: _buildBody(context)),
     );
   }
 
-  Widget _buildBody() {
+  Widget _buildBody(BuildContext context) {
     // Web platform: calm "not supported" message.
     if (kIsWeb) {
-      return _buildMessage('Bu özellik web\'de desteklenmiyor.');
+      return _buildMessage(AppStrings.t(context, 'qibla_web_unsupported'));
     }
 
     // Still loading permissions / sensor check.
@@ -132,8 +133,8 @@ class _QiblaScreenState extends State<QiblaScreen> {
     // Permission denied.
     if (_permissionDenied) {
       return _buildMessage(
-        'Kıble yönünü belirlemek için\nkonum iznine ihtiyacımız var.',
-        action: 'Ayarları Aç',
+        AppStrings.t(context, 'qibla_permission_message'),
+        action: AppStrings.t(context, 'qibla_open_settings'),
         onAction: () => Geolocator.openAppSettings(),
       );
     }
@@ -141,7 +142,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
     // Sensor unavailable.
     if (_sensorUnavailable) {
       return _buildMessage(
-        'Bu cihazda pusula sensörü\ntespit edilemedi.',
+        AppStrings.t(context, 'qibla_sensor_unavailable'),
       );
     }
 
@@ -217,13 +218,13 @@ class _QiblaCompass extends StatelessWidget {
         }
 
         if (snapshot.hasError || !snapshot.hasData) {
-          return const Center(
+          return Center(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 40),
+              padding: const EdgeInsets.symmetric(horizontal: 40),
               child: Text(
-                'Pusula verisi alınamıyor.\nCihazınızı 8 şeklinde hareket ettirerek\nkalibre etmeyi deneyin.',
+                AppStrings.t(context, 'qibla_compass_error'),
                 textAlign: TextAlign.center,
-                style: TextStyle(
+                style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
@@ -291,7 +292,10 @@ class _QiblaCompass extends StatelessWidget {
                         ),
                         const SizedBox(height: 20),
                         Text(
-                          'Kıble: $qiblaDegrees°',
+                          AppStrings.t(
+                            context,
+                            'qibla_value',
+                          ).replaceFirst('{degrees}', '$qiblaDegrees'),
                           style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 16,
@@ -302,10 +306,10 @@ class _QiblaCompass extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         // Calibration hint (always shown subtly)
-                        const Text(
-                          'Kalibrasyon için cihazınızı 8 şeklinde hareket ettirin',
+                        Text(
+                          AppStrings.t(context, 'qibla_calibration_hint'),
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 12,
                             fontWeight: FontWeight.w400,
@@ -453,4 +457,3 @@ class _NeedlePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
-

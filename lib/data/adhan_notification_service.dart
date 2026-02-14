@@ -112,6 +112,14 @@ class AdhanNotificationService {
     await cancelAll();
   }
 
+  static Future<AdhanEnableResult> enableForTodayAndRescheduleDaily() async {
+    return enable();
+  }
+
+  static Future<void> disableAndCancelAll() async {
+    await disable();
+  }
+
   static Future<void> rescheduleForToday() async {
     if (kIsWeb) return;
     if (!LocalPreferencesService.adhanEnabled.value) return;

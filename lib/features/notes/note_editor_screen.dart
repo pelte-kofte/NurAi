@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/notes_service.dart';
+import '../../l10n/app_strings.dart';
 
 /// Simple, calm note editor screen.
 /// Auto-saves on changes, no submit button.
@@ -47,9 +48,9 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Notlarım',
-          style: TextStyle(
+        title: Text(
+          AppStrings.t(context, 'my_notes'),
+          style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 16,
             fontWeight: FontWeight.w500,
@@ -72,10 +73,10 @@ class _NoteEditorScreenState extends State<NoteEditorScreen> {
             color: Color(0xFF2B2725),
             height: 1.8,
           ),
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             border: InputBorder.none,
-            hintText: 'Düşüncelerinizi yazın...',
-            hintStyle: TextStyle(
+            hintText: AppStrings.t(context, 'note_editor_hint'),
+            hintStyle: const TextStyle(
               fontFamily: 'Merriweather',
               fontSize: 16,
               fontWeight: FontWeight.w400,

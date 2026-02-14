@@ -114,6 +114,7 @@ class PrayerLocationService {
 
   static Future<void> setCityLocation({
     required String cityName,
+    String? cityId,
     required double lat,
     required double lng,
     String? timezoneId,
@@ -124,7 +125,7 @@ class PrayerLocationService {
       lat: lat,
       lng: lng,
       cityName: cityName,
-      cityId: cityName,
+      cityId: cityId ?? cityName,
       timezone: tzName,
       updatedAt: DateTime.now(),
     );

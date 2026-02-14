@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_strings.dart';
 
 /// A calm, focused screen for reading and reflecting on a single ayah.
 /// Designed to slow the user down and encourage contemplation.
@@ -21,11 +22,11 @@ class VerseDetailScreen extends StatelessWidget {
               const SizedBox(height: 28),
               _buildDivider(),
               const SizedBox(height: 28),
-              _buildTurkishMeaning(),
+              _buildMeaning(context),
               const SizedBox(height: 16),
-              _buildSurahReference(),
+              _buildSurahReference(context),
               const SizedBox(height: 40),
-              _buildReflectionCard(),
+              _buildReflectionCard(context),
               const SizedBox(height: 32),
             ],
           ),
@@ -77,13 +78,13 @@ class VerseDetailScreen extends StatelessWidget {
   }
 
   /// Turkish meaning in serif font, slightly muted for calm reading.
-  Widget _buildTurkishMeaning() {
-    return const Padding(
-      padding: EdgeInsets.symmetric(horizontal: 8),
+  Widget _buildMeaning(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Text(
-        'Şüphesiz her zorluğun yanında bir kolaylık vardır.',
+        AppStrings.t(context, 'verse_detail_meaning'),
         textAlign: TextAlign.center,
-        style: TextStyle(
+        style: const TextStyle(
           fontFamily: 'Merriweather',
           fontSize: 18,
           fontWeight: FontWeight.w400,
@@ -95,11 +96,11 @@ class VerseDetailScreen extends StatelessWidget {
   }
 
   /// Surah and verse reference, very subtle and unobtrusive.
-  Widget _buildSurahReference() {
-    return const Text(
-      'İnşirah Suresi · 6. Ayet',
+  Widget _buildSurahReference(BuildContext context) {
+    return Text(
+      AppStrings.t(context, 'verse_detail_reference'),
       textAlign: TextAlign.center,
-      style: TextStyle(
+      style: const TextStyle(
         fontFamily: 'Inter',
         fontSize: 13,
         fontWeight: FontWeight.w400,
@@ -110,7 +111,7 @@ class VerseDetailScreen extends StatelessWidget {
   }
 
   /// Reflection prompt card inviting personal contemplation.
-  Widget _buildReflectionCard() {
+  Widget _buildReflectionCard(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -127,9 +128,9 @@ class VerseDetailScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Bu ayet sende hangi duyguyu uyandırıyor?',
-            style: TextStyle(
+          Text(
+            AppStrings.t(context, 'verse_detail_reflection_prompt'),
+            style: const TextStyle(
               fontFamily: 'Merriweather',
               fontSize: 15,
               fontWeight: FontWeight.w400,
@@ -138,14 +139,14 @@ class VerseDetailScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          _buildReflectionButton(),
+          _buildReflectionButton(context),
         ],
       ),
     );
   }
 
   /// Subtle text button for leaving a note, non-demanding.
-  Widget _buildReflectionButton() {
+  Widget _buildReflectionButton(BuildContext context) {
     return TextButton(
       onPressed: () {},
       style: TextButton.styleFrom(
@@ -153,9 +154,9 @@ class VerseDetailScreen extends StatelessWidget {
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
       ),
-      child: const Text(
-        'Bir not bırak',
-        style: TextStyle(
+      child: Text(
+        AppStrings.t(context, 'verse_detail_leave_note'),
+        style: const TextStyle(
           fontFamily: 'Inter',
           fontSize: 14,
           fontWeight: FontWeight.w500,

@@ -275,6 +275,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return S.get('language_ar');
       case 'de':
         return S.get('language_de');
+      case 'fr':
+        return S.get('language_fr');
       case 'en':
         return S.get('language_en');
       case 'tr':
@@ -510,6 +512,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _Option(S.get('language_en'), 'en'),
         _Option(S.get('language_ar'), 'ar'),
         _Option(S.get('language_de'), 'de'),
+        _Option(S.get('language_fr'), 'fr'),
       ],
       current: LocalPreferencesService.language.value,
       onSelect: (val) {
@@ -662,6 +665,5 @@ class _Option {
   final String label;
   final String value;
 }
-
 
 

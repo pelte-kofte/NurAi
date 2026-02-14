@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../data/bookmark_service.dart';
 import '../../data/quran_data.dart';
+import '../../l10n/app_strings.dart';
 import '../../models/ayah.dart';
 import '../reading/ayah_reading_screen.dart';
 
@@ -34,9 +35,9 @@ class BookmarkScreen extends StatelessWidget {
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Kaydedilenler',
-          style: TextStyle(
+        title: Text(
+          AppStrings.t(context, 'bookmarks_title'),
+          style: const TextStyle(
             fontFamily: 'Merriweather',
             fontSize: 20,
             fontWeight: FontWeight.w400,
@@ -92,13 +93,13 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    return Center(
       child: Padding(
-        padding: EdgeInsets.all(32),
+        padding: const EdgeInsets.all(32),
         child: Text(
-          'Henüz kaydettiğiniz ayet yok.\n\nOkurken bir ayeti kaydetmek için\nyer imi simgesine dokunun.',
+          AppStrings.t(context, 'bookmarks_empty'),
           textAlign: TextAlign.center,
-          style: TextStyle(
+          style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
             fontWeight: FontWeight.w400,
@@ -133,7 +134,7 @@ class _BookmarkItem extends StatelessWidget {
         children: [
           // Surah name and ayah number
           Text(
-            '$surahName · ${ayah.ayahNumber}. Ayet',
+            '$surahName · ${ayah.ayahNumber}. ${AppStrings.t(context, 'ayah_label')}',
             style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,

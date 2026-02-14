@@ -7,6 +7,8 @@ import '../../l10n/app_strings.dart';
 
 class CityPickerResult {
   const CityPickerResult({
+    required this.id,
+    required this.name,
     required this.label,
     required this.country,
     required this.lat,
@@ -14,6 +16,8 @@ class CityPickerResult {
     this.timezone,
   });
 
+  final String id;
+  final String name;
   final String label;
   final String country;
   final double lat;
@@ -23,6 +27,7 @@ class CityPickerResult {
 
 class _CityItem {
   const _CityItem({
+    required this.id,
     required this.name,
     required this.country,
     required this.lat,
@@ -30,6 +35,7 @@ class _CityItem {
     this.timezone,
   });
 
+  final String id;
   final String name;
   final String country;
   final double lat;
@@ -40,11 +46,12 @@ class _CityItem {
 
   factory _CityItem.fromJson(Map<String, dynamic> json) {
     return _CityItem(
+      id: (json['id'] ?? '').toString().trim(),
       name: (json['name'] ?? '').toString().trim(),
       country: (json['country'] ?? '').toString().trim(),
       lat: (json['lat'] as num).toDouble(),
       lng: (json['lng'] as num).toDouble(),
-      timezone: json['timezone']?.toString(),
+      timezone: (json['tz'] ?? json['timezone'])?.toString(),
     );
   }
 }
@@ -78,7 +85,7 @@ class _CityPickerScreenState extends State<CityPickerScreen> {
   Future<void> _loadCities() async {
     try {
       final raw = await rootBundle.loadString(
-        'assets/cities/world_cities_min.json',
+        'assets/adhan/cities.json',
       );
       final decoded = jsonDecode(raw) as List<dynamic>;
       final cities = decoded
@@ -89,7 +96,12 @@ class _CityPickerScreenState extends State<CityPickerScreen> {
             ),
           )
           .map(_CityItem.fromJson)
-          .where((item) => item.name.isNotEmpty && item.country.isNotEmpty)
+          .where(
+            (item) =>
+                item.id.isNotEmpty &&
+                item.name.isNotEmpty &&
+                item.country.isNotEmpty,
+          )
           .toList(growable: false);
       if (!mounted) return;
       setState(() {
@@ -214,14 +226,16 @@ class _CityPickerScreenState extends State<CityPickerScreen> {
                           onTap: () {
                             Navigator.of(context).pop(
                               CityPickerResult(
+                                id: city.id,
+                                name: city.name,
                                 label: city.label,
-                              country: city.country,
-                              lat: city.lat,
-                              lng: city.lng,
-                              timezone: city.timezone,
-                            ),
-                          );
-                        },
+                                country: city.country,
+                                lat: city.lat,
+                                lng: city.lng,
+                                timezone: city.timezone,
+                              ),
+                            );
+                          },
                         );
                       },
                     ),

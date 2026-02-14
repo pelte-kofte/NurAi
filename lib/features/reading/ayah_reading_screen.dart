@@ -164,7 +164,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
 
   String get _title {
     if (_isJuzMode) {
-      return '${widget.readingContext.juzNumber}. Cüz';
+      return '${widget.readingContext.juzNumber}. ${S.get('reading_juz_label')}';
     }
     return widget.surahName;
   }
@@ -303,7 +303,9 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
             return Padding(
               padding: const EdgeInsets.only(bottom: 24),
               child: Text(
-                '${widget.readingContext.juzNumber}. Cüz · Sessizce eşlik ediyorsunuz',
+                S.get(
+                  'reading_juz_companion_subtitle',
+                ).replaceFirst('{juz}', '${widget.readingContext.juzNumber}'),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontFamily: 'Inter',
@@ -474,7 +476,7 @@ class _AyahBlockState extends State<_AyahBlock> {
                       Expanded(
                         child: Text(
                           widget.ayah.turkishReadable,
-                          textAlign: TextAlign.left,
+                          textAlign: TextAlign.start,
                           style: const TextStyle(
                             fontFamily: 'Merriweather',
                             fontSize: 15,

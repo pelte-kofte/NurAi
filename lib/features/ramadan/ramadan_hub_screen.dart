@@ -3,6 +3,7 @@ import '../../data/collective_reading_service.dart';
 import '../../data/quran_data.dart';
 import '../../data/ramadan_daily_note_service.dart';
 import '../../data/reading_progress_service.dart';
+import '../../l10n/app_strings.dart';
 import '../../models/reading_context.dart';
 import '../reading/ayah_reading_screen.dart';
 import '../ramadan/duas_screen.dart';
@@ -19,16 +20,34 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
   RamadanDailyNote? _dailyNote;
   int? _selectedJuz;
   bool _isJuzCompleted = false;
+  String? _loadedLanguageCode;
 
   @override
   void initState() {
     super.initState();
-    _loadDailyNote();
     _refreshJuzState();
   }
 
-  Future<void> _loadDailyNote() async {
-    await RamadanDailyNoteService.load();
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final languageCode = Localizations.localeOf(context).languageCode;
+    if (_loadedLanguageCode != languageCode) {
+      _loadedLanguageCode = languageCode;
+      _loadDailyNote(languageCode);
+    }
+  }
+
+  Future<void> _loadDailyNote(String languageCode) async {
+    final assetPath = switch (languageCode) {
+      'tr' => 'assets/ramadan/daily_notes_tr.json',
+      'en' => 'assets/ramadan/daily_notes_en.json',
+      'ar' => 'assets/ramadan/daily_notes_ar.json',
+      'de' => 'assets/ramadan/daily_notes_de.json',
+      'fr' => 'assets/ramadan/daily_notes_fr.json',
+      _ => 'assets/ramadan/daily_notes_en.json',
+    };
+    await RamadanDailyNoteService.load(assetPath: assetPath);
     if (!mounted) return;
     setState(() {
       _dailyNote = RamadanDailyNoteService.getTodayNote();
@@ -72,9 +91,9 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Cüz Seç',
-                style: TextStyle(
+              Text(
+                S.get('ramadan_juz_select'),
+                style: const TextStyle(
                   fontFamily: 'Merriweather',
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
@@ -181,9 +200,9 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
               ),
               onPressed: () => Navigator.of(context).pop(),
             ),
-            title: const Text(
-              'Ayarlar',
-              style: TextStyle(
+            title: Text(
+              S.get('settings'),
+              style: const TextStyle(
                 fontFamily: 'Merriweather',
                 fontSize: 20,
                 fontWeight: FontWeight.w400,
@@ -200,11 +219,12 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
   @override
   Widget build(BuildContext context) {
     const hatimCtx = ReadingContext.hatim();
+    final activeLang = Localizations.localeOf(context).languageCode;
     final hatimProgress = ReadingProgressService.getContextProgress(hatimCtx);
     final hatimSubtitle = hatimProgress != null
-        ? '${QuranData.instance.getSurahName(hatimProgress.surah)} \u00b7 ${hatimProgress.ayah}. Ayet'
-        : 'Hatim niyetiyle sakin bir ba\u015flang\u0131\u00e7 yap\u0131n';
-    final hatimCta = hatimProgress != null ? 'Devam Et' : 'Ba\u015fla';
+        ? '${QuranData.instance.getSurahName(hatimProgress.surah)} \u00b7 ${hatimProgress.ayah}. ${S.get('ayah_label')}'
+        : S.get('ramadan_hatim_subtitle');
+    final hatimCta = hatimProgress != null ? S.get('continue') : S.get('ramadan_start');
 
     return Scaffold(
       backgroundColor: const Color(0xFFFBF6F2),
@@ -220,9 +240,9 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Ramazan Rehberi',
-          style: TextStyle(
+        title: Text(
+          S.get('ramadan_hub_title'),
+          style: const TextStyle(
             fontFamily: 'Merriweather',
             fontSize: 22,
             fontWeight: FontWeight.w400,
@@ -233,9 +253,20 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(24, 8, 24, 28),
         children: [
-          const Text(
-            'Ramazan, kalbi sadele\u015ftirip niyeti tazeleyen bir yolculuktur.',
-            style: TextStyle(
+          Text(
+            'Ramadan • $activeLang',
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 11,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFFB5AEA8),
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            S.get('ramadan_intro'),
+            style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: FontWeight.w400,
@@ -244,36 +275,36 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
             ),
           ),
           const SizedBox(height: 22),
-          const _SectionHeader('Okuma'),
+          _SectionHeader(S.get('ramadan_section_reading')),
           const SizedBox(height: 10),
           _ReadingCard(
-            title: 'Hatim Niyeti',
+            title: S.get('hatim_title'),
             subtitle: hatimSubtitle,
             cta: hatimCta,
             accent: true,
             onTap: _openHatimReading,
           ),
           const SizedBox(height: 22),
-          const _SectionHeader('Cüz Niyeti'),
+          _SectionHeader(S.get('juz_title')),
           const SizedBox(height: 10),
           _buildJuzIntentionCard(),
           const SizedBox(height: 22),
-          const _SectionHeader('Bug\u00fcn i\u00e7in k\u00fc\u00e7\u00fck not'),
+          _SectionHeader(S.get('ramadan_section_daily_note')),
           const SizedBox(height: 10),
-          _DailyNoteCard(text: _dailyNote?.text ?? 'Y\u00fckleniyor...'),
+          _DailyNoteCard(text: _dailyNote?.text ?? S.get('prayer_times_loading')),
           const SizedBox(height: 22),
-          const _SectionHeader('Dualar'),
+          _SectionHeader(S.get('ramadan_section_duas')),
           const SizedBox(height: 10),
           _SimpleNavCard(
-            title: 'K\u0131sa Dualar',
+            title: S.get('ramadan_short_duas'),
             onTap: _openDuas,
           ),
           const SizedBox(height: 22),
-          const _SectionHeader('\u0130ftar & Ezan'),
+          _SectionHeader(S.get('ramadan_section_iftar_adhan')),
           const SizedBox(height: 10),
           _SimpleNavCard(
-            title: 'Ezan & Bildirimler',
-            subtitle: 'Ezan alarmlar\u0131 ayarlardan y\u00f6netilir',
+            title: S.get('ramadan_adhan_notifications'),
+            subtitle: S.get('ramadan_adhan_notifications_subtitle'),
             onTap: _openSettings,
           ),
         ],
@@ -284,8 +315,8 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
   Widget _buildJuzIntentionCard() {
     if (_selectedJuz == null) {
       return _SimpleNavCard(
-        title: 'Cüz Seç',
-        subtitle: 'Bir cüz seçerek niyetinizi belirleyin',
+        title: S.get('ramadan_juz_select'),
+        subtitle: S.get('ramadan_juz_select_subtitle'),
         onTap: _showJuzPicker,
       );
     }
@@ -302,7 +333,7 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Seçili Cüz: $_selectedJuz',
+            '${S.get('ramadan_selected_juz')}: $_selectedJuz',
             style: const TextStyle(
               fontFamily: 'Merriweather',
               fontSize: 16,
@@ -312,9 +343,9 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
           ),
           if (_isJuzCompleted) ...[
             const SizedBox(height: 4),
-            const Text(
-              'Tamamlandı',
-              style: TextStyle(
+            Text(
+              S.get('ramadan_completed'),
+              style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
@@ -327,14 +358,14 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
             children: [
               Expanded(
                 child: _JuzActionButton(
-                  label: 'Cüze Devam Et',
+                  label: S.get('ramadan_continue_juz'),
                   onTap: _openJuzReading,
                 ),
               ),
               const SizedBox(width: 10),
               Expanded(
                 child: _JuzActionButton(
-                  label: 'Cüzü Değiştir',
+                  label: S.get('ramadan_change_juz'),
                   onTap: _showJuzPicker,
                 ),
               ),
@@ -344,9 +375,9 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
             const SizedBox(height: 12),
             GestureDetector(
               onTap: _markJuzCompleted,
-              child: const Text(
-                'Tamamladım',
-                style: TextStyle(
+              child: Text(
+                S.get('ramadan_mark_completed'),
+                style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
@@ -481,9 +512,9 @@ class _DailyNoteCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Ramazan Notu',
-            style: TextStyle(
+          Text(
+            S.get('ramadan_note_title'),
+            style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
               fontWeight: FontWeight.w500,

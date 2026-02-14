@@ -43,11 +43,19 @@ class NurAIApp extends StatelessWidget {
               debugShowCheckedModeBanner: false,
               navigatorObservers: [routeObserver],
               locale: Locale(langCode),
+              builder: (context, child) {
+                final isArabic = langCode == 'ar';
+                return Directionality(
+                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                  child: child ?? const SizedBox.shrink(),
+                );
+              },
               supportedLocales: const [
                 Locale('tr'),
                 Locale('en'),
                 Locale('ar'),
                 Locale('de'),
+                Locale('fr'),
               ],
               localizationsDelegates: const [
                 GlobalMaterialLocalizations.delegate,

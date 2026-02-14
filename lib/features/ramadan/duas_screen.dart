@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/app_strings.dart';
 
 class DuasScreen extends StatelessWidget {
   const DuasScreen({super.key});
@@ -19,9 +20,9 @@ class DuasScreen extends StatelessWidget {
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Kısa Dualar',
-          style: TextStyle(
+        title: Text(
+          AppStrings.t(context, 'duas_title'),
+          style: const TextStyle(
             fontFamily: 'Merriweather',
             fontSize: 20,
             fontWeight: FontWeight.w400,
@@ -29,10 +30,10 @@ class DuasScreen extends StatelessWidget {
           ),
         ),
       ),
-      body: const Center(
+      body: Center(
         child: Text(
-          'Yakında eklenecek',
-          style: TextStyle(
+          AppStrings.t(context, 'coming_soon'),
+          style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,
             fontWeight: FontWeight.w400,
