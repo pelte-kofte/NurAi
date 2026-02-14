@@ -1,49 +1,40 @@
-import 'package:adhan/adhan.dart';
+import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
+import '../l10n/app_strings.dart';
+import '../models/prayer_location.dart';
+import 'adhan_times_service.dart';
+import 'local_preferences_service.dart';
+import 'prayer_location_service.dart';
 
-/// Schedules local notifications for the five daily prayer times.
-///
-/// Uses Diyanet (Turkey) calculation method with Istanbul coordinates
-/// as default. Pre-schedules 7 days ahead and refreshes each time
-/// the app launches while enabled.
+enum AdhanEnableResult {
+  enabled,
+  unavailableOnWeb,
+  notificationPermissionDenied,
+  locationServiceDisabled,
+  locationPermissionDenied,
+  locationPermissionDeniedForever,
+  locationMissing,
+  locationFailed,
+}
+
 class AdhanNotificationService {
   AdhanNotificationService._();
 
   static final _plugin = FlutterLocalNotificationsPlugin();
+  static Timer? _maintenanceTimer;
+  static const _prayerIndexes = <int>[0, 1, 2, 3, 4];
 
-  // Default: Istanbul
-  static const _defaultLat = 41.0082;
-  static const _defaultLng = 28.9784;
-
-  static const _prayerBodies = [
-    'Sabah vakti girdi.',
-    '\u00d6\u011fle vakti girdi.',
-    '\u0130kindi vakti girdi.',
-    'Ak\u015fam vakti girdi.',
-    'Yats\u0131 vakti girdi.',
-  ];
-
-  // ── Initialization ──────────────────────────────────────────────
-
-  /// Initialize timezone data and notification plugin.
-  /// Call once at app startup.
   static Future<void> init() async {
     if (kIsWeb) return;
 
     tz_data.initializeTimeZones();
-    try {
-      final name = await FlutterTimezone.getLocalTimezone();
-      tz.setLocalLocation(tz.getLocation(name));
-    } catch (_) {
-      tz.setLocalLocation(tz.getLocation('Europe/Istanbul'));
-    }
+    await _setTimezoneFromDeviceOrFallback();
 
-    const androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -52,22 +43,19 @@ class AdhanNotificationService {
     await _plugin.initialize(
       const InitializationSettings(android: androidSettings, iOS: iosSettings),
     );
+
+    _startDailyMaintenance();
   }
 
-  // ── Permissions ─────────────────────────────────────────────────
-
-  /// Request notification permissions. Returns true if granted.
   static Future<bool> requestPermissions() async {
     if (kIsWeb) return false;
 
-    // Android 13+
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     if (android != null) {
       return await android.requestNotificationsPermission() ?? false;
     }
 
-    // iOS
     final ios = _plugin.resolvePlatformSpecificImplementation<
         IOSFlutterLocalNotificationsPlugin>();
     if (ios != null) {
@@ -82,63 +70,136 @@ class AdhanNotificationService {
     return true;
   }
 
-  // ── Scheduling ──────────────────────────────────────────────────
-
-  /// Schedule prayer notifications for the next 7 days.
-  /// Cancels any existing scheduled notifications first.
-  /// Call this on toggle-enable and on every app launch (if enabled).
-  static Future<void> schedulePrayerNotifications({
-    double lat = _defaultLat,
-    double lng = _defaultLng,
-  }) async {
-    if (kIsWeb) return;
-
-    await cancelAll();
-
-    final coords = Coordinates(lat, lng);
-    final params = CalculationMethod.turkey.getParameters();
-    final now = DateTime.now();
-
-    for (int day = 0; day < 7; day++) {
-      final date = now.add(Duration(days: day));
-      final components = DateComponents(date.year, date.month, date.day);
-      final prayers = PrayerTimes(coords, components, params);
-
-      final times = [
-        prayers.fajr,
-        prayers.dhuhr,
-        prayers.asr,
-        prayers.maghrib,
-        prayers.isha,
-      ];
-
-      for (int i = 0; i < 5; i++) {
-        if (times[i].isAfter(now)) {
-          await _schedule(
-            id: day * 10 + i,
-            body: _prayerBodies[i],
-            dateTime: times[i],
-          );
-        }
-      }
+  static Future<AdhanEnableResult> enable() async {
+    if (kIsWeb) return AdhanEnableResult.unavailableOnWeb;
+    final permissionGranted = await requestPermissions();
+    if (!permissionGranted) {
+      return AdhanEnableResult.notificationPermissionDenied;
     }
+
+    var selection = LocalPreferencesService.prayerLocation.value;
+    if (selection.mode == PrayerLocationMode.current) {
+      final result = await PrayerLocationService.useCurrentLocation();
+      if (result != PrayerLocationActionResult.success) {
+        return switch (result) {
+          PrayerLocationActionResult.serviceDisabled =>
+            AdhanEnableResult.locationServiceDisabled,
+          PrayerLocationActionResult.permissionDenied =>
+            AdhanEnableResult.locationPermissionDenied,
+          PrayerLocationActionResult.permissionDeniedForever =>
+            AdhanEnableResult.locationPermissionDeniedForever,
+          PrayerLocationActionResult.unavailableOnWeb =>
+            AdhanEnableResult.unavailableOnWeb,
+          PrayerLocationActionResult.failed => AdhanEnableResult.locationFailed,
+          PrayerLocationActionResult.success => AdhanEnableResult.enabled,
+        };
+      }
+      selection = LocalPreferencesService.prayerLocation.value;
+    }
+
+    if (!selection.hasCoordinates) {
+      return AdhanEnableResult.locationMissing;
+    }
+
+    await LocalPreferencesService.setAdhanEnabled(true);
+    await rescheduleForToday();
+    return AdhanEnableResult.enabled;
+  }
+
+  static Future<void> disable() async {
+    if (kIsWeb) return;
+    await LocalPreferencesService.setAdhanEnabled(false);
+    await cancelAll();
+  }
+
+  static Future<void> rescheduleForToday() async {
+    if (kIsWeb) return;
+    if (!LocalPreferencesService.adhanEnabled.value) return;
+
+    final selection = LocalPreferencesService.prayerLocation.value;
+    if (!selection.hasCoordinates) return;
+
+    final today = DateTime.now();
+    await schedulePrayerNotificationsFor(today, selection);
+  }
+
+  static Future<void> schedulePrayerNotificationsFor(
+    DateTime date,
+    PrayerLocation selection,
+  ) async {
+    if (kIsWeb) return;
+    final now = DateTime.now();
+    final localDate = DateTime(date.year, date.month, date.day);
+    final times = AdhanTimesService.computeTimes(
+      localDate,
+      selection,
+      countryHint: _countryHintFromLocation(selection),
+    );
+    final prayerTimes = <DateTime>[
+      times.fajr,
+      times.dhuhr,
+      times.asr,
+      times.maghrib,
+      times.isha,
+    ];
+
+    for (var i = 0; i < _prayerIndexes.length; i++) {
+      final id = _notificationIdFor(localDate, i);
+      await _plugin.cancel(id);
+      final scheduleAt = prayerTimes[i];
+      if (!scheduleAt.isAfter(now)) continue;
+      final prayerName = _prayerNameForIndex(i);
+      final cityName = _cityLabel(selection);
+      final hhmm = AdhanTimesService.formatHHmm(scheduleAt);
+      await _schedule(
+        id: id,
+        title: S
+            .get('prayer_notif_title')
+            .replaceAll('{prayerName}', prayerName),
+        body: S
+            .get('prayer_notif_body')
+            .replaceAll('{prayerName}', prayerName)
+            .replaceAll('{cityName}', cityName)
+            .replaceAll('{time}', hhmm),
+        dateTime: scheduleAt,
+        timezoneName: selection.timezone,
+      );
+    }
+  }
+
+  static Future<void> cancelAll() async {
+    if (kIsWeb) return;
+    await _plugin.cancelAll();
   }
 
   static Future<void> _schedule({
     required int id,
+    required String title,
     required String body,
     required DateTime dateTime,
+    String? timezoneName,
   }) async {
+    final zone = _resolveLocation(timezoneName);
+    final tzDateTime = tz.TZDateTime(
+      zone,
+      dateTime.year,
+      dateTime.month,
+      dateTime.day,
+      dateTime.hour,
+      dateTime.minute,
+      dateTime.second,
+    );
+
     await _plugin.zonedSchedule(
       id,
-      'Vakit',
+      title,
       body,
-      tz.TZDateTime.from(dateTime, tz.local),
+      tzDateTime,
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'prayer_times',
-          'Namaz Vakitleri',
-          channelDescription: 'Ezan vakti bildirimleri',
+          'Prayer Times',
+          channelDescription: 'Prayer time reminders',
           importance: Importance.defaultImportance,
           priority: Priority.defaultPriority,
         ),
@@ -150,11 +211,78 @@ class AdhanNotificationService {
     );
   }
 
-  // ── Cancel ──────────────────────────────────────────────────────
+  static tz.Location _resolveLocation(String? timezoneName) {
+    if (timezoneName == null || timezoneName.isEmpty) {
+      return tz.local;
+    }
+    try {
+      return tz.getLocation(timezoneName);
+    } catch (_) {
+      return tz.local;
+    }
+  }
 
-  /// Cancel all scheduled prayer notifications.
-  static Future<void> cancelAll() async {
-    if (kIsWeb) return;
-    await _plugin.cancelAll();
+  static void _startDailyMaintenance() {
+    _maintenanceTimer?.cancel();
+
+    final now = DateTime.now();
+    var next = DateTime(now.year, now.month, now.day, 0, 5);
+    if (!next.isAfter(now)) {
+      next = next.add(const Duration(days: 1));
+    }
+
+    final wait = next.difference(now);
+    _maintenanceTimer = Timer(wait, () async {
+      if (LocalPreferencesService.adhanEnabled.value) {
+        await rescheduleForToday();
+      }
+      _startDailyMaintenance();
+    });
+  }
+
+  static Future<void> _setTimezoneFromDeviceOrFallback() async {
+    try {
+      final name = await FlutterTimezone.getLocalTimezone();
+      tz.setLocalLocation(tz.getLocation(name));
+    } catch (_) {
+      tz.setLocalLocation(tz.getLocation('Europe/Istanbul'));
+    }
+  }
+
+  static String? _countryHintFromLocation(PrayerLocation location) {
+    if (location.mode == PrayerLocationMode.current) return null;
+    final label = location.cityName ?? '';
+    final parts = label.split(',');
+    if (parts.length < 2) return null;
+    return parts.last.trim();
+  }
+
+  static String _prayerNameForIndex(int index) {
+    switch (index) {
+      case 0:
+        return S.get('fajr');
+      case 1:
+        return S.get('dhuhr');
+      case 2:
+        return S.get('asr');
+      case 3:
+        return S.get('maghrib');
+      case 4:
+      default:
+        return S.get('isha');
+    }
+  }
+
+  static String _cityLabel(PrayerLocation selection) {
+    if (selection.mode == PrayerLocationMode.city &&
+        (selection.cityName ?? '').trim().isNotEmpty) {
+      return selection.cityName!.trim();
+    }
+    return S.get('prayer_times_subtitle_current');
+  }
+
+  static int _notificationIdFor(DateTime date, int prayerIndex) {
+    final ymd = date.year * 10000 + date.month * 100 + date.day;
+    return ymd * 10 + prayerIndex;
   }
 }

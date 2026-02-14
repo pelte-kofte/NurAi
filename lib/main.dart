@@ -8,6 +8,10 @@ import 'data/adhan_notification_service.dart';
 import 'data/local_preferences_service.dart';
 import 'data/user_profile_service.dart';
 import 'data/notes_service.dart';
+import 'data/daily_content_service.dart';
+import 'data/prayer_location_service.dart';
+import 'data/premium_service.dart';
+import 'data/ayah_notes_service.dart';
 import 'l10n/app_strings.dart';
 import 'features/home/home_screen.dart';
 
@@ -15,7 +19,9 @@ import 'features/home/home_screen.dart';
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await LocalPreferencesService.init();
   runApp(const NurAIApp());
 }
 
@@ -37,7 +43,12 @@ class NurAIApp extends StatelessWidget {
               debugShowCheckedModeBanner: false,
               navigatorObservers: [routeObserver],
               locale: Locale(langCode),
-              supportedLocales: const [Locale('tr'), Locale('en')],
+              supportedLocales: const [
+                Locale('tr'),
+                Locale('en'),
+                Locale('ar'),
+                Locale('de'),
+              ],
               localizationsDelegates: const [
                 GlobalMaterialLocalizations.delegate,
                 GlobalWidgetsLocalizations.delegate,
@@ -67,8 +78,33 @@ class NurAIApp extends StatelessWidget {
 
 /// Loads Quran data before showing the main app.
 /// Shows a calm loading state while data loads.
-class _AppLoader extends StatelessWidget {
+class _AppLoader extends StatefulWidget {
   const _AppLoader();
+
+  @override
+  State<_AppLoader> createState() => _AppLoaderState();
+}
+
+class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed &&
+        LocalPreferencesService.adhanEnabled.value) {
+      AdhanNotificationService.rescheduleForToday();
+    }
+  }
 
   Future<void> _loadAppData() async {
     await Future.wait([
@@ -77,13 +113,17 @@ class _AppLoader extends StatelessWidget {
       BookmarkService.init(),
       CollectiveReadingService.init(),
       NotesService.init(),
+      DailyContentService.init(),
+      AyahNotesService.init(),
       LocalPreferencesService.init(),
+      PremiumService.init(),
       UserProfileService.init(),
       AdhanNotificationService.init(),
     ]);
-    // Re-schedule prayer notifications on every app launch (rolling 7-day window).
+    await PrayerLocationService.hydrateCurrentLocationIfPermitted();
+    // Re-schedule prayer notifications on every app launch.
     if (LocalPreferencesService.adhanEnabled.value) {
-      AdhanNotificationService.schedulePrayerNotifications();
+      AdhanNotificationService.rescheduleForToday();
     }
   }
 

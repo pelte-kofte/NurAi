@@ -2,7 +2,7 @@
 import '../../data/quran_data.dart';
 import '../../data/collective_reading_service.dart';
 import '../../data/daily_ayah_service.dart';
-import '../../data/daily_wisdom_service.dart';
+import '../../data/daily_content_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../data/notes_service.dart';
 import '../../data/reading_progress_service.dart';
@@ -11,6 +11,7 @@ import '../../models/reading_context.dart';
 import '../../widgets/quick_actions_popover.dart';
 import '../../main.dart';
 import '../collective/collective_reading_screen.dart';
+import '../adhan/adhan_times_screen.dart';
 import '../qibla/qibla_screen.dart';
 import '../ramadan/ramadan_hub_screen.dart';
 import '../reading/ayah_reading_screen.dart';
@@ -23,13 +24,13 @@ enum _SuggestionType { ayah, hadith }
 
 class _SuggestionItem {
   final _SuggestionType type;
-  final String text;
-  final String source;
+  final String textKey;
+  final String sourceKey;
 
   const _SuggestionItem({
     required this.type,
-    required this.text,
-    required this.source,
+    required this.textKey,
+    required this.sourceKey,
   });
 }
 
@@ -47,103 +48,103 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     _Mood.gratitude: [
       _SuggestionItem(
         type: _SuggestionType.ayah,
-        text: 'Eğer şükrederseniz elbette size artırırım.',
-        source: 'İbrahim 14:7',
+        textKey: 'suggestion_gratitude_1_text',
+        sourceKey: 'suggestion_gratitude_1_source',
       ),
       _SuggestionItem(
         type: _SuggestionType.hadith,
-        text: 'Allah kulunun şükründen razı olur.',
-        source: 'Müslim',
+        textKey: 'suggestion_gratitude_2_text',
+        sourceKey: 'suggestion_gratitude_2_source',
       ),
       _SuggestionItem(
         type: _SuggestionType.ayah,
-        text: 'Öyleyse Rabbinizin hangi nimetini yalanlarsınız?',
-        source: 'Rahman 55:13',
+        textKey: 'suggestion_gratitude_3_text',
+        sourceKey: 'suggestion_gratitude_3_source',
       ),
     ],
     _Mood.calm: [
       _SuggestionItem(
         type: _SuggestionType.ayah,
-        text: 'Kalpler ancak Allah’ı anmakla huzur bulur.',
-        source: 'Ra’d 13:28',
+        textKey: 'suggestion_calm_1_text',
+        sourceKey: 'suggestion_calm_1_source',
       ),
       _SuggestionItem(
         type: _SuggestionType.hadith,
-        text: 'Kolaylaştırın, zorlaştırmayın.',
-        source: 'Buhârî',
+        textKey: 'suggestion_calm_2_text',
+        sourceKey: 'suggestion_calm_2_source',
       ),
       _SuggestionItem(
         type: _SuggestionType.ayah,
-        text: 'Rabbinin adını an ve tüm kalbinle O’na yönel.',
-        source: 'Müzzemmil 73:8',
+        textKey: 'suggestion_calm_3_text',
+        sourceKey: 'suggestion_calm_3_source',
       ),
     ],
     _Mood.anxious: [
       _SuggestionItem(
         type: _SuggestionType.ayah,
-        text: 'Allah bize yeter, O ne güzel vekildir.',
-        source: 'Âl-i İmrân 3:173',
+        textKey: 'suggestion_anxious_1_text',
+        sourceKey: 'suggestion_anxious_1_source',
       ),
       _SuggestionItem(
         type: _SuggestionType.ayah,
-        text: 'Allah’ın rahmetinden ümit kesmeyin.',
-        source: 'Zümer 39:53',
+        textKey: 'suggestion_anxious_2_text',
+        sourceKey: 'suggestion_anxious_2_source',
       ),
       _SuggestionItem(
         type: _SuggestionType.hadith,
-        text: 'Dua, müminin dayanağıdır.',
-        source: 'Tirmizî',
+        textKey: 'suggestion_anxious_3_text',
+        sourceKey: 'suggestion_anxious_3_source',
       ),
     ],
     _Mood.sad: [
       _SuggestionItem(
         type: _SuggestionType.ayah,
-        text: 'Şüphesiz zorlukla beraber bir kolaylık vardır.',
-        source: 'İnşirah 94:6',
+        textKey: 'suggestion_sad_1_text',
+        sourceKey: 'suggestion_sad_1_source',
       ),
       _SuggestionItem(
         type: _SuggestionType.ayah,
-        text: 'Rabbin seni terk etmedi ve sana darılmadı.',
-        source: 'Duha 93:3',
+        textKey: 'suggestion_sad_2_text',
+        sourceKey: 'suggestion_sad_2_source',
       ),
       _SuggestionItem(
         type: _SuggestionType.hadith,
-        text: 'Müminin hali hayırdır.',
-        source: 'Müslim',
+        textKey: 'suggestion_sad_3_text',
+        sourceKey: 'suggestion_sad_3_source',
       ),
     ],
     _Mood.tired: [
       _SuggestionItem(
         type: _SuggestionType.ayah,
-        text: 'Biz insanı en güzel biçimde yarattık.',
-        source: 'Tin 95:4',
+        textKey: 'suggestion_tired_1_text',
+        sourceKey: 'suggestion_tired_1_source',
       ),
       _SuggestionItem(
         type: _SuggestionType.hadith,
-        text: 'Bedeninin de senin üzerinde hakkı vardır.',
-        source: 'Buhârî',
+        textKey: 'suggestion_tired_2_text',
+        sourceKey: 'suggestion_tired_2_source',
       ),
       _SuggestionItem(
         type: _SuggestionType.ayah,
-        text: 'Her nefse ancak gücünün yettiği kadar yük yüklenir.',
-        source: 'Bakara 2:286',
+        textKey: 'suggestion_tired_3_text',
+        sourceKey: 'suggestion_tired_3_source',
       ),
     ],
     _Mood.neutral: [
       _SuggestionItem(
         type: _SuggestionType.ayah,
-        text: 'Rabbiniz buyurdu: Bana dua edin, size cevap vereyim.',
-        source: 'Mü’min 40:60',
+        textKey: 'suggestion_neutral_1_text',
+        sourceKey: 'suggestion_neutral_1_source',
       ),
       _SuggestionItem(
         type: _SuggestionType.hadith,
-        text: 'Amellerin en hayırlısı az da olsa devamlı olandır.',
-        source: 'Buhârî',
+        textKey: 'suggestion_neutral_2_text',
+        sourceKey: 'suggestion_neutral_2_source',
       ),
       _SuggestionItem(
         type: _SuggestionType.ayah,
-        text: 'Kim Allah’a dayanırsa O kendisine yeter.',
-        source: 'Talâk 65:3',
+        textKey: 'suggestion_neutral_3_text',
+        sourceKey: 'suggestion_neutral_3_source',
       ),
     ],
   };
@@ -171,6 +172,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void didPopNext() {
     _refresh();
+  }
+
+  @override
+  void didPushNext() {
+    QuickActionsPopover.hide();
   }
 
   String _getGreeting() {
@@ -220,9 +226,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Size nasıl hitap edelim?',
-                style: TextStyle(
+              Text(
+                S.get('name_prompt_title'),
+                style: const TextStyle(
                   fontFamily: 'Merriweather',
                   fontSize: 20,
                   fontWeight: FontWeight.w400,
@@ -240,7 +246,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   color: Color(0xFF2B2725),
                 ),
                 decoration: InputDecoration(
-                  hintText: 'İsminiz (isteğe bağlı)',
+                  hintText: S.get('name_hint'),
                   hintStyle: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
@@ -278,9 +284,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                       Navigator.of(ctx).pop();
                     }
                   },
-                  child: const Text(
-                    'Devam et',
-                    style: TextStyle(
+                  child: Text(
+                    S.get('continue'),
+                    style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -298,9 +304,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                       Navigator.of(ctx).pop();
                     }
                   },
-                  child: const Text(
-                    'Atla',
-                    style: TextStyle(
+                  child: Text(
+                    S.get('skip'),
+                    style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
@@ -348,9 +354,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Bugün nasılsınız?',
-                style: TextStyle(
+              Text(
+                S.get('today_title'),
+                style: const TextStyle(
                   fontFamily: 'Merriweather',
                   fontSize: 20,
                   fontWeight: FontWeight.w400,
@@ -371,7 +377,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   height: 1.5,
                 ),
                 decoration: InputDecoration(
-                  hintText: 'İçinizden geçenleri yazabilirsiniz',
+                  hintText: S.get('today_hint'),
                   hintStyle: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
@@ -414,9 +420,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                       Navigator.of(ctx).pop();
                     }
                   },
-                  child: const Text(
-                    'Kaydet',
-                    style: TextStyle(
+                  child: Text(
+                    S.get('save'),
+                    style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
@@ -505,10 +511,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               _buildNotesEntry(context),
               const SizedBox(height: 32),
               _buildDailyAyahCard(dailyAyah),
-              if (DailyWisdomService.getTodayWisdom() != null) ...[
-                const SizedBox(height: 20),
-                _buildWisdomCard(DailyWisdomService.getTodayWisdom()!),
-              ],
+              const SizedBox(height: 20),
+              ValueListenableBuilder<int>(
+                valueListenable: DailyContentService.revision,
+                builder: (context, _, __) => _buildHadithCard(),
+              ),
+              const SizedBox(height: 16),
+              ValueListenableBuilder<int>(
+                valueListenable: DailyContentService.revision,
+                builder: (context, _, __) => _buildDailyWordCard(),
+              ),
               const SizedBox(height: 24),
               _buildRamadanInfo(),
               const SizedBox(height: 24),
@@ -581,50 +593,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           MaterialPageRoute(builder: (_) => const QiblaScreen()),
         );
       },
-      onPermissionDenied: _showNotificationPermissionDialog,
-    );
-  }
-
-  void _showNotificationPermissionDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFFFDF9F6),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        title: Text(
-          S.get('notif_title'),
-          style: const TextStyle(
-            fontFamily: 'Merriweather',
-            fontSize: 18,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF2B2725),
-          ),
-        ),
-        content: Text(
-          S.get('notif_body'),
-          style: const TextStyle(
-            fontFamily: 'Inter',
-            fontSize: 14,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF7A746F),
-            height: 1.5,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(
-              S.get('ok'),
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFFB57A5A),
-              ),
-            ),
-          ),
-        ],
-      ),
+      onAdhanTimes: () {
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const AdhanTimesScreen()))
+            .then((_) => _refresh());
+      },
     );
   }
 
@@ -709,9 +682,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             ),
             if (isLocked) ...[
               const SizedBox(height: 8),
-              const Text(
-                'Bugün için niyetiniz kaydedildi.',
-                style: TextStyle(
+              Text(
+                S.get('today_intention_saved'),
+                style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
@@ -721,9 +694,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             ],
             if (suggestion != null) ...[
               const SizedBox(height: 10),
-              const Text(
-                'Bugün için',
-                style: TextStyle(
+              Text(
+                S.get('today_for'),
+                style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
@@ -732,7 +705,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               ),
               const SizedBox(height: 4),
               Text(
-                suggestion.text,
+                S.get(suggestion.textKey),
                 style: const TextStyle(
                   fontFamily: 'Merriweather',
                   fontSize: 13,
@@ -743,7 +716,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               ),
               const SizedBox(height: 3),
               Text(
-                '${suggestion.type == _SuggestionType.ayah ? 'Ayet' : 'Hadis'} · ${suggestion.source}',
+                '${suggestion.type == _SuggestionType.ayah ? S.get('ayah_type') : S.get('hadith_type')} · ${S.get(suggestion.sourceKey)}',
                 style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 11,
@@ -758,7 +731,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  Widget _buildWisdomCard(DailyWisdom wisdom) {
+  Widget _buildHadithCard() {
+    final hadith = DailyContentService.todayHadith;
+    final source = hadith?.source?.trim() ?? '';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -771,7 +746,18 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            wisdom.text,
+            S.get('daily_hadith_title'),
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF7A746F),
+              letterSpacing: 0.6,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            hadith?.text ?? S.get('daily_hadith_empty'),
             style: const TextStyle(
               fontFamily: 'Merriweather',
               fontSize: 14,
@@ -781,14 +767,56 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               height: 1.6,
             ),
           ),
-          const SizedBox(height: 10),
+          if (source.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              '— $source',
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF7A746F),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDailyWordCard() {
+    final word = DailyContentService.todayWord;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDF9F6),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
           Text(
-            '\u2014 ${wisdom.source}',
+            S.get('daily_word_title'),
             style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
-              fontWeight: FontWeight.w400,
+              fontWeight: FontWeight.w500,
               color: Color(0xFF7A746F),
+              letterSpacing: 0.6,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            word?.text ?? S.get('daily_word_empty'),
+            style: const TextStyle(
+              fontFamily: 'Merriweather',
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              fontStyle: FontStyle.italic,
+              color: Color(0xFF2B2725),
+              height: 1.6,
             ),
           ),
         ],
@@ -1083,7 +1111,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       if (progress != null) {
         final surahName = QuranData.instance.getSurahName(progress.surah);
         subtitle =
-            '$selectedJuz. Juz \u00b7 $surahName ${progress.ayah}. ${S.get('ayah_label')}';
+            '$selectedJuz. ${S.get('juz_label')} \u00b7 $surahName ${progress.ayah}. ${S.get('ayah_label')}';
       } else {
         subtitle = '$selectedJuz. ${S.get('juz_selected')}';
       }

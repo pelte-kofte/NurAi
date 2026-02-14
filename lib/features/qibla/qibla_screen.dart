@@ -105,7 +105,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
         ),
         centerTitle: true,
       ),
-      body: _buildBody(),
+      body: SafeArea(child: _buildBody()),
     );
   }
 
@@ -243,70 +243,82 @@ class _QiblaCompass extends StatelessWidget {
         final compassAngle = qiblah.direction * (math.pi / 180) * -1;
         final qiblaDegrees = qiblah.qiblah.toInt() % 360;
 
-        return Column(
-          children: [
-            const Spacer(flex: 2),
-            // Compass
-            SizedBox(
-              width: 280,
-              height: 280,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  // Outer ring (rotates with compass heading)
-                  Transform.rotate(
-                    angle: compassAngle,
-                    child: CustomPaint(
-                      size: const Size(280, 280),
-                      painter: _CompassRingPainter(),
+        return LayoutBuilder(
+          builder: (context, c) {
+            final maxDial = math.min(c.maxWidth * 0.78, 320.0);
+
+            return SingleChildScrollView(
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: c.maxHeight),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(maxWidth: maxDial),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        AspectRatio(
+                          aspectRatio: 1,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Outer ring (rotates with compass heading)
+                              Transform.rotate(
+                                angle: compassAngle,
+                                child: CustomPaint(
+                                  size: Size.square(maxDial),
+                                  painter: _CompassRingPainter(),
+                                ),
+                              ),
+                              // Qibla needle (points to Qibla)
+                              Transform.rotate(
+                                angle: needleAngle,
+                                child: CustomPaint(
+                                  size: Size.square(maxDial),
+                                  painter: _NeedlePainter(),
+                                ),
+                              ),
+                              // Center dot
+                              Container(
+                                width: 10,
+                                height: 10,
+                                decoration: const BoxDecoration(
+                                  color: Color(0xFFB57A5A),
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text(
+                          'Kıble: $qiblaDegrees°',
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: Color(0xFF2B2725),
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        // Calibration hint (always shown subtly)
+                        const Text(
+                          'Kalibrasyon için cihazınızı 8 şeklinde hareket ettirin',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFFB5AEA8),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  // Qibla needle (points to Qibla)
-                  Transform.rotate(
-                    angle: needleAngle,
-                    child: CustomPaint(
-                      size: const Size(280, 280),
-                      painter: _NeedlePainter(),
-                    ),
-                  ),
-                  // Center dot
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFB57A5A),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(height: 32),
-            // Degree readout
-            Text(
-              'Kıble: $qiblaDegrees°',
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 16,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF2B2725),
-                letterSpacing: 0.5,
-              ),
-            ),
-            const SizedBox(height: 8),
-            // Calibration hint (always shown subtly)
-            const Text(
-              'Kalibrasyon için cihazınızı 8 şeklinde hareket ettirin',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFFB5AEA8),
-              ),
-            ),
-            const Spacer(flex: 3),
-          ],
+            );
+          },
         );
       },
     );
@@ -441,3 +453,4 @@ class _NeedlePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+

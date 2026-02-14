@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+import '../models/prayer_location.dart';
 
 /// Lightweight local preferences with ValueNotifiers for reactive UI.
 class LocalPreferencesService {
   static const _keyAdhan = 'pref_adhan_enabled';
   static const _keyHaptics = 'pref_haptics_enabled';
-  static const _keyTheme = 'pref_theme_mode';
+  static const _keyTheme = 'theme_mode';
+  static const _legacyKeyTheme = 'pref_theme_mode';
   static const _keyLanguage = 'pref_language';
+  static const _keyPrayerLocation = 'pref_prayer_location';
+  static const _keyPrayerLocationMode = 'prayer_location_mode';
+  static const _keyPrayerLat = 'prayer_lat';
+  static const _keyPrayerLng = 'prayer_lng';
+  static const _keyPrayerCityName = 'prayer_city_name';
 
   static SharedPreferences? _prefs;
 
@@ -15,6 +23,9 @@ class LocalPreferencesService {
   static final adhanEnabled = ValueNotifier<bool>(false);
   static final hapticsEnabled = ValueNotifier<bool>(true);
   static final language = ValueNotifier<String>('tr');
+  static final prayerLocation = ValueNotifier<PrayerLocation>(
+    PrayerLocation.initial(),
+  );
 
   static Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
@@ -23,12 +34,15 @@ class LocalPreferencesService {
     adhanEnabled.value = _prefs?.getBool(_keyAdhan) ?? false;
     hapticsEnabled.value = _prefs?.getBool(_keyHaptics) ?? true;
     language.value = _prefs?.getString(_keyLanguage) ?? 'tr';
+    prayerLocation.value = _readPrayerLocation();
   }
 
   // ── Theme ──────────────────────────────────────────────
 
   static ThemeMode _readThemeMode() {
-    final raw = _prefs?.getString(_keyTheme) ?? 'system';
+    final raw = _prefs?.getString(_keyTheme) ??
+        _prefs?.getString(_legacyKeyTheme) ??
+        'system';
     switch (raw) {
       case 'light':
         return ThemeMode.light;
@@ -46,6 +60,7 @@ class LocalPreferencesService {
       _ => 'system',
     };
     await _prefs?.setString(_keyTheme, raw);
+    await _prefs?.remove(_legacyKeyTheme);
     themeMode.value = mode;
   }
 
@@ -68,5 +83,58 @@ class LocalPreferencesService {
   static Future<void> setLanguage(String lang) async {
     await _prefs?.setString(_keyLanguage, lang);
     language.value = lang;
+  }
+
+  // Prayer location
+  static PrayerLocation _readPrayerLocation() {
+    final raw = _prefs?.getString(_keyPrayerLocation);
+    if (raw != null && raw.isNotEmpty) {
+      try {
+        final json = jsonDecode(raw) as Map<String, dynamic>;
+        return PrayerLocation.fromJson(json);
+      } catch (_) {
+        // Fall through to legacy keys.
+      }
+    }
+
+    final modeRaw = _prefs?.getString(_keyPrayerLocationMode);
+    final lat = _prefs?.getDouble(_keyPrayerLat);
+    final lng = _prefs?.getDouble(_keyPrayerLng);
+    final cityName = _prefs?.getString(_keyPrayerCityName);
+    if (modeRaw == null && lat == null && lng == null && cityName == null) {
+      return PrayerLocation.initial();
+    }
+
+    final mode = modeRaw == PrayerLocationMode.current.name
+        ? PrayerLocationMode.current
+        : PrayerLocationMode.city;
+    return PrayerLocation(
+      mode: mode,
+      lat: lat,
+      lng: lng,
+      cityName: cityName,
+      updatedAt: DateTime.now(),
+    );
+  }
+
+  static Future<void> setPrayerLocation(PrayerLocation value) async {
+    await _prefs?.setString(_keyPrayerLocation, jsonEncode(value.toJson()));
+    await _prefs?.setString(_keyPrayerLocationMode, value.mode.name);
+    if (value.lat != null) {
+      await _prefs?.setDouble(_keyPrayerLat, value.lat!);
+    } else {
+      await _prefs?.remove(_keyPrayerLat);
+    }
+    if (value.lng != null) {
+      await _prefs?.setDouble(_keyPrayerLng, value.lng!);
+    } else {
+      await _prefs?.remove(_keyPrayerLng);
+    }
+    if (value.cityName != null && value.cityName!.trim().isNotEmpty) {
+      await _prefs?.setString(_keyPrayerCityName, value.cityName!.trim());
+    } else {
+      await _prefs?.remove(_keyPrayerCityName);
+    }
+    prayerLocation.value = value;
   }
 }

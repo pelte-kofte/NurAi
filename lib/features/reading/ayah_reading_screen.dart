@@ -3,10 +3,14 @@ import 'package:flutter/services.dart';
 import '../../data/quran_data.dart';
 import '../../data/reading_progress_service.dart';
 import '../../data/bookmark_service.dart';
+import '../../data/ayah_notes_service.dart';
 import '../../data/collective_reading_service.dart';
 import '../../data/local_preferences_service.dart';
+import '../../data/premium_service.dart';
+import '../../l10n/app_strings.dart';
 import '../../models/ayah.dart';
 import '../../models/reading_context.dart';
+import '../premium/paywall_screen.dart';
 import '../surah/surah_list_screen.dart';
 
 /// Displays a full surah for calm, focused reading.
@@ -14,6 +18,7 @@ class AyahReadingScreen extends StatefulWidget {
   final int surahNumber;
   final String surahName;
   final int? initialAyah;
+  final bool openNoteEditorOnStart;
   final ReadingContext readingContext;
 
   const AyahReadingScreen({
@@ -21,6 +26,7 @@ class AyahReadingScreen extends StatefulWidget {
     required this.surahNumber,
     required this.surahName,
     this.initialAyah,
+    this.openNoteEditorOnStart = false,
     this.readingContext = const ReadingContext.explore(),
   });
 
@@ -37,6 +43,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   int? _scrollToSurah;
   int? _scrollToAyah;
   JuzRange? _activeJuzRange;
+  bool _didOpenInitialNoteEditor = false;
 
   static const double _ayahBlockHeight = 180.0;
 
@@ -51,7 +58,10 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
       _initSurahMode();
     }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToTarget());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _scrollToTarget();
+      _maybeOpenInitialNoteEditor();
+    });
   }
 
   void _initJuzMode() {
@@ -176,10 +186,42 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
           surahNumber: surahNumber,
           surahName: QuranData.instance.getSurahName(surahNumber),
           initialAyah: initialAyah,
+          openNoteEditorOnStart: false,
           readingContext: widget.readingContext,
         ),
       ),
     );
+  }
+
+  Future<void> _maybeOpenInitialNoteEditor() async {
+    if (!widget.openNoteEditorOnStart || _didOpenInitialNoteEditor) return;
+    final targetSurah = _scrollToSurah ?? widget.surahNumber;
+    final targetAyah = _scrollToAyah;
+    if (targetAyah == null) return;
+    final target = _ayahs.where((a) => a.surah == targetSurah && a.ayahNumber == targetAyah);
+    if (target.isEmpty) return;
+    _didOpenInitialNoteEditor = true;
+    await _openNoteEditorForAyah(target.first);
+  }
+
+  Future<void> _openNoteEditorForAyah(Ayah ayah) async {
+    if (!PremiumService.isPremium.value) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const PaywallScreen()),
+      );
+      if (mounted) {
+        setState(() {});
+      }
+      return;
+    }
+    await showAyahNoteEditorSheet(
+      context: context,
+      surahName: QuranData.instance.getSurahName(ayah.surah),
+      ayah: ayah,
+    );
+    if (mounted) {
+      setState(() {});
+    }
   }
 
   @override
@@ -278,6 +320,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
           final ayah = _ayahs[ayahIndex];
           return _AyahBlock(
             ayah: ayah,
+            surahName: QuranData.instance.getSurahName(ayah.surah),
             isLastRead: _isLastRead(ayah),
             isWithinJuzRange: _isAyahWithinJuzRange(ayah),
             onTap: () => _onAyahTap(ayah),
@@ -291,12 +334,14 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
 /// A single ayah with subtle bookmark toggle and last-read indicator.
 class _AyahBlock extends StatefulWidget {
   final Ayah ayah;
+  final String surahName;
   final bool isLastRead;
   final bool isWithinJuzRange;
   final VoidCallback? onTap;
 
   const _AyahBlock({
     required this.ayah,
+    required this.surahName,
     this.isLastRead = false,
     this.isWithinJuzRange = false,
     this.onTap,
@@ -308,6 +353,7 @@ class _AyahBlock extends StatefulWidget {
 
 class _AyahBlockState extends State<_AyahBlock> {
   late bool _isBookmarked;
+  late bool _hasNote;
 
   @override
   void initState() {
@@ -316,6 +362,7 @@ class _AyahBlockState extends State<_AyahBlock> {
       widget.ayah.surah,
       widget.ayah.ayahNumber,
     );
+    _hasNote = AyahNotesService.hasNote(widget.ayah.surah, widget.ayah.ayahNumber);
   }
 
   Future<void> _toggleBookmark() async {
@@ -327,6 +374,29 @@ class _AyahBlockState extends State<_AyahBlock> {
       widget.ayah.ayahNumber,
     );
     setState(() => _isBookmarked = newState);
+  }
+
+  Future<void> _openNote() async {
+    if (!PremiumService.isPremium.value) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const PaywallScreen()),
+      );
+      if (mounted) {
+        setState(() {});
+      }
+      return;
+    }
+
+    await showAyahNoteEditorSheet(
+      context: context,
+      surahName: widget.surahName,
+      ayah: widget.ayah,
+    );
+    if (mounted) {
+      setState(() {
+        _hasNote = AyahNotesService.hasNote(widget.ayah.surah, widget.ayah.ayahNumber);
+      });
+    }
   }
 
   @override
@@ -427,6 +497,31 @@ class _AyahBlockState extends State<_AyahBlock> {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 8),
+                      ValueListenableBuilder<bool>(
+                        valueListenable: PremiumService.isPremium,
+                        builder: (context, isPremium, _) {
+                          return GestureDetector(
+                            onTap: _openNote,
+                            child: Padding(
+                              padding: const EdgeInsets.only(top: 2),
+                              child: Icon(
+                                isPremium
+                                    ? (_hasNote
+                                        ? Icons.sticky_note_2_rounded
+                                        : Icons.sticky_note_2_outlined)
+                                    : Icons.lock_outline_rounded,
+                                size: 20,
+                                color: isPremium
+                                    ? (_hasNote
+                                        ? const Color(0xFF7BAEAC)
+                                        : const Color(0xFF7A746F))
+                                    : const Color(0xFFB5AEA8),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ],
@@ -437,5 +532,111 @@ class _AyahBlockState extends State<_AyahBlock> {
       ),
     );
   }
+}
+
+Future<void> showAyahNoteEditorSheet({
+  required BuildContext context,
+  required String surahName,
+  required Ayah ayah,
+}) async {
+  final existing = AyahNotesService.getNote(ayah.surah, ayah.ayahNumber);
+  final controller = TextEditingController(text: existing?.text ?? '');
+
+  await showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    showDragHandle: true,
+    backgroundColor: const Color(0xFFFBF6F2),
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+    ),
+    builder: (ctx) {
+      return Padding(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          8,
+          24,
+          MediaQuery.of(ctx).viewInsets.bottom + 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              S.get('note_title'),
+              style: const TextStyle(
+                fontFamily: 'Merriweather',
+                fontSize: 18,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF2B2725),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '$surahName · ${ayah.ayahNumber}. ${S.get('ayah_label')}',
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                color: Color(0xFF7A746F),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              minLines: 3,
+              maxLines: 8,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                color: Color(0xFF2B2725),
+              ),
+              decoration: InputDecoration(
+                hintText: S.get('note_hint'),
+                hintStyle: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  color: Color(0xFFB5AEA8),
+                ),
+                filled: true,
+                fillColor: const Color(0xFFFDF9F6),
+                contentPadding: const EdgeInsets.all(12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () async {
+                  await AyahNotesService.saveNote(
+                    surah: ayah.surah,
+                    ayah: ayah.ayahNumber,
+                    text: controller.text,
+                  );
+                  if (ctx.mounted) {
+                    Navigator.of(ctx).pop();
+                  }
+                },
+                child: Text(
+                  S.get('save'),
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontWeight: FontWeight.w500,
+                    color: Color(0xFF7BAEAC),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+
+  controller.dispose();
 }
 

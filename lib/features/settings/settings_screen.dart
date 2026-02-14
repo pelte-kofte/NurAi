@@ -1,7 +1,13 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
+import '../../data/adhan_notification_service.dart';
 import '../../data/local_preferences_service.dart';
+import '../../data/prayer_location_service.dart';
+import '../../data/premium_service.dart';
 import '../../data/user_profile_service.dart';
 import '../../l10n/app_strings.dart';
+import '../../models/prayer_location.dart';
+import '../notes/notes_screen.dart';
+import '../premium/paywall_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, this.scrollController});
@@ -33,18 +39,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-          _buildSectionTitle('Profil'),
+          _buildSectionTitle(S.get('profile')),
           ValueListenableBuilder<String?>(
             valueListenable: UserProfileService.displayNameNotifier,
             builder: (context, displayName, _) {
               return _buildRow(
-                title: 'Hitap İsmi',
+                title: S.get('display_name'),
                 value: _profileNameLabel(displayName),
                 onTap: _showNameEditorSheet,
               );
             },
           ),
+          ValueListenableBuilder<bool>(
+            valueListenable: PremiumService.isPremium,
+            builder: (context, isPremium, _) {
+              return _buildLockRow(
+                title: S.get('my_notes'),
+                locked: !isPremium,
+                onTap: () => _openNotesOrPaywall(isPremium),
+              );
+            },
+          ),
           const SizedBox(height: 14),
+          _buildSectionTitle(S.get('prayer_times')),
+          _buildSwitchRow(
+            title: S.get('prayer_notifications'),
+            value: LocalPreferencesService.adhanEnabled.value,
+            onChanged: _onPrayerNotificationsChanged,
+          ),
+          _buildRow(
+            title: S.get('location'),
+            value: _prayerLocationModeLabel(
+              LocalPreferencesService.prayerLocation.value.mode,
+            ),
+            onTap: () => _showPrayerLocationPicker(),
+          ),
+          if (LocalPreferencesService.prayerLocation.value.mode ==
+              PrayerLocationMode.current)
+            Padding(
+              padding: const EdgeInsets.only(top: 2, bottom: 12),
+              child: Text(
+                S.get('location_privacy_note'),
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFFB5AEA8),
+                  height: 1.4,
+                ),
+              ),
+            ),
+          const SizedBox(height: 6),
           _buildRow(
             title: S.get('language'),
             value: _languageLabel(LocalPreferencesService.language.value),
@@ -142,6 +187,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Widget _buildLockRow({
+    required String title,
+    required bool locked,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      behavior: HitTestBehavior.opaque,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF2B2725),
+                ),
+              ),
+            ),
+            if (locked)
+              const Padding(
+                padding: EdgeInsets.only(right: 6),
+                child: Icon(
+                  Icons.lock_outline_rounded,
+                  size: 16,
+                  color: Color(0xFFB5AEA8),
+                ),
+              ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: Color(0xFFB5AEA8),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildSwitchRow({
     required String title,
     required bool value,
@@ -177,28 +265,130 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   String _profileNameLabel(String? value) {
     final trimmed = value?.trim();
-    if (trimmed == null || trimmed.isEmpty) return 'Belirtilmedi';
+    if (trimmed == null || trimmed.isEmpty) return S.get('name_not_set');
     return trimmed;
   }
 
   String _languageLabel(String code) {
     switch (code) {
+      case 'ar':
+        return S.get('language_ar');
+      case 'de':
+        return S.get('language_de');
       case 'en':
-        return 'English';
+        return S.get('language_en');
+      case 'tr':
+        return S.get('language_tr');
       default:
-        return 'Türkçe';
+        return code;
     }
   }
 
   String _themeModeLabel(ThemeMode mode) {
     switch (mode) {
       case ThemeMode.light:
-        return S.get('theme_light');
+        return S.get('light');
       case ThemeMode.dark:
-        return S.get('theme_dark');
+        return S.get('dark');
       default:
-        return S.get('theme_system');
+        return S.get('system');
     }
+  }
+
+  String _prayerLocationModeLabel(PrayerLocationMode mode) {
+    switch (mode) {
+      case PrayerLocationMode.current:
+        return S.get('use_current_location');
+      case PrayerLocationMode.city:
+        return S.get('select_city');
+    }
+  }
+
+  Future<void> _onPrayerNotificationsChanged(bool enabled) async {
+    if (enabled) {
+      final result = await AdhanNotificationService.enable();
+      if (!mounted) return;
+      if (result != AdhanEnableResult.enabled) {
+        _showStubDialog(_enableFailureMessage(result));
+      }
+    } else {
+      await AdhanNotificationService.disable();
+    }
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  String _enableFailureMessage(AdhanEnableResult result) {
+    switch (result) {
+      case AdhanEnableResult.notificationPermissionDenied:
+        return S.get('prayer_notif_permission_body');
+      case AdhanEnableResult.locationServiceDisabled:
+        return S.get('location_service_disabled');
+      case AdhanEnableResult.locationPermissionDenied:
+      case AdhanEnableResult.locationPermissionDeniedForever:
+        return S.get('prayer_location_needed_body');
+      case AdhanEnableResult.locationMissing:
+        return S.get('prayer_times_location_required');
+      case AdhanEnableResult.locationFailed:
+        return S.get('location_read_failed');
+      case AdhanEnableResult.unavailableOnWeb:
+        return S.get('location_unavailable_web');
+      case AdhanEnableResult.enabled:
+        return S.get('ok');
+    }
+  }
+
+  void _showPrayerLocationPicker() {
+    _showOptionSheet(
+      title: S.get('location'),
+      options: [
+        _Option(S.get('use_current_location'), 'current'),
+        _Option(S.get('select_city'), 'city'),
+      ],
+      current: LocalPreferencesService.prayerLocation.value.mode.name,
+      onSelect: (value) async {
+        if (value == 'current') {
+          final result = await PrayerLocationService.useCurrentLocation();
+          if (!mounted) return;
+          if (result != PrayerLocationActionResult.success) {
+            _showStubDialog(_locationErrorMessage(result));
+          }
+          setState(() {});
+          return;
+        }
+
+        await PrayerLocationService.selectCityPlaceholder();
+        if (!mounted) return;
+        _showStubDialog(S.get('city_placeholder'));
+        setState(() {});
+      },
+    );
+  }
+
+  String _locationErrorMessage(PrayerLocationActionResult result) {
+    switch (result) {
+      case PrayerLocationActionResult.serviceDisabled:
+        return S.get('location_service_disabled');
+      case PrayerLocationActionResult.permissionDenied:
+        return S.get('location_permission_denied');
+      case PrayerLocationActionResult.permissionDeniedForever:
+        return S.get('location_permission_denied_forever');
+      case PrayerLocationActionResult.unavailableOnWeb:
+        return S.get('location_unavailable_web');
+      case PrayerLocationActionResult.failed:
+        return S.get('location_read_failed');
+      case PrayerLocationActionResult.success:
+        return S.get('ok');
+    }
+  }
+
+  void _openNotesOrPaywall(bool isPremium) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => isPremium ? const NotesScreen() : const PaywallScreen(),
+      ),
+    );
   }
 
   void _showNameEditorSheet() {
@@ -227,9 +417,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Hitap İsmi',
-                style: TextStyle(
+              Text(
+                S.get('display_name'),
+                style: const TextStyle(
                   fontFamily: 'Merriweather',
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
@@ -247,7 +437,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: Color(0xFF2B2725),
                 ),
                 decoration: InputDecoration(
-                  hintText: 'İsminiz (isteğe bağlı)',
+                  hintText: S.get('name_hint'),
                   hintStyle: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
@@ -275,9 +465,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Navigator.of(ctx).pop();
                       }
                     },
-                    child: const Text(
-                      'Temizle',
-                      style: TextStyle(
+                    child: Text(
+                      S.get('clear'),
+                      style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
@@ -293,9 +483,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         Navigator.of(ctx).pop();
                       }
                     },
-                    child: const Text(
-                      'Kaydet',
-                      style: TextStyle(
+                    child: Text(
+                      S.get('save'),
+                      style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
@@ -315,9 +505,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void _showLanguagePicker() {
     _showOptionSheet(
       title: S.get('language'),
-      options: const [
-        _Option('Türkçe', 'tr'),
-        _Option('English', 'en'),
+      options: [
+        _Option(S.get('language_tr'), 'tr'),
+        _Option(S.get('language_en'), 'en'),
+        _Option(S.get('language_ar'), 'ar'),
+        _Option(S.get('language_de'), 'de'),
       ],
       current: LocalPreferencesService.language.value,
       onSelect: (val) {
@@ -331,9 +523,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _showOptionSheet(
       title: S.get('appearance'),
       options: [
-        _Option(S.get('theme_system'), 'system'),
-        _Option(S.get('theme_light'), 'light'),
-        _Option(S.get('theme_dark'), 'dark'),
+        _Option(S.get('system'), 'system'),
+        _Option(S.get('light'), 'light'),
+        _Option(S.get('dark'), 'dark'),
       ],
       current: switch (LocalPreferencesService.themeMode.value) {
         ThemeMode.light => 'light',
@@ -470,3 +662,6 @@ class _Option {
   final String label;
   final String value;
 }
+
+
+
