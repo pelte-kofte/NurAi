@@ -41,11 +41,11 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
-	<key>NSLocationWhenInUseUsageDescription</key>`r`n	<string>Location is used on-device to calculate qibla direction and prayer times.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location is used on-device to calculate qibla direction and prayer times.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 </dict>
 </plist>
-
