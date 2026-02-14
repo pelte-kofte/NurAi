@@ -33,6 +33,16 @@ flutter:
     - assets/quran/final/quran_ar_tr.json
     - assets/quran/meta/surahs.json
     - assets/quran/meta/juz_ranges.json
+    - assets/content/hadith_tr.json
+    - assets/content/hadith_en.json
+    - assets/content/hadith_ar.json
+    - assets/content/hadith_de.json
+    - assets/content/daily_words_tr.json
+    - assets/content/daily_words_en.json
+    - assets/content/daily_words_ar.json
+    - assets/content/daily_words_de.json
+    - assets/adhan/cities.json
+    - assets/adhan/
     - assets/ramadan/
     - assets/content/
     - assets/cities/

@@ -1,0 +1,17 @@
+[
+  { "id": "istanbul_tr", "name": "Istanbul", "country": "Turkey", "lat": 41.0082, "lng": 28.9784, "tz": "Europe/Istanbul" },
+  { "id": "ankara_tr", "name": "Ankara", "country": "Turkey", "lat": 39.9334, "lng": 32.8597, "tz": "Europe/Istanbul" },
+  { "id": "makkah_sa", "name": "Makkah", "country": "Saudi Arabia", "lat": 21.3891, "lng": 39.8579, "tz": "Asia/Riyadh" },
+  { "id": "madinah_sa", "name": "Madinah", "country": "Saudi Arabia", "lat": 24.5247, "lng": 39.5692, "tz": "Asia/Riyadh" },
+  { "id": "cairo_eg", "name": "Cairo", "country": "Egypt", "lat": 30.0444, "lng": 31.2357, "tz": "Africa/Cairo" },
+  { "id": "london_gb", "name": "London", "country": "United Kingdom", "lat": 51.5072, "lng": -0.1276, "tz": "Europe/London" },
+  { "id": "paris_fr", "name": "Paris", "country": "France", "lat": 48.8566, "lng": 2.3522, "tz": "Europe/Paris" },
+  { "id": "berlin_de", "name": "Berlin", "country": "Germany", "lat": 52.52, "lng": 13.405, "tz": "Europe/Berlin" },
+  { "id": "new_york_us", "name": "New York", "country": "United States", "lat": 40.7128, "lng": -74.006, "tz": "America/New_York" },
+  { "id": "los_angeles_us", "name": "Los Angeles", "country": "United States", "lat": 34.0522, "lng": -118.2437, "tz": "America/Los_Angeles" },
+  { "id": "toronto_ca", "name": "Toronto", "country": "Canada", "lat": 43.6532, "lng": -79.3832, "tz": "America/Toronto" },
+  { "id": "dubai_ae", "name": "Dubai", "country": "United Arab Emirates", "lat": 25.2048, "lng": 55.2708, "tz": "Asia/Dubai" },
+  { "id": "jakarta_id", "name": "Jakarta", "country": "Indonesia", "lat": -6.2088, "lng": 106.8456, "tz": "Asia/Jakarta" },
+  { "id": "kuala_lumpur_my", "name": "Kuala Lumpur", "country": "Malaysia", "lat": 3.139, "lng": 101.6869, "tz": "Asia/Kuala_Lumpur" },
+  { "id": "sydney_au", "name": "Sydney", "country": "Australia", "lat": -33.8688, "lng": 151.2093, "tz": "Australia/Sydney" }
+]
