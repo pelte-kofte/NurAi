@@ -46,8 +46,10 @@ assets/quran/source/
 # Flutter / Dart
 .dart_tool/
 build/
-.flutter-plugins
-.flutter-plugins-dependencies
+ios/Flutter/ephemeral/
+ios/Pods/
+ios/Runner.xcworkspace/
+chrome/
 
 # iOS / macOS CocoaPods
 ios/Pods/
@@ -73,3 +75,4 @@ android/local.properties
 # OS
 .DS_Store
 Thumbs.db
+
