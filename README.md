@@ -159,3 +159,113 @@ bismillah.
 code
 
 ---
+
+## Next Prayer Home Widget (Flutter + iOS + Android)
+
+This project now includes cross-platform "Next Prayer" widget plumbing.
+
+### Data contract (shared payload)
+
+Flutter computes a JSON payload and writes it through native `MethodChannel` (`nurai.widgets`):
+
+```json
+{
+  "updatedAtEpochMs": 1700000000000,
+  "locationLabel": "Current",
+  "nextPrayerKey": "fajr",
+  "nextPrayerLabel": "Fajr",
+  "nextPrayerTime": "05:41",
+  "countdownLabel": "in 1h 12m",
+  "isNotificationsEnabled": true
+}
+```
+
+### Storage keys
+
+- Android: SharedPreferences file `nurai_widget_prefs`, key `next_prayer_payload`
+- iOS: App Group UserDefaults suite `group.com.nurai.app` (with fallback to bundle-based group), key `next_prayer_payload`
+
+### Flutter service
+
+- `lib/data/widget_payload_service.dart`
+- Public API:
+  - `WidgetPayloadService.writeNextPrayerPayload()`
+  - `WidgetPayloadService.refreshWidgets()`
+
+Triggered from:
+- app startup (`lib/main.dart`)
+- app resume (`lib/main.dart`)
+- prayer location updates (`lib/data/prayer_location_service.dart`)
+- adhan enable/disable/reschedule (`lib/data/adhan_notification_service.dart`)
+- adhan times bootstrap (`lib/features/adhan/adhan_times_screen.dart`)
+- language change (`lib/features/settings/settings_screen.dart`)
+
+### MethodChannel contract
+
+Channel name: `nurai.widgets`
+
+Methods:
+- `setNextPrayerPayload` with arg `{ "payload": "<json string>" }`
+- `refreshWidgets`
+
+Implemented in:
+- iOS: `ios/Runner/AppDelegate.swift`
+- Android: `android/app/src/main/kotlin/com/example/nurai/MainActivity.kt`
+
+### Android App Widget
+
+Added:
+- Provider: `android/app/src/main/kotlin/com/example/nurai/NextPrayerWidgetProvider.kt`
+- Layout: `android/app/src/main/res/layout/next_prayer_widget.xml`
+- Provider info: `android/app/src/main/res/xml/next_prayer_widget_info.xml`
+- Backgrounds:
+  - `android/app/src/main/res/drawable/next_prayer_widget_bg.xml`
+  - `android/app/src/main/res/drawable/next_prayer_widget_pill_bg.xml`
+- Strings: `android/app/src/main/res/values/strings.xml`
+- Manifest receiver registration: `android/app/src/main/AndroidManifest.xml`
+
+### iOS WidgetKit extension source files
+
+Added source/templates:
+- `ios/NurAiWidgets/NurAiWidgetsBundle.swift`
+- `ios/NurAiWidgets/NextPrayerWidget.swift`
+- `ios/NurAiWidgets/Info.plist`
+- `ios/NurAiWidgets/NurAiWidgets.entitlements`
+
+Runner App Group entitlement:
+- `ios/Runner/Runner.entitlements`
+- wired in `ios/Runner.xcodeproj/project.pbxproj`
+
+### iOS setup in Xcode (required)
+
+The extension source files are added in repo, but you still need to register the extension target in Xcode:
+
+1. Open `ios/Runner.xcworkspace` in Xcode.
+2. Add new target: `Widget Extension`, name it `NurAiWidgets`.
+3. Attach existing files from `ios/NurAiWidgets/` to that target.
+4. Enable **App Groups** capability in both targets:
+   - `Runner`
+   - `NurAiWidgets`
+5. Use the same group in both (default used here): `group.com.nurai.app`.
+   - Current Runner bundle id is `com.example.nurai`; if your app group policy uses bundle-based naming, set it to `group.com.example.nurai` and update both targets consistently.
+6. Ensure extension Info.plist points to WidgetKit extension point and entitlements include the app group.
+
+### Deep link behavior
+
+- iOS widget uses `widgetURL("nurai://adhan")`.
+- iOS URL scheme `nurai` is added in `ios/Runner/Info.plist`.
+- Android widget click opens `MainActivity` with extra route hint `route=adhan`.
+- If route handling is not yet implemented in Flutter, widgets still open the app safely.
+
+### Testing checklist
+
+1. Run app once and open prayer screen/location settings.
+2. Change location (current/city), then return home.
+3. Toggle prayer notifications ON/OFF.
+4. Add Android widget from launcher and verify:
+   - location label
+   - next prayer label/time
+   - countdown
+   - notification status line
+5. Add iOS widget from SpringBoard and verify the same fields.
+6. Confirm widget updates after location or notification changes.
