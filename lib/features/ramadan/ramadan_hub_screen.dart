@@ -9,6 +9,8 @@ import '../reading/ayah_reading_screen.dart';
 import '../ramadan/duas_screen.dart';
 import '../settings/settings_screen.dart';
 
+const Color _mutedInfoIconColor = Color(0xFF8FA9A7);
+
 class RamadanHubScreen extends StatefulWidget {
   const RamadanHubScreen({super.key});
 
@@ -297,6 +299,7 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
           const SizedBox(height: 10),
           _SimpleNavCard(
             title: S.get('ramadan_short_duas'),
+            leadingIcon: Icons.menu_book_outlined,
             onTap: _openDuas,
           ),
           const SizedBox(height: 22),
@@ -512,14 +515,24 @@ class _DailyNoteCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            S.get('ramadan_note_title'),
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF7A746F),
-            ),
+          Row(
+            children: [
+              const Icon(
+                Icons.edit_note_outlined,
+                size: 16,
+                color: _mutedInfoIconColor,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                S.get('ramadan_note_title'),
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF7A746F),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           Text(
@@ -576,16 +589,21 @@ class _JuzActionButton extends StatelessWidget {
 class _SimpleNavCard extends StatelessWidget {
   final String title;
   final String? subtitle;
+  final IconData? leadingIcon;
   final VoidCallback onTap;
 
   const _SimpleNavCard({
     required this.title,
     this.subtitle,
+    this.leadingIcon,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final chevron = Directionality.of(context) == TextDirection.rtl
+        ? Icons.chevron_left_rounded
+        : Icons.chevron_right_rounded;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -598,6 +616,10 @@ class _SimpleNavCard extends StatelessWidget {
         ),
         child: Row(
           children: [
+            if (leadingIcon != null) ...[
+              Icon(leadingIcon, size: 17, color: _mutedInfoIconColor),
+              const SizedBox(width: 10),
+            ],
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -627,10 +649,10 @@ class _SimpleNavCard extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(
-              Icons.chevron_right_rounded,
+            Icon(
+              chevron,
               size: 20,
-              color: Color(0xFF7A746F),
+              color: const Color(0xFF7A746F),
             ),
           ],
         ),

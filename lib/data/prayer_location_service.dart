@@ -4,6 +4,7 @@ import 'package:geolocator/geolocator.dart';
 import '../models/prayer_location.dart';
 import 'adhan_notification_service.dart';
 import 'local_preferences_service.dart';
+import 'widget_payload_service.dart';
 
 enum PrayerLocationActionResult {
   success,
@@ -50,6 +51,7 @@ class PrayerLocationService {
           updatedAt: DateTime.now(),
         ),
       );
+      await WidgetPayloadService.writeNextPrayerPayload();
     } catch (_) {
       // Keep existing persisted location as-is.
     }
@@ -91,6 +93,7 @@ class PrayerLocationService {
       );
       await LocalPreferencesService.setPrayerLocation(location);
       await _rescheduleIfNeeded();
+      await WidgetPayloadService.writeNextPrayerPayload();
       return PrayerLocationActionResult.success;
     } catch (_) {
       return PrayerLocationActionResult.failed;
@@ -110,6 +113,7 @@ class PrayerLocationService {
     );
     await LocalPreferencesService.setPrayerLocation(location);
     await _rescheduleIfNeeded();
+    await WidgetPayloadService.writeNextPrayerPayload();
   }
 
   static Future<void> setCityLocation({
@@ -131,6 +135,7 @@ class PrayerLocationService {
     );
     await LocalPreferencesService.setPrayerLocation(location);
     await _rescheduleIfNeeded();
+    await WidgetPayloadService.writeNextPrayerPayload();
   }
 
   static Future<void> _rescheduleIfNeeded() async {

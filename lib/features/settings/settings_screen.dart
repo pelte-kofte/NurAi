@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../data/adhan_notification_service.dart';
 import '../../data/local_preferences_service.dart';
 import '../../data/prayer_location_service.dart';
 import '../../data/premium_service.dart';
 import '../../data/user_profile_service.dart';
+import '../../data/widget_payload_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../models/prayer_location.dart';
 import '../notes/notes_screen.dart';
@@ -19,6 +19,8 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  static const Color _mutedIconColor = Color(0xFF8FA9A7);
+
   @override
   Widget build(BuildContext context) {
     return Material(
@@ -55,20 +57,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
             builder: (context, isPremium, _) {
               return _buildLockRow(
                 title: S.get('my_notes'),
+                icon: Icons.note_alt_outlined,
                 locked: !isPremium,
                 onTap: () => _openNotesOrPaywall(isPremium),
               );
             },
           ),
           const SizedBox(height: 14),
-          _buildSectionTitle(S.get('prayer_times')),
-          _buildSwitchRow(
-            title: S.get('prayer_notifications'),
-            value: LocalPreferencesService.adhanEnabled.value,
-            onChanged: _onPrayerNotificationsChanged,
+          _buildSectionTitle(
+            S.get('prayer_times'),
+            icon: Icons.access_time_rounded,
           ),
           _buildRow(
             title: S.get('location'),
+            icon: Icons.location_on_outlined,
             value: _prayerLocationModeLabel(
               LocalPreferencesService.prayerLocation.value.mode,
             ),
@@ -92,11 +94,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 6),
           _buildRow(
             title: S.get('language'),
+            icon: Icons.translate_rounded,
             value: _languageLabel(LocalPreferencesService.language.value),
             onTap: () => _showLanguagePicker(),
           ),
           _buildRow(
             title: S.get('appearance'),
+            icon: Icons.tune_rounded,
             value: _themeModeLabel(LocalPreferencesService.themeMode.value),
             onTap: () => _showThemePicker(),
           ),
@@ -126,27 +130,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, {IconData? icon}) {
     return Padding(
       padding: const EdgeInsets.only(top: 6, bottom: 4),
-      child: Text(
-        title,
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-          color: Color(0xFF7A746F),
-          letterSpacing: 0.5,
-        ),
+      child: Row(
+        children: [
+          if (icon != null) ...[
+            Icon(icon, size: 16, color: _mutedIconColor),
+            const SizedBox(width: 8),
+          ],
+          Text(
+            title,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF7A746F),
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildRow({
     required String title,
+    IconData? icon,
     String? value,
     required VoidCallback onTap,
   }) {
+    final chevron = Directionality.of(context) == TextDirection.rtl
+        ? Icons.chevron_left_rounded
+        : Icons.chevron_right_rounded;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -154,6 +170,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(
           children: [
+            if (icon != null) ...[
+              Icon(icon, size: 17, color: _mutedIconColor),
+              const SizedBox(width: 10),
+            ],
             Expanded(
               child: Text(
                 title,
@@ -176,10 +196,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             const SizedBox(width: 4),
-            const Icon(
-              Icons.chevron_right_rounded,
+            Icon(
+              chevron,
               size: 18,
-              color: Color(0xFFB5AEA8),
+              color: const Color(0xFFB5AEA8),
             ),
           ],
         ),
@@ -189,9 +209,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildLockRow({
     required String title,
+    IconData? icon,
     required bool locked,
     required VoidCallback onTap,
   }) {
+    final chevron = Directionality.of(context) == TextDirection.rtl
+        ? Icons.chevron_left_rounded
+        : Icons.chevron_right_rounded;
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
@@ -199,6 +223,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         padding: const EdgeInsets.symmetric(vertical: 14),
         child: Row(
           children: [
+            if (icon != null) ...[
+              Icon(icon, size: 17, color: _mutedIconColor),
+              const SizedBox(width: 10),
+            ],
             Expanded(
               child: Text(
                 title,
@@ -219,10 +247,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   color: Color(0xFFB5AEA8),
                 ),
               ),
-            const Icon(
-              Icons.chevron_right_rounded,
+            Icon(
+              chevron,
               size: 18,
-              color: Color(0xFFB5AEA8),
+              color: const Color(0xFFB5AEA8),
             ),
           ],
         ),
@@ -303,41 +331,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return S.get('use_current_location');
       case PrayerLocationMode.city:
         return S.get('select_city');
-    }
-  }
-
-  Future<void> _onPrayerNotificationsChanged(bool enabled) async {
-    if (enabled) {
-      final result = await AdhanNotificationService.enable();
-      if (!mounted) return;
-      if (result != AdhanEnableResult.enabled) {
-        _showStubDialog(_enableFailureMessage(result));
-      }
-    } else {
-      await AdhanNotificationService.disable();
-    }
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  String _enableFailureMessage(AdhanEnableResult result) {
-    switch (result) {
-      case AdhanEnableResult.notificationPermissionDenied:
-        return S.get('prayer_notif_permission_body');
-      case AdhanEnableResult.locationServiceDisabled:
-        return S.get('location_service_disabled');
-      case AdhanEnableResult.locationPermissionDenied:
-      case AdhanEnableResult.locationPermissionDeniedForever:
-        return S.get('prayer_location_needed_body');
-      case AdhanEnableResult.locationMissing:
-        return S.get('prayer_times_location_required');
-      case AdhanEnableResult.locationFailed:
-        return S.get('location_read_failed');
-      case AdhanEnableResult.unavailableOnWeb:
-        return S.get('location_unavailable_web');
-      case AdhanEnableResult.enabled:
-        return S.get('ok');
     }
   }
 
@@ -517,6 +510,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       current: LocalPreferencesService.language.value,
       onSelect: (val) {
         LocalPreferencesService.setLanguage(val);
+        WidgetPayloadService.writeNextPrayerPayload();
         setState(() {});
       },
     );
@@ -665,5 +659,3 @@ class _Option {
   final String label;
   final String value;
 }
-
-

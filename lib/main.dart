@@ -12,6 +12,7 @@ import 'data/daily_content_service.dart';
 import 'data/prayer_location_service.dart';
 import 'data/premium_service.dart';
 import 'data/ayah_notes_service.dart';
+import 'data/widget_payload_service.dart';
 import 'l10n/app_strings.dart';
 import 'features/home/home_screen.dart';
 
@@ -94,10 +95,24 @@ class _AppLoader extends StatefulWidget {
 }
 
 class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
+  late final Future<void> _appLoadFuture;
+  bool _isAppReady = false;
+  bool _isStarting = false;
+  bool _showHome = false;
+  Object? _loadError;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _appLoadFuture = _loadAppData();
+    _appLoadFuture.then((_) {
+      if (!mounted) return;
+      setState(() => _isAppReady = true);
+    }).catchError((Object error) {
+      if (!mounted) return;
+      setState(() => _loadError = error);
+    });
   }
 
   @override
@@ -109,8 +124,12 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed &&
+        _isAppReady &&
         LocalPreferencesService.adhanEnabled.value) {
       AdhanNotificationService.rescheduleForToday();
+    }
+    if (state == AppLifecycleState.resumed && _isAppReady) {
+      WidgetPayloadService.writeNextPrayerPayload();
     }
   }
 
@@ -133,44 +152,90 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
     if (LocalPreferencesService.adhanEnabled.value) {
       AdhanNotificationService.rescheduleForToday();
     }
+    await WidgetPayloadService.writeNextPrayerPayload();
+  }
+
+  Future<void> _handleStartTap() async {
+    if (_isStarting) return;
+    setState(() => _isStarting = true);
+    try {
+      await _appLoadFuture;
+      if (!mounted) return;
+      setState(() => _showHome = true);
+    } catch (error) {
+      if (!mounted) return;
+      setState(() => _loadError = error);
+    } finally {
+      if (mounted) {
+        setState(() => _isStarting = false);
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<void>(
-      future: _loadAppData(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const _LoadingScreen();
-        }
-
-        if (snapshot.hasError) {
-          return const _ErrorScreen();
-        }
-
-        return const HomeScreen();
-      },
+    if (_loadError != null) {
+      return const _ErrorScreen();
+    }
+    if (_showHome) {
+      return const HomeScreen();
+    }
+    return _FirstScreen(
+      isStarting: _isStarting,
+      onTapStart: _handleStartTap,
     );
   }
 }
 
-/// Minimal loading screen with warm background.
-class _LoadingScreen extends StatelessWidget {
-  const _LoadingScreen();
+class _FirstScreen extends StatelessWidget {
+  const _FirstScreen({
+    required this.isStarting,
+    required this.onTapStart,
+  });
+
+  final bool isStarting;
+  final VoidCallback onTapStart;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6F2),
-      body: Center(
-        child: Text(
-          S.get('loading'),
-          style: const TextStyle(
-            fontFamily: 'Amiri',
-            fontSize: 28,
-            color: Color(0xFF7A746F),
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          Image.asset(
+            'assets/splash/splash.png',
+            fit: BoxFit.cover,
           ),
-        ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
+              child: Align(
+                alignment: Alignment.bottomCenter,
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: isStarting ? null : onTapStart,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFFB57A5A),
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: const StadiumBorder(),
+                    ),
+                    child: const Text(
+                      'Tap to start',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

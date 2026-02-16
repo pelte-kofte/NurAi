@@ -9,6 +9,7 @@ import '../models/prayer_location.dart';
 import 'adhan_times_service.dart';
 import 'local_preferences_service.dart';
 import 'prayer_location_service.dart';
+import 'widget_payload_service.dart';
 
 enum AdhanEnableResult {
   enabled,
@@ -103,6 +104,7 @@ class AdhanNotificationService {
 
     await LocalPreferencesService.setAdhanEnabled(true);
     await rescheduleForToday();
+    await WidgetPayloadService.writeNextPrayerPayload();
     return AdhanEnableResult.enabled;
   }
 
@@ -110,6 +112,7 @@ class AdhanNotificationService {
     if (kIsWeb) return;
     await LocalPreferencesService.setAdhanEnabled(false);
     await cancelAll();
+    await WidgetPayloadService.writeNextPrayerPayload();
   }
 
   static Future<AdhanEnableResult> enableForTodayAndRescheduleDaily() async {
@@ -129,6 +132,7 @@ class AdhanNotificationService {
 
     final today = DateTime.now();
     await schedulePrayerNotificationsFor(today, selection);
+    await WidgetPayloadService.writeNextPrayerPayload();
   }
 
   static Future<void> schedulePrayerNotificationsFor(

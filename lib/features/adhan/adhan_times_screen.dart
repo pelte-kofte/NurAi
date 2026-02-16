@@ -5,6 +5,7 @@ import '../../data/adhan_notification_service.dart';
 import '../../data/adhan_times_service.dart';
 import '../../data/local_preferences_service.dart';
 import '../../data/prayer_location_service.dart';
+import '../../data/widget_payload_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../models/prayer_location.dart';
 import 'city_picker_screen.dart';
@@ -30,6 +31,7 @@ class _AdhanTimesScreenState extends State<AdhanTimesScreen> {
     if (LocalPreferencesService.adhanEnabled.value) {
       await AdhanNotificationService.rescheduleForToday();
     }
+    await WidgetPayloadService.writeNextPrayerPayload();
     if (!mounted) return;
     setState(() => _isLoading = false);
   }

@@ -45,6 +45,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with RouteAware {
   final GlobalKey _quickActionsKey = GlobalKey();
   bool _checkedNamePrompt = false;
+  static const Color _mutedIconColor = Color(0xFF8FA9A7);
   static const Map<_Mood, List<_SuggestionItem>> _suggestionPool = {
     _Mood.gratitude: [
       _SuggestionItem(
@@ -509,6 +510,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             children: [
               _buildGreeting(),
               const SizedBox(height: 12),
+              _buildSectionHeader(
+                title: S.get('prayer_times'),
+                icon: Icons.access_time_rounded,
+              ),
+              const SizedBox(height: 8),
               NextPrayerPill(
                 onTap: () {
                   Navigator.of(context)
@@ -533,8 +539,18 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 builder: (context, _, __) => _buildDailyWordCard(),
               ),
               const SizedBox(height: 24),
+              _buildSectionHeader(
+                title: S.get('ramadan_hub_title'),
+                icon: Icons.nights_stay_outlined,
+              ),
+              const SizedBox(height: 8),
               _buildRamadanInfo(),
               const SizedBox(height: 24),
+              _buildSectionHeader(
+                title: S.get('ramadan_section_reading'),
+                icon: Icons.menu_book_outlined,
+              ),
+              const SizedBox(height: 8),
               _buildReadingEntry(context),
               const SizedBox(height: 16),
               _buildHatimEntry(context),
@@ -589,6 +605,28 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               size: 24,
               color: Color(0xFF7A746F),
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionHeader({
+    required String title,
+    required IconData icon,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: _mutedIconColor),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: Color(0xFF7A746F),
+            letterSpacing: 0.4,
           ),
         ),
       ],
@@ -920,7 +958,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         ),
         child: Row(
           children: [
-            const Icon(Icons.nights_stay_outlined, size: 18, color: Color(0xFF7A746F)),
+            const Icon(
+              Icons.nights_stay_outlined,
+              size: 17,
+              color: _mutedIconColor,
+            ),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
