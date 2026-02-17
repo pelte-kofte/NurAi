@@ -43,7 +43,7 @@ class S {
       'daily_word_empty': 'Bugün için hatırlatma bulunamadı.',
       'notes_placeholder': 'Bugün nasılsınız?',
       'ramadan_prep': 'Ramazan ayına hazırlık zamanı',
-      'start_reading': 'Okumaya başla',
+      'start_reading': 'Kurani Kesfet',
       'hatim_title': 'Hatim Niyeti',
       'hatim_subtitle': 'Baştan sona okuma niyeti',
       'juz_title': 'Cüz Niyeti',
@@ -53,7 +53,8 @@ class S {
       'juz_selected': 'Cüz seçildi',
       'juz_label': 'Cüz',
       'ramadan_hub_title': 'Ramazan Rehberi',
-      'ramadan_intro': 'Ramazan, kalbi sadeleştirip niyeti tazeleyen bir yolculuktur.',
+      'ramadan_intro':
+          'Ramazan, kalbi sadeleştirip niyeti tazeleyen bir yolculuktur.',
       'ramadan_section_reading': 'Okuma',
       'ramadan_section_daily_note': 'Bugün için küçük not',
       'ramadan_section_duas': 'Dualar',
@@ -91,13 +92,16 @@ class S {
       'qibla_location_read_failed':
           'Konum bilgisi alınamadı.\nLütfen tekrar deneyin.',
       'reading_juz_label': 'Cuz',
-      'reading_juz_companion_subtitle': '{juz}. Cuz · Sessizce eslik ediyorsunuz',
+      'reading_juz_companion_subtitle':
+          '{juz}. Cuz · Sessizce eslik ediyorsunuz',
       'bookmarks_title': 'Kaydedilenler',
       'bookmarks_empty':
           'Henuz kaydettiginiz ayet yok.\n\nOkurken bir ayeti kaydetmek icin yer imi simgesine dokunun.',
-      'verse_detail_meaning': 'Suphesiz her zorlugun yaninda bir kolaylik vardir.',
+      'verse_detail_meaning':
+          'Suphesiz her zorlugun yaninda bir kolaylik vardir.',
       'verse_detail_reference': 'İnşirah Sûresi · 6. Ayet',
-      'verse_detail_reflection_prompt': 'Bu ayet sende hangi duyguyu uyandiriyor?',
+      'verse_detail_reflection_prompt':
+          'Bu ayet sende hangi duyguyu uyandiriyor?',
       'verse_detail_leave_note': 'Bir not birak',
 
       // Quick Actions
@@ -105,6 +109,16 @@ class S {
       'qibla': 'Kıble Bulucu',
       'adhan_alarms': 'Ezan bildirimleri',
       'adhan_times': 'Ezan Vakitleri',
+      'tasbih': 'Tesbih',
+      'tasbih_dhikr': 'Zikir',
+      'tasbih_goal': 'Hedef',
+      'tasbih_reset': 'Sifirla',
+      'tasbih_tap_to_count': 'Saymak icin dokun',
+      'tasbih_custom_dhikr': 'Ozel zikir',
+      'tasbih_enter_dhikr': 'Zikir yazin',
+      'tasbih_custom_goal': 'Ozel hedef',
+      'tasbih_enter_goal': 'Hedef sayi girin',
+      'custom': 'Ozel',
       'adhan_preview_subtitle_on': 'Bildirim bu saatlerde gidecek.',
       'adhan_preview_subtitle_off': 'Bildirim kapali.',
       'adhan_location_permission_fallback_note':
@@ -130,6 +144,12 @@ class S {
       'light': 'Açık',
       'dark': 'Koyu',
       'haptics': 'Haptik geri bildirim',
+      'iftar_live_activity_hint':
+          'Not: Kilit ekranındaki sayaç için ‘1 saat kaldı’ bildirimine dokunmanız gerekebilir.',
+      'iftar_live_activity_tip_title': 'İftar Live Activity',
+      'iftar_live_activity_tip_body':
+          'Kilit ekranındaki sayaç için “1 saat kaldı” bildirimine dokunun.',
+      'iftar_live_activity_tip_ok': 'Tamam',
       'send_feedback': 'Geri bildirim gönder',
       'privacy_policy': 'Gizlilik Politikasi',
       'terms': 'Kullanim Sartlari',
@@ -250,8 +270,7 @@ class S {
       'suggestion_calm_1_source': 'Rad 13:28',
       'suggestion_calm_2_text': 'Kolaylastirin, zorlastirmayin.',
       'suggestion_calm_2_source': 'Buhari',
-      'suggestion_calm_3_text':
-          'Rabbinin adini an ve tum kalbinle Ona yonel.',
+      'suggestion_calm_3_text': 'Rabbinin adini an ve tum kalbinle Ona yonel.',
       'suggestion_calm_3_source': 'Muzzemmil 73:8',
       'suggestion_anxious_1_text': 'Allah bize yeter, O ne guzel vekildir.',
       'suggestion_anxious_1_source': 'Al-i Imran 3:173',
@@ -304,7 +323,7 @@ class S {
       'daily_word_empty': 'No reminder available for today.',
       'notes_placeholder': 'How are you today?',
       'ramadan_prep': 'Time to prepare for Ramadan',
-      'start_reading': 'Start reading',
+      'start_reading': 'Exploring Quran',
       'hatim_title': 'Khatm Intention',
       'hatim_subtitle': 'Reading from cover to cover',
       'juz_title': 'Juz Intention',
@@ -359,8 +378,7 @@ class S {
       'bookmarks_title': 'Bookmarks',
       'bookmarks_empty':
           'You do not have any saved ayahs yet.\n\nTap the bookmark icon while reading to save an ayah.',
-      'verse_detail_meaning':
-          'Indeed, with hardship comes ease.',
+      'verse_detail_meaning': 'Indeed, with hardship comes ease.',
       'verse_detail_reference': 'Ash-Sharh Surah · Ayah 6',
       'verse_detail_reflection_prompt':
           'What feeling does this ayah awaken in you?',
@@ -371,6 +389,16 @@ class S {
       'qibla': 'Qibla Finder',
       'adhan_alarms': 'Adhan notifications',
       'adhan_times': 'Adhan Times',
+      'tasbih': 'Tasbih',
+      'tasbih_dhikr': 'Dhikr',
+      'tasbih_goal': 'Goal',
+      'tasbih_reset': 'Reset',
+      'tasbih_tap_to_count': 'Tap to count',
+      'tasbih_custom_dhikr': 'Custom dhikr',
+      'tasbih_enter_dhikr': 'Enter dhikr',
+      'tasbih_custom_goal': 'Custom goal',
+      'tasbih_enter_goal': 'Enter goal number',
+      'custom': 'Custom',
       'adhan_preview_subtitle_on': 'Notifications will be sent at these times.',
       'adhan_preview_subtitle_off': 'Notifications are off.',
       'adhan_location_permission_fallback_note':
@@ -396,6 +424,12 @@ class S {
       'light': 'Light',
       'dark': 'Dark',
       'haptics': 'Haptic feedback',
+      'iftar_live_activity_hint':
+          'Note: To show the lock screen countdown, you may need to tap the ‘1 hour left’ notification.',
+      'iftar_live_activity_tip_title': 'Iftar Live Activity',
+      'iftar_live_activity_tip_body':
+          'Tap the “1 hour left” notification to start the lock screen countdown.',
+      'iftar_live_activity_tip_ok': 'Got it',
       'send_feedback': 'Send feedback',
       'privacy_policy': 'Privacy Policy',
       'terms': 'Terms of Use',
@@ -468,8 +502,7 @@ class S {
       'prayer_times_notifications_off': 'Notifications: OFF',
       'prayer_times_scheduled': 'Scheduled',
       'prayer_times_passed': 'Passed',
-      'prayer_timezone_device_disclaimer':
-          'Timezone based on device settings.',
+      'prayer_timezone_device_disclaimer': 'Timezone based on device settings.',
       'prayer_notif_title': 'Time for {prayerName}',
       'prayer_notif_body': '{prayerName} in {cityName} • {time}',
       'prayer_notif_scheduled': 'Notifications scheduled.',
@@ -515,31 +548,36 @@ class S {
       'suggestion_gratitude_3_text':
           'Then which of your Lord\'s favors will you deny?',
       'suggestion_gratitude_3_source': 'Ar-Rahman 55:13',
-      'suggestion_calm_1_text': 'Surely, hearts find peace in the remembrance of Allah.',
+      'suggestion_calm_1_text':
+          'Surely, hearts find peace in the remembrance of Allah.',
       'suggestion_calm_1_source': 'Ar-Rad 13:28',
-      'suggestion_calm_2_text': 'Make things easy and do not make them difficult.',
+      'suggestion_calm_2_text':
+          'Make things easy and do not make them difficult.',
       'suggestion_calm_2_source': 'Bukhari',
       'suggestion_calm_3_text':
           'Remember the name of your Lord and devote yourself to Him wholeheartedly.',
       'suggestion_calm_3_source': 'Al-Muzzammil 73:8',
-      'suggestion_anxious_1_text': 'Allah is sufficient for us, and He is the best Disposer of affairs.',
+      'suggestion_anxious_1_text':
+          'Allah is sufficient for us, and He is the best Disposer of affairs.',
       'suggestion_anxious_1_source': 'Aal Imran 3:173',
       'suggestion_anxious_2_text': 'Do not despair of the mercy of Allah.',
       'suggestion_anxious_2_source': 'Az-Zumar 39:53',
-      'suggestion_anxious_3_text': 'Supplication is the support of the believer.',
+      'suggestion_anxious_3_text':
+          'Supplication is the support of the believer.',
       'suggestion_anxious_3_source': 'Tirmidhi',
       'suggestion_sad_1_text': 'Indeed, with hardship comes ease.',
       'suggestion_sad_1_source': 'Ash-Sharh 94:6',
-      'suggestion_sad_2_text': 'Your Lord has not forsaken you, nor is He displeased.',
+      'suggestion_sad_2_text':
+          'Your Lord has not forsaken you, nor is He displeased.',
       'suggestion_sad_2_source': 'Ad-Duhaa 93:3',
       'suggestion_sad_3_text': 'The affair of the believer is always good.',
       'suggestion_sad_3_source': 'Muslim',
-      'suggestion_tired_1_text': 'We have certainly created man in the best form.',
+      'suggestion_tired_1_text':
+          'We have certainly created man in the best form.',
       'suggestion_tired_1_source': 'At-Tin 95:4',
       'suggestion_tired_2_text': 'Your body has a right over you.',
       'suggestion_tired_2_source': 'Bukhari',
-      'suggestion_tired_3_text':
-          'No soul is burdened beyond what it can bear.',
+      'suggestion_tired_3_text': 'No soul is burdened beyond what it can bear.',
       'suggestion_tired_3_source': 'Al-Baqarah 2:286',
       'suggestion_neutral_1_text':
           'Your Lord said: Call upon Me; I will respond to you.',
@@ -547,7 +585,8 @@ class S {
       'suggestion_neutral_2_text':
           'The most beloved deeds are those done consistently, even if small.',
       'suggestion_neutral_2_source': 'Bukhari',
-      'suggestion_neutral_3_text': 'Whoever relies upon Allah, He is sufficient for them.',
+      'suggestion_neutral_3_text':
+          'Whoever relies upon Allah, He is sufficient for them.',
       'suggestion_neutral_3_source': 'At-Talaq 65:3',
 
       // Surah list
@@ -597,7 +636,8 @@ class S {
       'daily_word_empty': 'لا يوجد تذكير متاح اليوم.',
       'notes_placeholder': 'كيف تشعر اليوم؟',
       'ramadan_prep': 'حان وقت الاستعداد لرمضان',
-      'start_reading': 'ابدأ القراءة',
+      'start_reading':
+          '\u0627\u0633\u062A\u0643\u0634\u0627\u0641 \u0627\u0644\u0642\u0631\u0622\u0646',
       'hatim_title': 'نية الختم',
       'hatim_subtitle': 'قراءة من البداية إلى النهاية',
       'juz_title': 'نية الجزء',
@@ -616,7 +656,8 @@ class S {
       'ramadan_start': 'ابدأ',
       'ramadan_short_duas': 'أدعية قصيرة',
       'ramadan_adhan_notifications': 'الأذان والتنبيهات',
-      'ramadan_adhan_notifications_subtitle': 'يتم إدارة تنبيهات الأذان من الإعدادات',
+      'ramadan_adhan_notifications_subtitle':
+          'يتم إدارة تنبيهات الأذان من الإعدادات',
       'ramadan_juz_select': 'اختر جزءًا',
       'ramadan_juz_select_subtitle': 'حدّد نيتك باختيار جزء',
       'ramadan_selected_juz': 'الجزء المحدد',
@@ -632,14 +673,16 @@ class S {
       'qibla_web_unsupported': 'هذه الميزة غير مدعومة على الويب.',
       'qibla_permission_message': 'نحتاج إذن الموقع لتحديد اتجاه القبلة.',
       'qibla_open_settings': 'فتح الإعدادات',
-      'qibla_sensor_unavailable': 'تعذّر العثور على مستشعر البوصلة على هذا الجهاز.',
+      'qibla_sensor_unavailable':
+          'تعذّر العثور على مستشعر البوصلة على هذا الجهاز.',
       'qibla_compass_error':
           'بيانات البوصلة غير متاحة.\nحاول المعايرة بتحريك الجهاز على شكل الرقم 8.',
       'qibla_value': 'القبلة: {degrees}°',
       'qibla_calibration_hint': 'حرّك جهازك على شكل 8 للمعايرة',
       'qibla_location_services_disabled':
           'خدمات الموقع متوقفة.\nيرجى تفعيلها من إعدادات الجهاز.',
-      'qibla_location_read_failed': 'تعذر قراءة الموقع.\nيرجى المحاولة مرة أخرى.',
+      'qibla_location_read_failed':
+          'تعذر قراءة الموقع.\nيرجى المحاولة مرة أخرى.',
       'prayer_times_loading': 'جارٍ التحميل...',
       'bookmarks_title': 'المحفوظات',
       'bookmarks_empty':
@@ -693,7 +736,7 @@ class S {
       'daily_word_empty': 'Für heute ist keine Erinnerung verfügbar.',
       'notes_placeholder': 'Wie geht es dir heute?',
       'ramadan_prep': 'Zeit, sich auf Ramadan vorzubereiten',
-      'start_reading': 'Lesen beginnen',
+      'start_reading': 'Koran erkunden',
       'hatim_title': 'Khatm-Absicht',
       'hatim_subtitle': 'Lesen von Anfang bis Ende',
       'juz_title': 'Juz-Absicht',
@@ -716,7 +759,8 @@ class S {
       'ramadan_adhan_notifications_subtitle':
           'Adhan-Alarme werden in den Einstellungen verwaltet',
       'ramadan_juz_select': 'Juz auswählen',
-      'ramadan_juz_select_subtitle': 'Lege deine Absicht fest, indem du einen Juz auswählst',
+      'ramadan_juz_select_subtitle':
+          'Lege deine Absicht fest, indem du einen Juz auswählst',
       'ramadan_selected_juz': 'Ausgewählter Juz',
       'ramadan_continue_juz': 'Juz fortsetzen',
       'ramadan_change_juz': 'Juz ändern',
@@ -736,8 +780,7 @@ class S {
       'qibla_compass_error':
           'Kompassdaten sind nicht verfügbar.\nVersuche zu kalibrieren, indem du dein Gerät in einer 8 bewegst.',
       'qibla_value': 'Qibla: {degrees}°',
-      'qibla_calibration_hint':
-          'Bewege dein Gerät zur Kalibrierung in einer 8',
+      'qibla_calibration_hint': 'Bewege dein Gerät zur Kalibrierung in einer 8',
       'qibla_location_services_disabled':
           'Standortdienste sind deaktiviert.\nBitte in den Geräteeinstellungen aktivieren.',
       'qibla_location_read_failed':
@@ -788,7 +831,8 @@ class S {
       'skip': 'Passer',
       'today_title': 'Comment allez-vous aujourd\'hui ?',
       'today_hint': 'Vous pouvez ecrire ce que vous ressentez',
-      'today_intention_saved': 'Votre intention pour aujourd\'hui a ete enregistree.',
+      'today_intention_saved':
+          'Votre intention pour aujourd\'hui a ete enregistree.',
       'today_for': 'Pour aujourd\'hui',
       'daily_ayah': 'Verset du jour',
       'daily_hadith_title': 'Hadith du jour',
@@ -797,7 +841,7 @@ class S {
       'daily_word_empty': 'Aucun rappel disponible aujourd\'hui.',
       'notes_placeholder': 'Comment vous sentez-vous aujourd\'hui ?',
       'ramadan_prep': 'Il est temps de se preparer pour Ramadan',
-      'start_reading': 'Commencer la lecture',
+      'start_reading': 'Explorer le Coran',
       'hatim_title': 'Intention de Khatm',
       'hatim_subtitle': 'Lecture du debut a la fin',
       'juz_title': 'Intention de Juz',
@@ -813,7 +857,8 @@ class S {
       'ramadan_section_daily_note': 'Petite note du jour',
       'ramadan_section_duas': 'Douas',
       'ramadan_section_iftar_adhan': 'Iftar & Adhan',
-      'ramadan_hatim_subtitle': 'Commencez en douceur avec l\'intention de khatm',
+      'ramadan_hatim_subtitle':
+          'Commencez en douceur avec l\'intention de khatm',
       'ramadan_start': 'Commencer',
       'ramadan_short_duas': 'Douas courtes',
       'ramadan_adhan_notifications': 'Adhan & Notifications',
@@ -832,7 +877,8 @@ class S {
       'coming_soon': 'Bientot disponible',
       'note_editor_hint': 'Ecrivez vos pensees...',
       'qibla_title': 'Qibla',
-      'qibla_web_unsupported': 'Cette fonctionnalite n\'est pas prise en charge sur le web.',
+      'qibla_web_unsupported':
+          'Cette fonctionnalite n\'est pas prise en charge sur le web.',
       'qibla_permission_message':
           'Nous avons besoin de la permission de localisation pour determiner la direction de la Qibla.',
       'qibla_open_settings': 'Ouvrir les parametres',

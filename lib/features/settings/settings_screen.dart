@@ -1,9 +1,12 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../../data/local_preferences_service.dart';
 import '../../data/prayer_location_service.dart';
 import '../../data/premium_service.dart';
 import '../../data/user_profile_service.dart';
 import '../../data/widget_payload_service.dart';
+import '../../data/iftar_live_activity_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../models/prayer_location.dart';
 import '../notes/notes_screen.dart';
@@ -112,6 +115,53 @@ class _SettingsScreenState extends State<SettingsScreen> {
               setState(() {});
             },
           ),
+          if (!kIsWeb && Platform.isIOS)
+            ValueListenableBuilder<bool>(
+              valueListenable: IftarLiveActivityService.isSupported,
+              builder: (context, isSupported, _) {
+                if (!isSupported) return const SizedBox.shrink();
+                return _buildSwitchRow(
+                  title: 'İftar Live Activity',
+                  value: LocalPreferencesService.iftarLiveActivityEnabled.value,
+                  onChanged: (v) async {
+                    await LocalPreferencesService.setIftarLiveActivityEnabled(
+                        v);
+                    await IftarLiveActivityService.scheduleIftarNotifications();
+                    await IftarLiveActivityService.maybeStartOrUpdate();
+                    if (!mounted) return;
+                    if (v &&
+                        !LocalPreferencesService
+                            .iftarLiveActivityTipSeen.value) {
+                      await LocalPreferencesService.setIftarLiveActivityTipSeen(
+                          true);
+                      if (!mounted) return;
+                      _showIftarLiveActivityTip();
+                    }
+                    setState(() {});
+                  },
+                );
+              },
+            ),
+          if (!kIsWeb && Platform.isIOS)
+            ValueListenableBuilder<bool>(
+              valueListenable: IftarLiveActivityService.isSupported,
+              builder: (context, isSupported, _) {
+                if (!isSupported) return const SizedBox.shrink();
+                return Padding(
+                  padding: const EdgeInsets.only(top: 2, bottom: 8),
+                  child: Text(
+                    S.get('iftar_live_activity_hint'),
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFFB5AEA8),
+                      height: 1.35,
+                    ),
+                  ),
+                );
+              },
+            ),
           const SizedBox(height: 24),
           _buildRow(
             title: S.get('send_feedback'),
@@ -613,6 +663,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         );
       },
+    );
+  }
+
+  void _showIftarLiveActivityTip() {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      SnackBar(
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: const Color(0xFF7A746F),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              S.get('iftar_live_activity_tip_title'),
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFFFBF6F2),
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              S.get('iftar_live_activity_tip_body'),
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFFFBF6F2),
+              ),
+            ),
+          ],
+        ),
+        action: SnackBarAction(
+          label: S.get('iftar_live_activity_tip_ok'),
+          textColor: const Color(0xFFF6D9C4),
+          onPressed: () {},
+        ),
+      ),
     );
   }
 

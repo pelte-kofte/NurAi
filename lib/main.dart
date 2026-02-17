@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'data/quran_data.dart';
 import 'data/reading_progress_service.dart';
@@ -9,6 +9,7 @@ import 'data/local_preferences_service.dart';
 import 'data/user_profile_service.dart';
 import 'data/notes_service.dart';
 import 'data/daily_content_service.dart';
+import 'data/iftar_live_activity_service.dart';
 import 'data/prayer_location_service.dart';
 import 'data/premium_service.dart';
 import 'data/ayah_notes_service.dart';
@@ -47,7 +48,8 @@ class NurAIApp extends StatelessWidget {
               builder: (context, child) {
                 final isArabic = langCode == 'ar';
                 return Directionality(
-                  textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
+                  textDirection:
+                      isArabic ? TextDirection.rtl : TextDirection.ltr,
                   child: child ?? const SizedBox.shrink(),
                 );
               },
@@ -129,6 +131,10 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
       AdhanNotificationService.rescheduleForToday();
     }
     if (state == AppLifecycleState.resumed && _isAppReady) {
+      IftarLiveActivityService.scheduleIftarNotifications();
+      IftarLiveActivityService.maybeStartOrUpdate();
+    }
+    if (state == AppLifecycleState.resumed && _isAppReady) {
       WidgetPayloadService.writeNextPrayerPayload();
     }
   }
@@ -146,12 +152,15 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
       PremiumService.init(),
       UserProfileService.init(),
       AdhanNotificationService.init(),
+      IftarLiveActivityService.init(),
     ]);
     await PrayerLocationService.hydrateCurrentLocationIfPermitted();
     // Re-schedule prayer notifications on every app launch.
     if (LocalPreferencesService.adhanEnabled.value) {
       AdhanNotificationService.rescheduleForToday();
     }
+    await IftarLiveActivityService.scheduleIftarNotifications();
+    await IftarLiveActivityService.maybeStartOrUpdate();
     await WidgetPayloadService.writeNextPrayerPayload();
   }
 

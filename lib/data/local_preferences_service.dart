@@ -15,6 +15,8 @@ class LocalPreferencesService {
   static const _keyPrayerLat = 'prayer_lat';
   static const _keyPrayerLng = 'prayer_lng';
   static const _keyPrayerCityName = 'prayer_city_name';
+  static const _keyIftarLiveActivity = 'pref_iftar_live_activity_enabled';
+  static const _keyIftarLiveActivityTipSeen = 'iftar_live_activity_tip_seen';
 
   static SharedPreferences? _prefs;
 
@@ -23,6 +25,8 @@ class LocalPreferencesService {
   static final adhanEnabled = ValueNotifier<bool>(false);
   static final hapticsEnabled = ValueNotifier<bool>(true);
   static final language = ValueNotifier<String>('tr');
+  static final iftarLiveActivityEnabled = ValueNotifier<bool>(false);
+  static final iftarLiveActivityTipSeen = ValueNotifier<bool>(false);
   static final prayerLocation = ValueNotifier<PrayerLocation>(
     PrayerLocation.initial(),
   );
@@ -34,6 +38,10 @@ class LocalPreferencesService {
     adhanEnabled.value = _prefs?.getBool(_keyAdhan) ?? false;
     hapticsEnabled.value = _prefs?.getBool(_keyHaptics) ?? true;
     language.value = _prefs?.getString(_keyLanguage) ?? 'tr';
+    iftarLiveActivityEnabled.value =
+        _prefs?.getBool(_keyIftarLiveActivity) ?? false;
+    iftarLiveActivityTipSeen.value =
+        _prefs?.getBool(_keyIftarLiveActivityTipSeen) ?? false;
     prayerLocation.value = _readPrayerLocation();
   }
 
@@ -83,6 +91,16 @@ class LocalPreferencesService {
   static Future<void> setLanguage(String lang) async {
     await _prefs?.setString(_keyLanguage, lang);
     language.value = lang;
+  }
+
+  static Future<void> setIftarLiveActivityEnabled(bool value) async {
+    await _prefs?.setBool(_keyIftarLiveActivity, value);
+    iftarLiveActivityEnabled.value = value;
+  }
+
+  static Future<void> setIftarLiveActivityTipSeen(bool value) async {
+    await _prefs?.setBool(_keyIftarLiveActivityTipSeen, value);
+    iftarLiveActivityTipSeen.value = value;
   }
 
   // Prayer location

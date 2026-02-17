@@ -20,6 +20,8 @@ class NextPrayerPill extends StatefulWidget {
 }
 
 class _NextPrayerPillState extends State<NextPrayerPill> {
+  static const Color _secondaryIconColor = Color(0x992B2725);
+
   Timer? _ticker;
   DateTime _now = DateTime.now();
 
@@ -56,17 +58,29 @@ class _NextPrayerPillState extends State<NextPrayerPill> {
               color: const Color(0xFFF3ECE7),
               borderRadius: BorderRadius.circular(999),
             ),
-            child: Text(
-              text,
-              textAlign: TextAlign.start,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF5F5954),
-              ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.schedule_rounded,
+                  size: 17,
+                  color: _secondaryIconColor,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    text,
+                    textAlign: TextAlign.start,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF5F5954),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         );
@@ -102,7 +116,7 @@ class _NextPrayerPillState extends State<NextPrayerPill> {
       alwaysUse24HourFormat: MediaQuery.of(context).alwaysUse24HourFormat,
     );
 
-    return '⏰ ${next.label} · $timeText · ${_remainingText(next.time)}';
+    return '${next.label} - $timeText - ${_remainingText(next.time)}';
   }
 
   _PrayerRow? _findNextPrayer(List<_PrayerRow> rows) {

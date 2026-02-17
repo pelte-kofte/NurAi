@@ -269,3 +269,10 @@ The extension source files are added in repo, but you still need to register the
    - notification status line
 5. Add iOS widget from SpringBoard and verify the same fields.
 6. Confirm widget updates after location or notification changes.
+
+## Serverless Iftar Live Activity limitations
+
+- This implementation is fully serverless (no push), so Live Activity reliability depends on the app being opened around iftar time.
+- If the app is never opened during the `Maghrib - 60 min` to `Maghrib` window, the countdown may not start automatically.
+- Local notifications still fire at `Maghrib - 60 min` and `Maghrib` (when notifications are enabled), and tapping the `Maghrib - 60 min` one triggers countdown start on app open.
+- On app launch/resume, the app reevaluates current time and repairs stale state (start remaining countdown in-window, or end if Maghrib already passed).

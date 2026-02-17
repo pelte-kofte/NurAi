@@ -1,7 +1,7 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 import 'local_preferences_service.dart';
 
@@ -33,11 +33,28 @@ class DailyContentService {
   static List<DailyContentItem> _hadith = const [];
   static List<DailyContentItem> _words = const [];
 
-  static DailyContentItem? get todayHadith =>
-      _pickDeterministic(_hadith);
+  static DailyContentItem? get todayHadith => _pickDeterministic(
+        _hadith,
+        DateTime.now(),
+      );
 
-  static DailyContentItem? get todayWord =>
-      _pickDeterministic(_words);
+  static DailyContentItem? get todayWord => _pickDeterministic(
+        _words,
+        DateTime.now(),
+      );
+
+  static Future<String> getGentleReminderForDate(
+    DateTime date,
+    Locale locale,
+  ) async {
+    final normalized = _normalizeLanguageCode(locale.languageCode);
+    final words = await _loadLocalizedList(
+      primaryPath: 'assets/content/daily_words_$normalized.json',
+      fallbackPath: 'assets/content/daily_words_en.json',
+    );
+    final picked = _pickDeterministic(words, date);
+    return picked?.text ?? '';
+  }
 
   static Future<void> init() async {
     if (_initialized) return;
@@ -108,18 +125,42 @@ class DailyContentService {
       case 'en':
       case 'ar':
       case 'de':
+      case 'fr':
         return languageCode.toLowerCase();
       default:
         return 'en';
     }
   }
 
-  static DailyContentItem? _pickDeterministic(List<DailyContentItem> items) {
+  static DailyContentItem? _pickDeterministic(
+    List<DailyContentItem> items,
+    DateTime date,
+  ) {
     if (items.isEmpty) return null;
-    final now = DateTime.now();
-    final dayOfYear = now.difference(DateTime(now.year, 1, 1)).inDays + 1;
-    final daySeed = now.year * 1000 + dayOfYear;
-    final index = daySeed % items.length;
+    final index = reminderIndexForDate(date, items.length);
     return items[index];
+  }
+
+  static int reminderIndexForDate(DateTime date, int listLength) {
+    if (listLength <= 0) return 0;
+    final key = _dateKey(date);
+    return stableHash(key) % listLength;
+  }
+
+  static int stableHash(String value) {
+    // FNV-1a 32-bit for deterministic cross-run hashing.
+    var hash = 0x811C9DC5;
+    for (var i = 0; i < value.length; i++) {
+      hash ^= value.codeUnitAt(i);
+      hash = (hash * 0x01000193) & 0xFFFFFFFF;
+    }
+    return hash & 0x7FFFFFFF;
+  }
+
+  static String _dateKey(DateTime date) {
+    final y = date.year.toString().padLeft(4, '0');
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
   }
 }

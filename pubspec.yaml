@@ -36,7 +36,7 @@ flutter_launcher_icons:
 flutter_native_splash:
   color: "#FBF6F2"
   image: assets/splash/splash.png
-  ios: true
+  ios: false
   android: true
   web: false
   fullscreen: true
@@ -82,4 +82,3 @@ flutter:
     - family: Inter
       fonts:
         - asset: assets/fonts/Inter.ttf
-

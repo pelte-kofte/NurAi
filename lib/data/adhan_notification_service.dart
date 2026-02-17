@@ -1,15 +1,22 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 import '../l10n/app_strings.dart';
 import '../models/prayer_location.dart';
 import 'adhan_times_service.dart';
+import 'daily_content_service.dart';
 import 'local_preferences_service.dart';
 import 'prayer_location_service.dart';
 import 'widget_payload_service.dart';
+
+@pragma('vm:entry-point')
+void adhanNotificationTapBackground(NotificationResponse response) {
+  AdhanNotificationService.handleNotificationResponsePayload(response.payload);
+}
 
 enum AdhanEnableResult {
   enabled,
@@ -22,12 +29,35 @@ enum AdhanEnableResult {
   locationFailed,
 }
 
+String buildAdhanNotificationBody(
+  String prayerName,
+  String time, {
+  String? optionalReminder,
+  String? cityName,
+}) {
+  final resolvedCity = cityName ?? S.get('prayer_times_subtitle_current');
+  final base = S
+      .get('prayer_notif_body')
+      .replaceAll('{prayerName}', prayerName)
+      .replaceAll('{cityName}', resolvedCity)
+      .replaceAll('{time}', time);
+
+  if (optionalReminder == null || optionalReminder.trim().isEmpty) {
+    return base;
+  }
+  return '$base\n${S.get('daily_word_title')}: ${optionalReminder.trim()}';
+}
+
 class AdhanNotificationService {
   AdhanNotificationService._();
 
   static final _plugin = FlutterLocalNotificationsPlugin();
   static Timer? _maintenanceTimer;
   static const _prayerIndexes = <int>[0, 1, 2, 3, 4];
+  static const _iftarWarmupOffset = Duration(hours: 1);
+  static const _iftarWarmupPayload = 'iftar_live_activity_warmup';
+  static const _iftarAtMaghribPayload = 'iftar_live_activity_maghrib';
+  static bool _iftarWarmupTapped = false;
 
   static Future<void> init() async {
     if (kIsWeb) return;
@@ -35,7 +65,8 @@ class AdhanNotificationService {
     tz_data.initializeTimeZones();
     await _setTimezoneFromDeviceOrFallback();
 
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
@@ -43,7 +74,18 @@ class AdhanNotificationService {
     );
     await _plugin.initialize(
       const InitializationSettings(android: androidSettings, iOS: iosSettings),
+      onDidReceiveNotificationResponse: (response) {
+        handleNotificationResponsePayload(response.payload);
+      },
+      onDidReceiveBackgroundNotificationResponse:
+          adhanNotificationTapBackground,
     );
+    final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp ?? false) {
+      handleNotificationResponsePayload(
+        launchDetails?.notificationResponse?.payload,
+      );
+    }
 
     _startDailyMaintenance();
   }
@@ -163,18 +205,69 @@ class AdhanNotificationService {
       final prayerName = _prayerNameForIndex(i);
       final cityName = _cityLabel(selection);
       final hhmm = AdhanTimesService.formatHHmm(scheduleAt);
+      String? reminder;
+      if (i == 0) {
+        reminder = await DailyContentService.getGentleReminderForDate(
+          scheduleAt,
+          Locale(LocalPreferencesService.language.value),
+        );
+      }
       await _schedule(
         id: id,
-        title: S
-            .get('prayer_notif_title')
-            .replaceAll('{prayerName}', prayerName),
-        body: S
-            .get('prayer_notif_body')
-            .replaceAll('{prayerName}', prayerName)
-            .replaceAll('{cityName}', cityName)
-            .replaceAll('{time}', hhmm),
+        title:
+            S.get('prayer_notif_title').replaceAll('{prayerName}', prayerName),
+        body: buildAdhanNotificationBody(
+          prayerName,
+          hhmm,
+          optionalReminder: reminder,
+          cityName: cityName,
+        ),
         dateTime: scheduleAt,
         timezoneName: selection.timezone,
+      );
+    }
+  }
+
+  static Future<void> cancelIftarLiveActivityNotificationsForDate(
+    DateTime date,
+  ) async {
+    if (kIsWeb) return;
+    await _plugin.cancel(_iftarNotificationIdFor(date, isWarmup: true));
+    await _plugin.cancel(_iftarNotificationIdFor(date, isWarmup: false));
+  }
+
+  static Future<void> scheduleIftarLiveActivityNotifications({
+    required DateTime maghrib,
+    String? timezoneName,
+  }) async {
+    if (kIsWeb) return;
+    final now = DateTime.now();
+    final warmupAt = maghrib.subtract(_iftarWarmupOffset);
+    final warmupId = _iftarNotificationIdFor(maghrib, isWarmup: true);
+    final maghribId = _iftarNotificationIdFor(maghrib, isWarmup: false);
+
+    await _plugin.cancel(warmupId);
+    await _plugin.cancel(maghribId);
+
+    if (warmupAt.isAfter(now)) {
+      await _schedule(
+        id: warmupId,
+        title: _iftarWarmupTitle(),
+        body: _iftarWarmupBody(),
+        dateTime: warmupAt,
+        timezoneName: timezoneName,
+        payload: _iftarWarmupPayload,
+      );
+    }
+
+    if (maghrib.isAfter(now)) {
+      await _schedule(
+        id: maghribId,
+        title: 'Allah kabul etsin',
+        body: 'İftar vakti.',
+        dateTime: maghrib,
+        timezoneName: timezoneName,
+        payload: _iftarAtMaghribPayload,
       );
     }
   }
@@ -190,6 +283,7 @@ class AdhanNotificationService {
     required String body,
     required DateTime dateTime,
     String? timezoneName,
+    String? payload,
   }) async {
     final zone = _resolveLocation(timezoneName);
     final tzDateTime = tz.TZDateTime(
@@ -217,6 +311,7 @@ class AdhanNotificationService {
         ),
         iOS: DarwinNotificationDetails(),
       ),
+      payload: payload,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
       androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
@@ -296,5 +391,37 @@ class AdhanNotificationService {
   static int _notificationIdFor(DateTime date, int prayerIndex) {
     final ymd = date.year * 10000 + date.month * 100 + date.day;
     return ymd * 10 + prayerIndex;
+  }
+
+  static int _iftarNotificationIdFor(DateTime date, {required bool isWarmup}) {
+    final ymd = date.year * 10000 + date.month * 100 + date.day;
+    return (ymd * 10 + (isWarmup ? 6 : 7));
+  }
+
+  static void handleNotificationResponsePayload(String? payload) {
+    if (payload == _iftarWarmupPayload) {
+      _iftarWarmupTapped = true;
+    }
+  }
+
+  static bool consumeIftarWarmupTapFlag() {
+    final wasTapped = _iftarWarmupTapped;
+    _iftarWarmupTapped = false;
+    return wasTapped;
+  }
+
+  static bool get _isTurkishLanguage =>
+      LocalPreferencesService.language.value.toLowerCase() == 'tr';
+
+  static String _iftarWarmupTitle() {
+    if (_isTurkishLanguage) return 'İftara 1 saat kaldı';
+    return '1 hour left until iftar';
+  }
+
+  static String _iftarWarmupBody() {
+    if (_isTurkishLanguage) {
+      return 'Sayaç için dokun ve kilit ekranına ekle.';
+    }
+    return 'Tap to start the countdown and add it to your lock screen.';
   }
 }

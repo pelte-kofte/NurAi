@@ -17,6 +17,7 @@ class QuickActionsPopover {
     required GlobalKey anchorKey,
     required VoidCallback onQibla,
     required VoidCallback onAdhanTimes,
+    required VoidCallback onTasbih,
   }) {
     if (isShowing) {
       hide();
@@ -28,6 +29,7 @@ class QuickActionsPopover {
       anchorKey: anchorKey,
       onQibla: onQibla,
       onAdhanTimes: onAdhanTimes,
+      onTasbih: onTasbih,
     );
   }
 
@@ -41,9 +43,11 @@ class QuickActionsPopover {
     required GlobalKey anchorKey,
     required VoidCallback onQibla,
     required VoidCallback onAdhanTimes,
+    required VoidCallback onTasbih,
   }) {
     final overlay = Overlay.of(context, rootOverlay: true);
-    final renderBox = anchorKey.currentContext?.findRenderObject() as RenderBox?;
+    final renderBox =
+        anchorKey.currentContext?.findRenderObject() as RenderBox?;
     if (renderBox == null) return;
 
     final anchorPos = renderBox.localToGlobal(Offset.zero);
@@ -51,7 +55,7 @@ class QuickActionsPopover {
     final screen = MediaQuery.of(context).size;
 
     const popoverWidth = 280.0;
-    const popoverHeight = 220.0;
+    const popoverHeight = 270.0;
     const gap = 8.0;
     const edgePadding = 16.0;
 
@@ -95,6 +99,10 @@ class QuickActionsPopover {
                   hide();
                   onAdhanTimes();
                 },
+                onTasbih: () {
+                  hide();
+                  onTasbih();
+                },
               ),
             ),
           ),
@@ -111,11 +119,13 @@ class _PopoverContent extends StatefulWidget {
     required this.width,
     required this.onQibla,
     required this.onAdhanTimes,
+    required this.onTasbih,
   });
 
   final double width;
   final VoidCallback onQibla;
   final VoidCallback onAdhanTimes;
+  final VoidCallback onTasbih;
 
   @override
   State<_PopoverContent> createState() => _PopoverContentState();
@@ -287,7 +297,8 @@ class _PopoverContentState extends State<_PopoverContent> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
                 children: [
-                  const Icon(Icons.explore_rounded, size: 18, color: Color(0xFF7BAEAC)),
+                  const Icon(Icons.explore_rounded,
+                      size: 18, color: Color(0xFF7BAEAC)),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
@@ -300,7 +311,8 @@ class _PopoverContentState extends State<_PopoverContent> {
                       ),
                     ),
                   ),
-                  const Icon(Icons.chevron_right_rounded, size: 16, color: Color(0xFFB5AEA8)),
+                  const Icon(Icons.chevron_right_rounded,
+                      size: 16, color: Color(0xFFB5AEA8)),
                 ],
               ),
             ),
@@ -386,6 +398,44 @@ class _PopoverContentState extends State<_PopoverContent> {
               ),
             ),
           ],
+          Container(
+            height: 1,
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            color: const Color(0xFFEDE6E1),
+          ),
+          GestureDetector(
+            onTap: widget.onTasbih,
+            behavior: HitTestBehavior.opaque,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.touch_app_rounded,
+                    size: 18,
+                    color: Color(0xFF7BAEAC),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      S.get('tasbih'),
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF2B2725),
+                      ),
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: Color(0xFFB5AEA8),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

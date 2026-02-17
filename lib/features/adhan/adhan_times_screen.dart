@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../../data/adhan_notification_service.dart';
@@ -90,17 +89,6 @@ class _AdhanTimesScreenState extends State<AdhanTimesScreen> {
             children: [
               _buildLocationCard(location),
               const SizedBox(height: 14),
-              ValueListenableBuilder<bool>(
-                valueListenable: LocalPreferencesService.adhanEnabled,
-                builder: (context, enabled, _) {
-                  final nextPrayer = _findNextPrayer(rows);
-                  return _buildNotificationCard(
-                    enabled: enabled,
-                    nextPrayer: nextPrayer,
-                  );
-                },
-              ),
-              const SizedBox(height: 14),
               _buildTodayTimesCard(rows),
             ],
           );
@@ -165,71 +153,6 @@ class _AdhanTimesScreenState extends State<AdhanTimesScreen> {
     );
   }
 
-  Widget _buildNotificationCard({
-    required bool enabled,
-    required _PrayerRowData? nextPrayer,
-  }) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFDF9F6),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF7BAEAC)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  S.get('adhan_alarms'),
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    color: Color(0xFF2B2725),
-                  ),
-                ),
-              ),
-              CupertinoSwitch(
-                value: enabled,
-                activeTrackColor: const Color(0xFFB57A5A),
-                onChanged: _toggleNotifications,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            enabled
-                ? S.get('adhan_preview_subtitle_on')
-                : S.get('adhan_preview_subtitle_off'),
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF7A746F),
-            ),
-          ),
-          if (enabled && nextPrayer != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              S.get('prayer_times_next_line')
-                  .replaceAll('{prayer}', nextPrayer.label)
-                  .replaceAll('{time}', AdhanTimesService.formatHHmm(nextPrayer.time)),
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF7A746F),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
   Widget _buildTodayTimesCard(List<_PrayerRowData> rows) {
     return _CardBox(
       child: Column(
@@ -246,72 +169,37 @@ class _AdhanTimesScreenState extends State<AdhanTimesScreen> {
             ),
           ),
           const SizedBox(height: 8),
-          ...rows
-            .map(
-              (row) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        row.label,
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 15,
-                          color: Color(0xFF2B2725),
-                        ),
-                      ),
-                    ),
-                    Text(
-                      AdhanTimesService.formatHHmm(row.time),
+          ...rows.map(
+            (row) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      row.label,
                       style: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 15,
-                        fontWeight: FontWeight.w500,
                         color: Color(0xFF2B2725),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  Text(
+                    AdhanTimesService.formatHHmm(row.time),
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: Color(0xFF2B2725),
+                    ),
+                  ),
+                ],
               ),
             ),
+          ),
         ],
       ),
     );
-  }
-
-  Future<void> _toggleNotifications(bool value) async {
-    setState(() => _isLoading = true);
-    if (value) {
-      final result =
-          await AdhanNotificationService.enableForTodayAndRescheduleDaily();
-      if (!mounted) return;
-      setState(() {
-        _inlineMessage = switch (result) {
-          AdhanEnableResult.enabled => null,
-          AdhanEnableResult.notificationPermissionDenied =>
-            S.get('prayer_notif_permission_body'),
-          AdhanEnableResult.locationServiceDisabled =>
-            S.get('location_service_disabled'),
-          AdhanEnableResult.locationPermissionDenied ||
-          AdhanEnableResult.locationPermissionDeniedForever =>
-            S.get('prayer_times_permission_denied'),
-          AdhanEnableResult.locationMissing =>
-            S.get('prayer_times_location_required'),
-          AdhanEnableResult.locationFailed => S.get('location_read_failed'),
-          AdhanEnableResult.unavailableOnWeb => S.get('location_unavailable_web'),
-        };
-        _isLoading = false;
-      });
-      return;
-    }
-
-    await AdhanNotificationService.disableAndCancelAll();
-    if (!mounted) return;
-    setState(() {
-      _inlineMessage = null;
-      _isLoading = false;
-    });
   }
 
   Future<void> _useCurrentLocation() async {
@@ -382,14 +270,6 @@ class _AdhanTimesScreenState extends State<AdhanTimesScreen> {
       return S.get('prayer_times_not_set');
     }
     return '${S.get('prayer_times_city_prefix')}: $city';
-  }
-
-  _PrayerRowData? _findNextPrayer(List<_PrayerRowData> rows) {
-    final now = DateTime.now();
-    for (final row in rows) {
-      if (row.time.isAfter(now)) return row;
-    }
-    return null;
   }
 }
 

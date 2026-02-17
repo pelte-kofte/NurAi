@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../../data/quran_data.dart';
 import '../../data/daily_ayah_service.dart';
 import '../../data/daily_content_service.dart';
@@ -18,6 +18,7 @@ import '../ramadan/ramadan_hub_screen.dart';
 import '../reading/ayah_reading_screen.dart';
 import '../settings/settings_screen.dart';
 import '../surah/surah_list_screen.dart';
+import '../tasbih/tasbih_screen.dart';
 
 enum _Mood { gratitude, calm, anxious, sad, tired, neutral }
 
@@ -158,6 +159,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       _maybeShowNamePrompt();
     });
   }
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -454,7 +456,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     ];
     const calmKeywords = ['huzur', 'sakin', 'dingin', 'rahat', 'ferah'];
     const anxiousKeywords = ['kaygı', 'stres', 'korku', 'endişe', 'panik'];
-    const sadKeywords = ['üzgün', 'ağladım', 'kırgın', 'yalnız', 'moralim bozuk'];
+    const sadKeywords = [
+      'üzgün',
+      'ağladım',
+      'kırgın',
+      'yalnız',
+      'moralim bozuk'
+    ];
     const tiredKeywords = ['yorgun', 'bitkin', 'uykusuz', 'tükendim', 'halsiz'];
 
     bool containsAny(List<String> keywords) =>
@@ -473,20 +481,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final items = _suggestionPool[mood] ?? const <_SuggestionItem>[];
     if (items.isEmpty) return mood.index * 100;
     final today = DateTime.now();
-    final seed = today.year * 10000 + today.month * 100 + today.day + mood.index;
+    final seed =
+        today.year * 10000 + today.month * 100 + today.day + mood.index;
     final index = seed % items.length;
     return mood.index * 100 + index;
-  }
-
-  _SuggestionItem? _suggestionFromId(int? id) {
-    if (id == null) return null;
-    final moodIndex = id ~/ 100;
-    final index = id % 100;
-    if (moodIndex < 0 || moodIndex >= _Mood.values.length) return null;
-    final mood = _Mood.values[moodIndex];
-    final items = _suggestionPool[mood];
-    if (items == null || index < 0 || index >= items.length) return null;
-    return items[index];
   }
 
   void _refresh() {
@@ -519,7 +517,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 onTap: () {
                   Navigator.of(context)
                       .push(
-                        MaterialPageRoute(builder: (_) => const AdhanTimesScreen()),
+                        MaterialPageRoute(
+                            builder: (_) => const AdhanTimesScreen()),
                       )
                       .then((_) => _refresh());
                 },
@@ -647,6 +646,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             .push(MaterialPageRoute(builder: (_) => const AdhanTimesScreen()))
             .then((_) => _refresh());
       },
+      onTasbih: () {
+        Navigator.of(context)
+            .push(MaterialPageRoute(builder: (_) => const TasbihScreen()))
+            .then((_) => _refresh());
+      },
     );
   }
 
@@ -688,8 +692,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       valueListenable: NotesService.dailyMoodRevision,
       builder: (context, _, __) {
         final isLocked = NotesService.isDailyMoodLockedToday();
-        final todayText = NotesService.getTodayMoodText();
-        final suggestion = _suggestionFromId(NotesService.getTodayReflectionId());
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -698,7 +700,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               onTap: isLocked ? null : _openTodayNoteSheet,
               child: Container(
                 width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFDF9F6),
                   borderRadius: BorderRadius.circular(10),
@@ -708,14 +711,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   children: [
                     Expanded(
                       child: Text(
-                        isLocked ? todayText : S.get('notes_placeholder'),
-                        style: TextStyle(
-                          fontFamily: isLocked ? 'Merriweather' : 'Inter',
+                        S.get('notes_placeholder'),
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
                           fontSize: 14,
                           fontWeight: FontWeight.w400,
-                          fontStyle:
-                              isLocked ? FontStyle.italic : FontStyle.normal,
-                          color: const Color(0xFF7A746F),
+                          color: Color(0xFF7A746F),
                           height: 1.4,
                         ),
                       ),
@@ -729,51 +730,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 ),
               ),
             ),
-            if (isLocked) ...[
-              const SizedBox(height: 8),
-              Text(
-                S.get('today_intention_saved'),
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFFB5AEA8),
-                ),
-              ),
-            ],
-            if (suggestion != null) ...[
-              const SizedBox(height: 10),
-              Text(
-                S.get('today_for'),
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w500,
-                  color: Color(0xFF7A746F),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                S.get(suggestion.textKey),
-                style: const TextStyle(
-                  fontFamily: 'Merriweather',
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF2B2725),
-                  height: 1.5,
-                ),
-              ),
-              const SizedBox(height: 3),
-              Text(
-                '${suggestion.type == _SuggestionType.ayah ? S.get('ayah_type') : S.get('hadith_type')} · ${S.get(suggestion.sourceKey)}',
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFFB5AEA8),
-                ),
-              ),
-            ],
           ],
         );
       },
@@ -958,12 +914,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         ),
         child: Row(
           children: [
-            const Icon(
-              Icons.nights_stay_outlined,
-              size: 17,
-              color: _mutedIconColor,
-            ),
-            const SizedBox(width: 10),
             Expanded(
               child: Text(
                 S.get('ramadan_prep'),
@@ -981,7 +931,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       ),
     );
   }
-
 
   Widget _buildReadingEntry(BuildContext context) {
     const ctx = ReadingContext.explore();

@@ -1,80 +1,85 @@
-//
-//  NurAiWidgetsLiveActivity.swift
-//  NurAiWidgets
-//
-//  Created by Bekir Cem Kusdemir on 16.02.2026.
-//
-
 import ActivityKit
 import WidgetKit
 import SwiftUI
 
 struct NurAiWidgetsAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
-        // Dynamic stateful properties about your activity go here!
-        var emoji: String
+        var title: String
+        var subtitle: String
+        var targetEpochMs: Int64
+        var phase: String
     }
 
-    // Fixed non-changing properties about your activity go here!
     var name: String
 }
 
 struct NurAiWidgetsLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: NurAiWidgetsAttributes.self) { context in
-            // Lock screen/banner UI goes here
-            VStack {
-                Text("Hello \(context.state.emoji)")
+            VStack(alignment: .leading, spacing: 6) {
+                if context.state.phase == "done" {
+                    Text("Allah kabul etsin")
+                        .font(.system(size: 20, weight: .bold))
+                    Text("İftar vakti.")
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text("İftara")
+                        .font(.system(size: 16, weight: .semibold))
+                    Text(Date(timeIntervalSince1970: Double(context.state.targetEpochMs) / 1000), style: .timer)
+                        .font(.system(size: 24, weight: .bold, design: .rounded))
+                        .monospacedDigit()
+                    Text(context.state.subtitle)
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundStyle(.secondary)
+                }
             }
-            .activityBackgroundTint(Color.cyan)
-            .activitySystemActionForegroundColor(Color.black)
-
+            .padding(.vertical, 4)
+            .activityBackgroundTint(Color.black.opacity(0.12))
+            .activitySystemActionForegroundColor(Color.primary)
         } dynamicIsland: { context in
             DynamicIsland {
-                // Expanded UI goes here.  Compose the expanded UI through
-                // various regions, like leading/trailing/center/bottom
                 DynamicIslandExpandedRegion(.leading) {
-                    Text("Leading")
+                    Text("İftara")
+                        .font(.system(size: 13, weight: .semibold))
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    Text("Trailing")
+                    if context.state.phase == "done" {
+                        Text("Vakit")
+                            .font(.system(size: 13, weight: .semibold))
+                    } else {
+                        Text(Date(timeIntervalSince1970: Double(context.state.targetEpochMs) / 1000), style: .timer)
+                            .font(.system(size: 13, weight: .semibold, design: .rounded))
+                            .monospacedDigit()
+                    }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    Text("Bottom \(context.state.emoji)")
-                    // more content
+                    if context.state.phase == "done" {
+                        Text("Allah kabul etsin")
+                            .font(.system(size: 16, weight: .bold))
+                    } else {
+                        Text(context.state.subtitle)
+                            .font(.system(size: 13, weight: .regular))
+                    }
                 }
             } compactLeading: {
-                Text("L")
+                Text("İ")
             } compactTrailing: {
-                Text("T \(context.state.emoji)")
+                if context.state.phase == "done" {
+                    Text("✓")
+                } else {
+                    Text(Date(timeIntervalSince1970: Double(context.state.targetEpochMs) / 1000), style: .timer)
+                        .monospacedDigit()
+                }
             } minimal: {
-                Text(context.state.emoji)
+                if context.state.phase == "done" {
+                    Text("✓")
+                } else {
+                    Text("İ")
+                }
             }
-            .widgetURL(URL(string: "http://www.apple.com"))
-            .keylineTint(Color.red)
+            .widgetURL(URL(string: "nurai://ramadan"))
+            .keylineTint(Color.orange)
         }
     }
-}
-
-extension NurAiWidgetsAttributes {
-    fileprivate static var preview: NurAiWidgetsAttributes {
-        NurAiWidgetsAttributes(name: "World")
-    }
-}
-
-extension NurAiWidgetsAttributes.ContentState {
-    fileprivate static var smiley: NurAiWidgetsAttributes.ContentState {
-        NurAiWidgetsAttributes.ContentState(emoji: "😀")
-     }
-     
-     fileprivate static var starEyes: NurAiWidgetsAttributes.ContentState {
-         NurAiWidgetsAttributes.ContentState(emoji: "🤩")
-     }
-}
-
-#Preview("Notification", as: .content, using: NurAiWidgetsAttributes.preview) {
-   NurAiWidgetsLiveActivity()
-} contentStates: {
-    NurAiWidgetsAttributes.ContentState.smiley
-    NurAiWidgetsAttributes.ContentState.starEyes
 }
