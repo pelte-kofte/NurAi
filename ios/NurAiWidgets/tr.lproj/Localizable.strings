@@ -1,0 +1,9 @@
+"widget_config_title" = "Widget Ayari";
+"widget_config_description" = "Kilit ekraninda gosterilecek icerigi secin.";
+"content_type_param" = "Icerik Turu";
+"content_type_verse" = "Ayet";
+"content_type_hadith" = "Hadis";
+"content_type_asma" = "Esma";
+"widget_display_name" = "Gunluk Manevi Icerik";
+"widget_description" = "Gunluk ayet, hadis veya Esma icerigi gosterir.";
+"widget_loading" = "Yukleniyor...";

@@ -215,32 +215,81 @@ class _FirstScreen extends StatelessWidget {
             'assets/splash/splash.png',
             fit: BoxFit.cover,
           ),
+          Container(
+            color: const Color(0xFF000000).withValues(alpha: 0.23),
+          ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
-              child: Align(
-                alignment: Alignment.bottomCenter,
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: isStarting ? null : onTapStart,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFFB57A5A),
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: const StadiumBorder(),
+              child: Stack(
+                children: [
+                  const Align(
+                    alignment: Alignment(0, 0.2),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Kalbini sakinleştir.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Merriweather',
+                            fontSize: 34,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFFF5F3EF),
+                            height: 1.2,
+                          ),
+                        ),
+                        Text(
+                          'Niyetini tazele.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Merriweather',
+                            fontSize: 34,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFFF5F3EF),
+                            height: 1.2,
+                          ),
+                        ),
+                        SizedBox(height: 10),
+                        Text(
+                          'Ramazan için kısa bir durak.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFFF5F3EF),
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
                     ),
-                    child: const Text(
-                      'Tap to start',
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
+                  ),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: isStarting ? null : onTapStart,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF7BAEAC),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: const StadiumBorder(),
+                        ),
+                        child: const Text(
+                          'Tap to start',
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ),
             ),
           ),

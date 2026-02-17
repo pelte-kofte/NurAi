@@ -1,17 +1,20 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
-import '../../data/quran_data.dart';
+
+import '../../data/adhan_times_service.dart';
 import '../../data/daily_ayah_service.dart';
 import '../../data/daily_content_service.dart';
-import '../../data/collective_reading_service.dart';
-import '../../l10n/app_strings.dart';
-import '../../data/notes_service.dart';
+import '../../data/local_preferences_service.dart';
+import '../../data/quran_data.dart';
 import '../../data/reading_progress_service.dart';
 import '../../data/user_profile_service.dart';
-import '../../models/reading_context.dart';
-import '../../widgets/quick_actions_popover.dart';
-import '../../widgets/next_prayer_pill.dart';
+import '../../l10n/app_strings.dart';
 import '../../main.dart';
-import '../collective/collective_reading_screen.dart';
+import '../../models/prayer_location.dart';
+import '../../models/reading_context.dart';
+import '../../widgets/next_prayer_pill.dart';
+import '../../widgets/quick_actions_popover.dart';
 import '../adhan/adhan_times_screen.dart';
 import '../qibla/qibla_screen.dart';
 import '../ramadan/ramadan_hub_screen.dart';
@@ -19,22 +22,7 @@ import '../reading/ayah_reading_screen.dart';
 import '../settings/settings_screen.dart';
 import '../surah/surah_list_screen.dart';
 import '../tasbih/tasbih_screen.dart';
-
-enum _Mood { gratitude, calm, anxious, sad, tired, neutral }
-
-enum _SuggestionType { ayah, hadith }
-
-class _SuggestionItem {
-  final _SuggestionType type;
-  final String textKey;
-  final String sourceKey;
-
-  const _SuggestionItem({
-    required this.type,
-    required this.textKey,
-    required this.sourceKey,
-  });
-}
+import 'today_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,117 +34,18 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> with RouteAware {
   final GlobalKey _quickActionsKey = GlobalKey();
   bool _checkedNamePrompt = false;
-  static const Color _mutedIconColor = Color(0xFF8FA9A7);
-  static const Map<_Mood, List<_SuggestionItem>> _suggestionPool = {
-    _Mood.gratitude: [
-      _SuggestionItem(
-        type: _SuggestionType.ayah,
-        textKey: 'suggestion_gratitude_1_text',
-        sourceKey: 'suggestion_gratitude_1_source',
-      ),
-      _SuggestionItem(
-        type: _SuggestionType.hadith,
-        textKey: 'suggestion_gratitude_2_text',
-        sourceKey: 'suggestion_gratitude_2_source',
-      ),
-      _SuggestionItem(
-        type: _SuggestionType.ayah,
-        textKey: 'suggestion_gratitude_3_text',
-        sourceKey: 'suggestion_gratitude_3_source',
-      ),
-    ],
-    _Mood.calm: [
-      _SuggestionItem(
-        type: _SuggestionType.ayah,
-        textKey: 'suggestion_calm_1_text',
-        sourceKey: 'suggestion_calm_1_source',
-      ),
-      _SuggestionItem(
-        type: _SuggestionType.hadith,
-        textKey: 'suggestion_calm_2_text',
-        sourceKey: 'suggestion_calm_2_source',
-      ),
-      _SuggestionItem(
-        type: _SuggestionType.ayah,
-        textKey: 'suggestion_calm_3_text',
-        sourceKey: 'suggestion_calm_3_source',
-      ),
-    ],
-    _Mood.anxious: [
-      _SuggestionItem(
-        type: _SuggestionType.ayah,
-        textKey: 'suggestion_anxious_1_text',
-        sourceKey: 'suggestion_anxious_1_source',
-      ),
-      _SuggestionItem(
-        type: _SuggestionType.ayah,
-        textKey: 'suggestion_anxious_2_text',
-        sourceKey: 'suggestion_anxious_2_source',
-      ),
-      _SuggestionItem(
-        type: _SuggestionType.hadith,
-        textKey: 'suggestion_anxious_3_text',
-        sourceKey: 'suggestion_anxious_3_source',
-      ),
-    ],
-    _Mood.sad: [
-      _SuggestionItem(
-        type: _SuggestionType.ayah,
-        textKey: 'suggestion_sad_1_text',
-        sourceKey: 'suggestion_sad_1_source',
-      ),
-      _SuggestionItem(
-        type: _SuggestionType.ayah,
-        textKey: 'suggestion_sad_2_text',
-        sourceKey: 'suggestion_sad_2_source',
-      ),
-      _SuggestionItem(
-        type: _SuggestionType.hadith,
-        textKey: 'suggestion_sad_3_text',
-        sourceKey: 'suggestion_sad_3_source',
-      ),
-    ],
-    _Mood.tired: [
-      _SuggestionItem(
-        type: _SuggestionType.ayah,
-        textKey: 'suggestion_tired_1_text',
-        sourceKey: 'suggestion_tired_1_source',
-      ),
-      _SuggestionItem(
-        type: _SuggestionType.hadith,
-        textKey: 'suggestion_tired_2_text',
-        sourceKey: 'suggestion_tired_2_source',
-      ),
-      _SuggestionItem(
-        type: _SuggestionType.ayah,
-        textKey: 'suggestion_tired_3_text',
-        sourceKey: 'suggestion_tired_3_source',
-      ),
-    ],
-    _Mood.neutral: [
-      _SuggestionItem(
-        type: _SuggestionType.ayah,
-        textKey: 'suggestion_neutral_1_text',
-        sourceKey: 'suggestion_neutral_1_source',
-      ),
-      _SuggestionItem(
-        type: _SuggestionType.hadith,
-        textKey: 'suggestion_neutral_2_text',
-        sourceKey: 'suggestion_neutral_2_source',
-      ),
-      _SuggestionItem(
-        type: _SuggestionType.ayah,
-        textKey: 'suggestion_neutral_3_text',
-        sourceKey: 'suggestion_neutral_3_source',
-      ),
-    ],
-  };
+  Timer? _clockTicker;
+  DateTime _now = DateTime.now();
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _maybeShowNamePrompt();
+    });
+    _clockTicker = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (!mounted) return;
+      setState(() => _now = DateTime.now());
     });
   }
 
@@ -168,6 +57,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   void dispose() {
+    _clockTicker?.cancel();
     QuickActionsPopover.hide();
     routeObserver.unsubscribe(this);
     super.dispose();
@@ -175,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   void didPopNext() {
-    _refresh();
+    setState(() {});
   }
 
   @override
@@ -332,229 +222,162 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     controller.dispose();
   }
 
-  Future<void> _openTodayNoteSheet() async {
-    if (NotesService.isDailyMoodLockedToday()) return;
-    final controller = TextEditingController();
-    var submitted = false;
-
-    await showModalBottomSheet<void>(
+  void _toggleQuickActions() {
+    QuickActionsPopover.toggle(
       context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      useSafeArea: true,
-      backgroundColor: const Color(0xFFFDF9F6),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.fromLTRB(
-            24,
-            8,
-            24,
-            MediaQuery.of(ctx).viewInsets.bottom + 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                S.get('today_title'),
-                style: const TextStyle(
-                  fontFamily: 'Merriweather',
-                  fontSize: 20,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF2B2725),
-                ),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                minLines: 1,
-                maxLines: 4,
-                textInputAction: TextInputAction.newline,
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF2B2725),
-                  height: 1.5,
-                ),
-                decoration: InputDecoration(
-                  hintText: S.get('today_hint'),
-                  hintStyle: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFFB5AEA8),
-                  ),
-                  filled: true,
-                  fillColor: const Color(0xFFFBF6F2),
-                  contentPadding: const EdgeInsets.all(14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFB57A5A),
-                    foregroundColor: Colors.white,
-                    elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  onPressed: () async {
-                    final text = controller.text.trim();
-                    if (text.isEmpty) return;
-                    final reflectionId = _generateDailyReflectionId(text);
-                    final saved = await NotesService.submitDailyMood(
-                      text: text,
-                      reflectionId: reflectionId,
-                    );
-                    if (!saved) return;
-                    submitted = true;
-                    if (ctx.mounted) {
-                      Navigator.of(ctx).pop();
-                    }
-                  },
-                  child: Text(
-                    S.get('save'),
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+      anchorKey: _quickActionsKey,
+      onQibla: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const QiblaScreen()),
+        );
+      },
+      onAdhanTimes: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const AdhanTimesScreen()),
+        );
+      },
+      onTasbih: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const TasbihScreen()),
         );
       },
     );
-    if (submitted) {
-      NotesService.refreshDailyMoodState();
-    }
-    controller.dispose();
   }
 
-  _Mood _classifyMood(String note) {
-    final text = note.toLowerCase();
-
-    const gratitudeKeywords = [
-      'şükür',
-      'elhamdülillah',
-      'hamdolsun',
-      'minnettar',
-    ];
-    const calmKeywords = ['huzur', 'sakin', 'dingin', 'rahat', 'ferah'];
-    const anxiousKeywords = ['kaygı', 'stres', 'korku', 'endişe', 'panik'];
-    const sadKeywords = [
-      'üzgün',
-      'ağladım',
-      'kırgın',
-      'yalnız',
-      'moralim bozuk'
-    ];
-    const tiredKeywords = ['yorgun', 'bitkin', 'uykusuz', 'tükendim', 'halsiz'];
-
-    bool containsAny(List<String> keywords) =>
-        keywords.any((k) => text.contains(k));
-
-    if (containsAny(gratitudeKeywords)) return _Mood.gratitude;
-    if (containsAny(calmKeywords)) return _Mood.calm;
-    if (containsAny(anxiousKeywords)) return _Mood.anxious;
-    if (containsAny(sadKeywords)) return _Mood.sad;
-    if (containsAny(tiredKeywords)) return _Mood.tired;
-    return _Mood.neutral;
+  void _openSettingsModal() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.85,
+          minChildSize: 0.55,
+          maxChildSize: 0.95,
+          builder: (sheetContext, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Color(0xFFFDF9F6),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+              ),
+              child: SettingsScreen(scrollController: scrollController),
+            );
+          },
+        );
+      },
+    );
   }
 
-  int _generateDailyReflectionId(String note) {
-    final mood = _classifyMood(note);
-    final items = _suggestionPool[mood] ?? const <_SuggestionItem>[];
-    if (items.isEmpty) return mood.index * 100;
-    final today = DateTime.now();
-    final seed =
-        today.year * 10000 + today.month * 100 + today.day + mood.index;
-    final index = seed % items.length;
-    return mood.index * 100 + index;
+  String? _maghribCountdown(PrayerLocation location) {
+    if (!location.hasCoordinates) return null;
+    final times = AdhanTimesService.computeTimes(
+      _now,
+      location,
+      countryHint: _countryFromPrayerLocation(location),
+    );
+    final diff = times.maghrib.difference(_now);
+    if (diff.isNegative || diff > const Duration(minutes: 60)) return null;
+
+    final totalMinutes = (diff.inSeconds / 60).ceil();
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    final hh = hours.toString().padLeft(2, '0');
+    final mm = minutes.toString().padLeft(2, '0');
+    return '$hh:$mm';
   }
 
-  void _refresh() {
-    setState(() {});
+  String? _countryFromPrayerLocation(PrayerLocation location) {
+    if (location.mode == PrayerLocationMode.current) return null;
+    final raw = location.cityName ?? '';
+    final parts = raw.split(',');
+    if (parts.length < 2) return null;
+    return parts.last.trim();
   }
 
   @override
   Widget build(BuildContext context) {
-    final dailyAyah = DailyAyahService.getTodayAyahWithContext(
-      QuranData.instance.ayahs,
-      QuranData.instance.getSurahName,
-    );
-
     return Scaffold(
       backgroundColor: const Color(0xFFFBF6F2),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildGreeting(),
-              const SizedBox(height: 12),
+              const SizedBox(height: 26),
               _buildSectionHeader(
-                title: S.get('prayer_times'),
-                icon: Icons.access_time_rounded,
+                title: S.get('home_section_now_upcoming'),
+                icon: Icons.schedule_rounded,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 10),
               NextPrayerPill(
                 onTap: () {
-                  Navigator.of(context)
-                      .push(
-                        MaterialPageRoute(
-                            builder: (_) => const AdhanTimesScreen()),
-                      )
-                      .then((_) => _refresh());
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const AdhanTimesScreen()),
+                  );
                 },
               ),
-              const SizedBox(height: 24),
-              _buildNotesEntry(context),
-              const SizedBox(height: 32),
-              _buildDailyAyahCard(dailyAyah),
-              const SizedBox(height: 20),
-              ValueListenableBuilder<int>(
-                valueListenable: DailyContentService.revision,
-                builder: (context, _, __) => _buildHadithCard(),
+              const SizedBox(height: 10),
+              ValueListenableBuilder<PrayerLocation>(
+                valueListenable: LocalPreferencesService.prayerLocation,
+                builder: (context, location, _) {
+                  final countdown = _maghribCountdown(location);
+                  if (countdown == null) return const SizedBox.shrink();
+                  return _buildCountdownCard(countdown);
+                },
               ),
-              const SizedBox(height: 16),
-              ValueListenableBuilder<int>(
-                valueListenable: DailyContentService.revision,
-                builder: (context, _, __) => _buildDailyWordCard(),
-              ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 30),
               _buildSectionHeader(
+                title: S.get('home_section_for_today'),
+                icon: Icons.auto_awesome_outlined,
+              ),
+              const SizedBox(height: 10),
+              ValueListenableBuilder<int>(
+                valueListenable: DailyContentService.revision,
+                builder: (context, _, __) => _buildPrimaryDailyCard(),
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const TodayScreen()),
+                  );
+                },
+                style: TextButton.styleFrom(
+                  foregroundColor: const Color(0xFF7A746F),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  S.get('home_see_more_for_today'),
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 28),
+              _buildSectionHeader(
+                title: S.get('home_section_explore'),
+                icon: Icons.explore_outlined,
+              ),
+              const SizedBox(height: 10),
+              _buildExploreQuranEntry(context),
+              const SizedBox(height: 12),
+              _buildExploreEntry(
                 title: S.get('ramadan_hub_title'),
-                icon: Icons.nights_stay_outlined,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const RamadanHubScreen()),
+                  );
+                },
               ),
-              const SizedBox(height: 8),
-              _buildRamadanInfo(),
-              const SizedBox(height: 24),
-              _buildSectionHeader(
-                title: S.get('ramadan_section_reading'),
-                icon: Icons.menu_book_outlined,
-              ),
-              const SizedBox(height: 8),
-              _buildReadingEntry(context),
-              const SizedBox(height: 16),
-              _buildHatimEntry(context),
-              const SizedBox(height: 16),
-              _buildCollectiveReadingEntry(context),
             ],
           ),
         ),
@@ -616,7 +439,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: _mutedIconColor),
+        Icon(icon, size: 16, color: const Color(0xFF8FA9A7)),
         const SizedBox(width: 8),
         Text(
           title,
@@ -632,150 +455,135 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  void _toggleQuickActions() {
-    QuickActionsPopover.toggle(
-      context: context,
-      anchorKey: _quickActionsKey,
-      onQibla: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const QiblaScreen()),
-        );
-      },
-      onAdhanTimes: () {
-        Navigator.of(context)
-            .push(MaterialPageRoute(builder: (_) => const AdhanTimesScreen()))
-            .then((_) => _refresh());
-      },
-      onTasbih: () {
-        Navigator.of(context)
-            .push(MaterialPageRoute(builder: (_) => const TasbihScreen()))
-            .then((_) => _refresh());
-      },
-    );
-  }
-
-  void _openSettingsModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      showDragHandle: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) {
-        return DraggableScrollableSheet(
-          expand: false,
-          initialChildSize: 0.85,
-          minChildSize: 0.55,
-          maxChildSize: 0.95,
-          builder: (sheetContext, scrollController) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFFFDF9F6),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-              ),
-              child: SettingsScreen(scrollController: scrollController),
-            );
-          },
-        );
-      },
-    ).then((_) => _refresh());
-  }
-
-  void _openRamadanHub() {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const RamadanHubScreen()),
-    );
-  }
-
-  Widget _buildNotesEntry(BuildContext context) {
-    return ValueListenableBuilder<int>(
-      valueListenable: NotesService.dailyMoodRevision,
-      builder: (context, _, __) {
-        final isLocked = NotesService.isDailyMoodLockedToday();
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GestureDetector(
-              onTap: isLocked ? null : _openTodayNoteSheet,
-              child: Container(
-                width: double.infinity,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFDF9F6),
-                  borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        S.get('notes_placeholder'),
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFF7A746F),
-                          height: 1.4,
-                        ),
-                      ),
-                    ),
-                    const Icon(
-                      Icons.edit_outlined,
-                      size: 16,
-                      color: Color(0xFFB5AEA8),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Widget _buildHadithCard() {
-    final hadith = DailyContentService.todayHadith;
-    final source = hadith?.source?.trim() ?? '';
+  Widget _buildCountdownCard(String countdown) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFFDF9F6),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
+        border: Border.all(color: const Color(0xFF7BAEAC), width: 1),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.timelapse_rounded,
+            size: 16,
+            color: Color(0xFF7BAEAC),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              S.get('home_time_to_maghrib'),
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Color(0xFF5F5954),
+              ),
+            ),
+          ),
+          Text(
+            countdown,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF7BAEAC),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrimaryDailyCard() {
+    final date = DateTime.now();
+    final contentType = DailyContentService.homeContentTypeForDate(date);
+
+    switch (contentType) {
+      case HomeDailyContentType.verse:
+        final ayah = DailyAyahService.getTodayAyahWithContext(
+          QuranData.instance.ayahs,
+          QuranData.instance.getSurahName,
+        );
+        return _buildPrimaryCard(
+          title: S.get('daily_ayah'),
+          body: ayah.turkishReadable,
+          source: ayah.reference,
+        );
+      case HomeDailyContentType.hadith:
+        final hadith = DailyContentService.todayHadith;
+        return _buildPrimaryCard(
+          title: S.get('daily_hadith_title'),
+          body: hadith?.text ?? S.get('daily_hadith_empty'),
+          source: hadith?.source,
+        );
+      case HomeDailyContentType.gentleReminder:
+        final reminder = DailyContentService.todayWord;
+        return _buildPrimaryCard(
+          title: S.get('daily_word_title'),
+          body: reminder?.text ?? S.get('daily_word_empty'),
+        );
+      case HomeDailyContentType.quote:
+        final quote = DailyContentService.getQuoteForDate(date);
+        return _buildPrimaryCard(
+          title: S.get('daily_quote_title'),
+          body: quote.text,
+          source: quote.source,
+        );
+    }
+  }
+
+  Widget _buildPrimaryCard({
+    required String title,
+    required String body,
+    String? source,
+  }) {
+    final cleanSource = source?.trim() ?? '';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDF9F6),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xFF7BAEAC), width: 1.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x182B2721),
+            blurRadius: 14,
+            offset: Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            S.get('daily_hadith_title'),
+            title,
             style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF7A746F),
-              letterSpacing: 0.6,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF7BAEAC),
+              letterSpacing: 0.8,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 16),
           Text(
-            hadith?.text ?? S.get('daily_hadith_empty'),
+            body,
             style: const TextStyle(
               fontFamily: 'Merriweather',
-              fontSize: 14,
+              fontSize: 20,
               fontWeight: FontWeight.w400,
-              fontStyle: FontStyle.italic,
               color: Color(0xFF2B2725),
               height: 1.6,
             ),
           ),
-          if (source.isNotEmpty) ...[
-            const SizedBox(height: 10),
+          if (cleanSource.isNotEmpty) ...[
+            const SizedBox(height: 16),
             Text(
-              '— $source',
+              cleanSource,
               style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
@@ -789,121 +597,43 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  Widget _buildDailyWordCard() {
-    final word = DailyContentService.todayWord;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFDF9F6),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            S.get('daily_word_title'),
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF7A746F),
-              letterSpacing: 0.6,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            word?.text ?? S.get('daily_word_empty'),
-            style: const TextStyle(
-              fontFamily: 'Merriweather',
-              fontSize: 14,
-              fontWeight: FontWeight.w400,
-              fontStyle: FontStyle.italic,
-              color: Color(0xFF2B2725),
-              height: 1.6,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  Widget _buildExploreQuranEntry(BuildContext context) {
+    const readingContext = ReadingContext.explore();
+    final progress = ReadingProgressService.getContextProgress(readingContext);
 
-  Widget _buildDailyAyahCard(DailyAyah dailyAyah) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFDF9F6),
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0F2B2721),
-            blurRadius: 12,
-            offset: Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            S.get('daily_ayah'),
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: Color(0xFF7A746F),
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            child: Text(
-              dailyAyah.arabic,
-              textAlign: TextAlign.right,
-              textDirection: TextDirection.rtl,
-              style: const TextStyle(
-                fontFamily: 'Amiri',
-                fontSize: 26,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF2B2725),
-                height: 1.8,
+    return _buildExploreEntry(
+      title: S.get('start_reading'),
+      subtitle: progress == null
+          ? null
+          : '${QuranData.instance.getSurahName(progress.surah)} · ${progress.ayah}. ${S.get('ayah_label')}',
+      onTap: () {
+        if (progress != null) {
+          final surahName = QuranData.instance.getSurahName(progress.surah);
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => AyahReadingScreen(
+                surahNumber: progress.surah,
+                surahName: surahName,
+                readingContext: readingContext,
               ),
             ),
-          ),
-          const SizedBox(height: 16),
-          Container(height: 1, color: const Color(0xFFEDE6E1)),
-          const SizedBox(height: 16),
-          Text(
-            dailyAyah.turkishReadable,
-            style: const TextStyle(
-              fontFamily: 'Merriweather',
-              fontSize: 16,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF2B2725),
-              height: 1.6,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            dailyAyah.reference,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w400,
-              color: Color(0xFF7A746F),
-            ),
-          ),
-        ],
-      ),
+          );
+        } else {
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const SurahListScreen()),
+          );
+        }
+      },
     );
   }
 
-  Widget _buildRamadanInfo() {
+  Widget _buildExploreEntry({
+    required String title,
+    String? subtitle,
+    required VoidCallback onTap,
+  }) {
     return GestureDetector(
-      onTap: _openRamadanHub,
+      onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -915,71 +645,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         child: Row(
           children: [
             Expanded(
-              child: Text(
-                S.get('ramadan_prep'),
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF7A746F),
-                  height: 1.4,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildReadingEntry(BuildContext context) {
-    const ctx = ReadingContext.explore();
-    final progress = ReadingProgressService.getContextProgress(ctx);
-    final globalSurah = ReadingProgressService.getGlobalLastSurah();
-    final globalAyah = ReadingProgressService.getGlobalLastAyah();
-    final hasGlobal = globalSurah != null;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        GestureDetector(
-          onTap: () {
-            if (progress != null) {
-              final surahName = QuranData.instance.getSurahName(progress.surah);
-              Navigator.of(context)
-                  .push(
-                    MaterialPageRoute(
-                      builder: (_) => AyahReadingScreen(
-                        surahNumber: progress.surah,
-                        surahName: surahName,
-                        readingContext: ctx,
-                      ),
-                    ),
-                  )
-                  .then((_) => _refresh());
-            } else {
-              Navigator.of(context)
-                  .push(
-                    MaterialPageRoute(
-                      builder: (_) => const SurahListScreen(),
-                    ),
-                  )
-                  .then((_) => _refresh());
-            }
-          },
-          child: Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFDF9F6),
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    S.get('start_reading'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
                     style: const TextStyle(
                       fontFamily: 'Merriweather',
                       fontSize: 15,
@@ -988,189 +658,24 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                       height: 1.4,
                     ),
                   ),
-                ),
-                const Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 14,
-                  color: Color(0xFF7A746F),
-                ),
-              ],
-            ),
-          ),
-        ),
-        if (hasGlobal)
-          Padding(
-            padding: const EdgeInsets.only(left: 4, top: 8),
-            child: Text(
-              '${QuranData.instance.getSurahName(globalSurah)} ${S.get('surah_label')} \u00b7 $globalAyah. ${S.get('ayah_label')}',
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                fontStyle: FontStyle.italic,
-                color: Color(0xFF7A746F),
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _buildHatimEntry(BuildContext context) {
-    const ctx = ReadingContext.hatim();
-    final progress = ReadingProgressService.getContextProgress(ctx);
-
-    String subtitle;
-    if (progress != null) {
-      final surahName = QuranData.instance.getSurahName(progress.surah);
-      subtitle = '$surahName \u00b7 ${progress.ayah}. ${S.get('ayah_label')}';
-    } else {
-      subtitle = S.get('hatim_subtitle');
-    }
-
-    return GestureDetector(
-      onTap: () {
-        if (progress != null) {
-          final surahName = QuranData.instance.getSurahName(progress.surah);
-          Navigator.of(context)
-              .push(
-                MaterialPageRoute(
-                  builder: (_) => AyahReadingScreen(
-                    surahNumber: progress.surah,
-                    surahName: surahName,
-                    readingContext: ctx,
-                  ),
-                ),
-              )
-              .then((_) => _refresh());
-        } else {
-          Navigator.of(context)
-              .push(
-                MaterialPageRoute(
-                  builder: (_) => const SurahListScreen(
-                    readingContext: ctx,
-                  ),
-                ),
-              )
-              .then((_) => _refresh());
-        }
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFDF9F6),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    S.get('hatim_title'),
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFF7A746F),
-                      height: 1.4,
+                  if (subtitle != null && subtitle.isNotEmpty) ...[
+                    const SizedBox(height: 3),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF7A746F),
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFFB5AEA8),
-                    ),
-                  ),
+                  ],
                 ],
               ),
             ),
             const Icon(
               Icons.arrow_forward_ios_rounded,
-              size: 12,
-              color: Color(0xFFB5AEA8),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCollectiveReadingEntry(BuildContext context) {
-    final selectedJuz = CollectiveReadingService.getSelectedJuz();
-    final isCompleted = CollectiveReadingService.isCompleted();
-
-    String subtitle;
-    if (selectedJuz != null && !isCompleted) {
-      final ctx = ReadingContext.juz(selectedJuz);
-      final progress = ReadingProgressService.getContextProgress(ctx);
-      if (progress != null) {
-        final surahName = QuranData.instance.getSurahName(progress.surah);
-        subtitle =
-            '$selectedJuz. ${S.get('juz_label')} \u00b7 $surahName ${progress.ayah}. ${S.get('ayah_label')}';
-      } else {
-        subtitle = '$selectedJuz. ${S.get('juz_selected')}';
-      }
-    } else {
-      subtitle = S.get('juz_subtitle');
-    }
-
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context)
-            .push(
-              MaterialPageRoute(
-                  builder: (_) => const CollectiveReadingScreen()),
-            )
-            .then((_) => _refresh());
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFDF9F6),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    S.get('juz_title'),
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFF7A746F),
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: Color(0xFFB5AEA8),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 12,
+              size: 14,
               color: Color(0xFFB5AEA8),
             ),
           ],

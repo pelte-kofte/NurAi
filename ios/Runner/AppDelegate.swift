@@ -7,13 +7,17 @@ import ActivityKit
 @objc class AppDelegate: FlutterAppDelegate {
   private let channelName = "nurai.widgets"
   private let methodSetPayload = "setNextPrayerPayload"
+  private let methodSetDailyContentPayload = "setDailyContentPayload"
   private let methodRefreshWidgets = "refreshWidgets"
   private let methodIsIftarLiveActivitySupported = "isIftarLiveActivitySupported"
   private let methodStartIftarLiveActivity = "startIftarLiveActivity"
   private let methodUpdateIftarLiveActivity = "updateIftarLiveActivity"
   private let methodEndIftarLiveActivity = "endIftarLiveActivity"
-  private let defaultAppGroupId = "group.com.nurai.app"
+  private let defaultAppGroupId = "group.com.nilico.duaya"
   private let payloadKey = "next_prayer_payload"
+  private let dailyContentPayloadKey = "daily_content_payload"
+  private let nextPrayerWidgetKind = "NextPrayerWidget"
+  private let dailyContentWidgetKind = "NurAiWidgets"
 
   override func application(
     _ application: UIApplication,
@@ -39,7 +43,19 @@ import ActivityKit
             result(FlutterError(code: "invalid_args", message: "Missing payload", details: nil))
             return
           }
-          self.writePayload(payload)
+          self.writePayload(payload, key: self.payloadKey)
+          self.refreshWidgets()
+          result(nil)
+
+        case self.methodSetDailyContentPayload:
+          guard
+            let args = call.arguments as? [String: Any],
+            let payload = args["payload"] as? String
+          else {
+            result(FlutterError(code: "invalid_args", message: "Missing payload", details: nil))
+            return
+          }
+          self.writePayload(payload, key: self.dailyContentPayloadKey)
           self.refreshWidgets()
           result(nil)
 
@@ -79,9 +95,9 @@ import ActivityKit
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
-  private func writePayload(_ payload: String) {
+  private func writePayload(_ payload: String, key: String) {
     if let sharedDefaults = resolveSharedDefaults() {
-      sharedDefaults.set(payload, forKey: payloadKey)
+      sharedDefaults.set(payload, forKey: key)
       sharedDefaults.synchronize()
     }
   }
@@ -101,7 +117,8 @@ import ActivityKit
 
   private func refreshWidgets() {
     if #available(iOS 14.0, *) {
-      WidgetCenter.shared.reloadAllTimelines()
+      WidgetCenter.shared.reloadTimelines(ofKind: nextPrayerWidgetKind)
+      WidgetCenter.shared.reloadTimelines(ofKind: dailyContentWidgetKind)
     }
   }
 

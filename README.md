@@ -180,10 +180,36 @@ Flutter computes a JSON payload and writes it through native `MethodChannel` (`n
 }
 ```
 
+Daily content payload (for configurable iOS lock screen widget):
+
+```json
+{
+  "schema": 1,
+  "lang": "tr",
+  "date": "2026-02-17",
+  "verse": {
+    "title": "Günün Ayeti",
+    "text": "...",
+    "ref": "Bakara Suresi, 255"
+  },
+  "hadith": {
+    "title": "Günün Hadisi",
+    "text": "...",
+    "ref": "Buhari"
+  },
+  "asma": {
+    "name": "الرَّحْمَٰنُ - Ar-Rahman",
+    "meaning": "Sonsuz merhamet sahibi."
+  },
+  "updatedAt": 1700000000000
+}
+```
+
 ### Storage keys
 
 - Android: SharedPreferences file `nurai_widget_prefs`, key `next_prayer_payload`
-- iOS: App Group UserDefaults suite `group.com.nurai.app` (with fallback to bundle-based group), key `next_prayer_payload`
+- iOS: App Group UserDefaults suite `group.com.nilico.duaya` (with fallback to bundle-based group), key `next_prayer_payload`
+- iOS daily content widget payload key: `daily_content_payload`
 
 ### Flutter service
 
@@ -206,6 +232,7 @@ Channel name: `nurai.widgets`
 
 Methods:
 - `setNextPrayerPayload` with arg `{ "payload": "<json string>" }`
+- `setDailyContentPayload` with arg `{ "payload": "<json string>" }`
 - `refreshWidgets`
 
 Implemented in:
@@ -229,8 +256,12 @@ Added:
 Added source/templates:
 - `ios/NurAiWidgets/NurAiWidgetsBundle.swift`
 - `ios/NurAiWidgets/NextPrayerWidget.swift`
+- `ios/NurAiWidgets/NurAiWidgets.swift` (configurable daily lock screen widget)
 - `ios/NurAiWidgets/Info.plist`
 - `ios/NurAiWidgets/NurAiWidgets.entitlements`
+- `ios/NurAiWidgets/AppIntent.swift` (AppIntent enum/config)
+- `ios/NurAiWidgets/en.lproj/Localizable.strings`
+- `ios/NurAiWidgets/tr.lproj/Localizable.strings`
 
 Runner App Group entitlement:
 - `ios/Runner/Runner.entitlements`
@@ -246,9 +277,12 @@ The extension source files are added in repo, but you still need to register the
 4. Enable **App Groups** capability in both targets:
    - `Runner`
    - `NurAiWidgets`
-5. Use the same group in both (default used here): `group.com.nurai.app`.
-   - Current Runner bundle id is `com.example.nurai`; if your app group policy uses bundle-based naming, set it to `group.com.example.nurai` and update both targets consistently.
-6. Ensure extension Info.plist points to WidgetKit extension point and entitlements include the app group.
+5. Use the same group in both: `group.com.nilico.duaya`.
+6. Bundle identifiers should be:
+   - App: `com.nilico.duaya`
+   - Widget extension: `com.nilico.duaya.NurAiWidgetsExtension`
+7. After entitlement/capability changes, bump build number and reinstall app on device.
+8. Ensure extension Info.plist points to WidgetKit extension point and entitlements include the app group.
 
 ### Deep link behavior
 
@@ -269,6 +303,24 @@ The extension source files are added in repo, but you still need to register the
    - notification status line
 5. Add iOS widget from SpringBoard and verify the same fields.
 6. Confirm widget updates after location or notification changes.
+
+### iOS lock screen configurable widget test (Verse / Hadith / Asma)
+
+1. Build and run on a physical iPhone (iOS with WidgetKit lock-screen support).
+2. Delete app from device if you changed entitlements, then reinstall.
+3. Open app once so shared payloads are written (done at launch/resume automatically).
+4. Long-press lock screen -> `Customize` -> `Lock Screen`.
+5. Tap widget area and add `NurAi` widget (daily content).
+6. Tap the added widget, then in edit UI set `Content Type`:
+   - `Ayet / Verse`
+   - `Hadis / Hadith`
+   - `Esma / Asma ul Husna`
+7. Save and verify widget content switches immediately.
+8. Keep device until next day and verify automatic timeline refresh after midnight.
+9. Confirm lock-screen families are available:
+   - `.accessoryInline`
+   - `.accessoryCircular`
+   - `.accessoryRectangular`
 
 ## Serverless Iftar Live Activity limitations
 

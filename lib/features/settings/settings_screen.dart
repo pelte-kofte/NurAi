@@ -2,13 +2,11 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../../data/local_preferences_service.dart';
-import '../../data/prayer_location_service.dart';
 import '../../data/premium_service.dart';
 import '../../data/user_profile_service.dart';
 import '../../data/widget_payload_service.dart';
 import '../../data/iftar_live_activity_service.dart';
 import '../../l10n/app_strings.dart';
-import '../../models/prayer_location.dart';
 import '../notes/notes_screen.dart';
 import '../premium/paywall_screen.dart';
 
@@ -67,33 +65,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           const SizedBox(height: 14),
-          _buildSectionTitle(
-            S.get('prayer_times'),
-            icon: Icons.access_time_rounded,
-          ),
-          _buildRow(
-            title: S.get('location'),
-            icon: Icons.location_on_outlined,
-            value: _prayerLocationModeLabel(
-              LocalPreferencesService.prayerLocation.value.mode,
-            ),
-            onTap: () => _showPrayerLocationPicker(),
-          ),
-          if (LocalPreferencesService.prayerLocation.value.mode ==
-              PrayerLocationMode.current)
-            Padding(
-              padding: const EdgeInsets.only(top: 2, bottom: 12),
-              child: Text(
-                S.get('location_privacy_note'),
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFFB5AEA8),
-                  height: 1.4,
-                ),
-              ),
-            ),
           const SizedBox(height: 6),
           _buildRow(
             title: S.get('language'),
@@ -333,7 +304,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Switch.adaptive(
               value: value,
               onChanged: onChanged,
-              activeTrackColor: const Color(0xFFB57A5A),
+              activeTrackColor: const Color(0xFF7BAEAC),
             ),
           ),
         ],
@@ -372,59 +343,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         return S.get('dark');
       default:
         return S.get('system');
-    }
-  }
-
-  String _prayerLocationModeLabel(PrayerLocationMode mode) {
-    switch (mode) {
-      case PrayerLocationMode.current:
-        return S.get('use_current_location');
-      case PrayerLocationMode.city:
-        return S.get('select_city');
-    }
-  }
-
-  void _showPrayerLocationPicker() {
-    _showOptionSheet(
-      title: S.get('location'),
-      options: [
-        _Option(S.get('use_current_location'), 'current'),
-        _Option(S.get('select_city'), 'city'),
-      ],
-      current: LocalPreferencesService.prayerLocation.value.mode.name,
-      onSelect: (value) async {
-        if (value == 'current') {
-          final result = await PrayerLocationService.useCurrentLocation();
-          if (!mounted) return;
-          if (result != PrayerLocationActionResult.success) {
-            _showStubDialog(_locationErrorMessage(result));
-          }
-          setState(() {});
-          return;
-        }
-
-        await PrayerLocationService.selectCityPlaceholder();
-        if (!mounted) return;
-        _showStubDialog(S.get('city_placeholder'));
-        setState(() {});
-      },
-    );
-  }
-
-  String _locationErrorMessage(PrayerLocationActionResult result) {
-    switch (result) {
-      case PrayerLocationActionResult.serviceDisabled:
-        return S.get('location_service_disabled');
-      case PrayerLocationActionResult.permissionDenied:
-        return S.get('location_permission_denied');
-      case PrayerLocationActionResult.permissionDeniedForever:
-        return S.get('location_permission_denied_forever');
-      case PrayerLocationActionResult.unavailableOnWeb:
-        return S.get('location_unavailable_web');
-      case PrayerLocationActionResult.failed:
-        return S.get('location_read_failed');
-      case PrayerLocationActionResult.success:
-        return S.get('ok');
     }
   }
 

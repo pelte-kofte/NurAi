@@ -25,6 +25,13 @@ class DailyContentItem {
   }
 }
 
+enum HomeDailyContentType {
+  verse,
+  hadith,
+  gentleReminder,
+  quote,
+}
+
 class DailyContentService {
   static bool _initialized = false;
   static bool _isLoading = false;
@@ -42,6 +49,51 @@ class DailyContentService {
         _words,
         DateTime.now(),
       );
+
+  static HomeDailyContentType homeContentTypeForDate(DateTime date) {
+    switch (date.weekday) {
+      case DateTime.monday:
+        return HomeDailyContentType.verse;
+      case DateTime.tuesday:
+        return HomeDailyContentType.hadith;
+      case DateTime.wednesday:
+        return HomeDailyContentType.gentleReminder;
+      case DateTime.thursday:
+        return HomeDailyContentType.quote;
+      case DateTime.friday:
+        return HomeDailyContentType.hadith;
+      case DateTime.saturday:
+        return HomeDailyContentType.verse;
+      case DateTime.sunday:
+        return HomeDailyContentType.gentleReminder;
+      default:
+        return HomeDailyContentType.verse;
+    }
+  }
+
+  static DailyContentItem getQuoteForDate(DateTime date) {
+    const quotes = <DailyContentItem>[
+      DailyContentItem(
+        id: 'quote_1',
+        text:
+            'The most beloved deeds to Allah are those done regularly, even if they are small.',
+        source: 'Bukhari',
+      ),
+      DailyContentItem(
+        id: 'quote_2',
+        text: 'Whoever relies upon Allah, then He is sufficient for them.',
+        source: 'At-Talaq 65:3',
+      ),
+      DailyContentItem(
+        id: 'quote_3',
+        text:
+            'Indeed, Allah does not look at your forms, but He looks at your hearts and deeds.',
+        source: 'Muslim',
+      ),
+    ];
+    final index = reminderIndexForDate(date, quotes.length);
+    return quotes[index];
+  }
 
   static Future<String> getGentleReminderForDate(
     DateTime date,

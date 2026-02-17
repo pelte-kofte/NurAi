@@ -4,7 +4,7 @@
 <dict>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.nurai.app</string>
+		<string>group.com.nilico.duaya</string>
 	</array>
 </dict>
 </plist>

@@ -1,0 +1,9 @@
+"widget_config_title" = "Widget Configuration";
+"widget_config_description" = "Choose which daily content to show on the lock screen.";
+"content_type_param" = "Content Type";
+"content_type_verse" = "Verse";
+"content_type_hadith" = "Hadith";
+"content_type_asma" = "Asma ul Husna";
+"widget_display_name" = "Daily Spiritual Content";
+"widget_description" = "Shows a daily verse, hadith, or Asma ul Husna.";
+"widget_loading" = "Loading...";

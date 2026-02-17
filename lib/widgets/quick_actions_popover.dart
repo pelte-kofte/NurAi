@@ -380,7 +380,7 @@ class _PopoverContentState extends State<_PopoverContent> {
                   CupertinoSwitch(
                     value: enabled,
                     onChanged: _onToggleAdhan,
-                    activeTrackColor: const Color(0xFFB57A5A),
+                    activeTrackColor: const Color(0xFF7BAEAC),
                   ),
                 ],
               ),

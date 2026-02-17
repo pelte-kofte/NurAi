@@ -29,6 +29,17 @@ class S {
 
   static const _strings = <String, Map<String, String>>{
     'tr': {
+      'splash_headline': 'Kalbinizi sakinlestirin, niyetinizi tazeleyin.',
+      'splash_subtitle':
+          'Her yeni vakit, Rabbine yakinlasmak icin bir davettir.',
+      'home_section_now_upcoming': 'Bir sonraki vakit',
+      'home_section_for_today': 'Bugun Icin',
+      'home_see_more_for_today': 'Bugun icin daha fazlasini gor',
+      'home_section_explore': 'Kesfet',
+      'home_time_to_maghrib': 'Aksam ezanina kalan',
+      'today_screen_title': 'Bugun',
+      'daily_quote_title': 'Gunluk Soz',
+      'daily_asma_title': 'Gunun Esmasi',
       // Greetings
       'greeting_night': 'Hayırlı geceler',
       'greeting_morning': 'Hayırlı sabahlar',
@@ -309,6 +320,17 @@ class S {
       'load_error': 'Veriler yüklenemedi.\nLütfen uygulamayı yeniden başlatın.',
     },
     'en': {
+      'splash_headline': 'Soften the heart, renew the intention.',
+      'splash_subtitle':
+          'Each new prayer time is an invitation to draw near to Allah.',
+      'home_section_now_upcoming': 'Next prayer time',
+      'home_section_for_today': 'For Today',
+      'home_see_more_for_today': 'See more for today',
+      'home_section_explore': 'Explore',
+      'home_time_to_maghrib': 'Time to Maghrib',
+      'today_screen_title': 'Today',
+      'daily_quote_title': 'Quote of the Day',
+      'daily_asma_title': 'Name of Allah',
       // Greetings
       'greeting_night': 'Blessed night',
       'greeting_morning': 'Good morning',
@@ -598,6 +620,16 @@ class S {
       'load_error': 'Data could not be loaded.\nPlease restart the app.',
     },
     'ar': {
+      'splash_headline': 'هدئ قلبك، وجدد نيتك.',
+      'splash_subtitle': 'كل وقت جديد دعوة للاقتراب من الله.',
+      'home_section_now_upcoming': 'الصلاة القادمة',
+      'home_section_for_today': 'لليوم',
+      'home_see_more_for_today': 'شاهد المزيد لليوم',
+      'home_section_explore': 'استكشف',
+      'home_time_to_maghrib': 'الوقت الى المغرب',
+      'today_screen_title': 'اليوم',
+      'daily_quote_title': 'اقتباس اليوم',
+      'daily_asma_title': 'اسم من اسماء الله',
       'settings': 'الإعدادات',
       'profile': 'الملف الشخصي',
       'display_name': 'الاسم المعروض',
@@ -698,6 +730,17 @@ class S {
       'language_fr': 'الفرنسية',
     },
     'de': {
+      'splash_headline': 'Beruhige dein Herz und erneuere deine Absicht.',
+      'splash_subtitle':
+          'Jede neue Gebetszeit ist eine Einladung, Allah naher zu kommen.',
+      'home_section_now_upcoming': 'Naechste Gebetszeit',
+      'home_section_for_today': 'Fuer heute',
+      'home_see_more_for_today': 'Mehr fuer heute ansehen',
+      'home_section_explore': 'Entdecken',
+      'home_time_to_maghrib': 'Zeit bis Maghrib',
+      'today_screen_title': 'Heute',
+      'daily_quote_title': 'Zitat des Tages',
+      'daily_asma_title': 'Name Allahs',
       'settings': 'Einstellungen',
       'profile': 'Profil',
       'display_name': 'Anzeigename',
@@ -802,6 +845,17 @@ class S {
       'language_fr': 'Französisch',
     },
     'fr': {
+      'splash_headline': 'Apaise le coeur et renouvelle ton intention.',
+      'splash_subtitle':
+          'Chaque nouvelle priere est une invitation a te rapprocher d\'Allah.',
+      'home_section_now_upcoming': 'Prochaine priere',
+      'home_section_for_today': 'Pour aujourd\'hui',
+      'home_see_more_for_today': 'Voir plus pour aujourd\'hui',
+      'home_section_explore': 'Explorer',
+      'home_time_to_maghrib': 'Temps jusqu\'a Maghrib',
+      'today_screen_title': 'Aujourd\'hui',
+      'daily_quote_title': 'Citation du jour',
+      'daily_asma_title': 'Nom d\'Allah',
       'settings': 'Parametres',
       'profile': 'Profil',
       'display_name': 'Nom affiche',

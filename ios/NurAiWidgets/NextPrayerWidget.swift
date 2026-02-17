@@ -1,7 +1,7 @@
 import WidgetKit
 import SwiftUI
 
-private let defaultAppGroupId = "group.com.nurai.app"
+private let defaultAppGroupId = "group.com.nilico.duaya"
 private let payloadKey = "next_prayer_payload"
 
 struct NextPrayerEntry: TimelineEntry {
