@@ -28,49 +28,42 @@ struct DailyContentPayload: Decodable {
 
 struct DailyContentEntry: TimelineEntry {
   let date: Date
-  let configuration: DailyWidgetConfigurationIntent
   let payload: DailyContentPayload?
 }
 
-struct DailyContentProvider: AppIntentTimelineProvider {
+struct DailyContentProvider: TimelineProvider {
   func placeholder(in context: Context) -> DailyContentEntry {
     DailyContentEntry(
       date: Date(),
-      configuration: DailyWidgetConfigurationIntent(),
       payload: nil
     )
   }
 
-  func snapshot(
-    for configuration: DailyWidgetConfigurationIntent,
-    in context: Context
-  ) async -> DailyContentEntry {
-    DailyContentEntry(
+  func getSnapshot(in context: Context, completion: @escaping (DailyContentEntry) -> Void) {
+    let entry: DailyContentEntry = DailyContentEntry(
       date: Date(),
-      configuration: configuration,
       payload: loadPayload()
     )
+    completion(entry)
   }
 
-  func timeline(
-    for configuration: DailyWidgetConfigurationIntent,
-    in context: Context
-  ) async -> Timeline<DailyContentEntry> {
-    let now = Date()
-    let entry = DailyContentEntry(
+  func getTimeline(in context: Context, completion: @escaping (Timeline<DailyContentEntry>) -> Void) {
+    let now: Date = Date()
+    let entry: DailyContentEntry = DailyContentEntry(
       date: now,
-      configuration: configuration,
       payload: loadPayload()
     )
-    let nextRefresh = nextMidnightRefreshDate(after: now)
-    return Timeline(entries: [entry], policy: .after(nextRefresh))
+    let nextRefresh: Date = nextMidnightRefreshDate(after: now)
+    let timeline: Timeline<DailyContentEntry> = Timeline(entries: [entry], policy: .after(nextRefresh))
+    completion(timeline)
   }
 
   private func nextMidnightRefreshDate(after date: Date) -> Date {
-    let calendar = Calendar.current
-    let startOfToday = calendar.startOfDay(for: date)
-    let nextDay = calendar.date(byAdding: .day, value: 1, to: startOfToday) ?? date
-    return calendar.date(byAdding: .minute, value: 5, to: nextDay) ?? nextDay
+    let calendar: Calendar = Calendar.current
+    let startOfToday: Date = calendar.startOfDay(for: date)
+    let nextDay: Date = calendar.date(byAdding: .day, value: 1, to: startOfToday) ?? date
+    let refreshDate: Date = calendar.date(byAdding: .minute, value: 5, to: nextDay) ?? nextDay
+    return refreshDate
   }
 
   private func loadPayload() -> DailyContentPayload? {
@@ -91,7 +84,7 @@ struct DailyContentProvider: AppIntentTimelineProvider {
   }
 
   private func resolveSharedDefaults() -> UserDefaults? {
-    var candidates = [defaultAppGroupId]
+    var candidates: [String] = [defaultAppGroupId]
     if let bundleId = Bundle.main.bundleIdentifier {
       candidates.append("group.\(bundleId)")
       if let dotIndex = bundleId.lastIndex(of: ".") {
@@ -109,8 +102,14 @@ struct DailyContentProvider: AppIntentTimelineProvider {
 }
 
 struct NurAiWidgetsEntryView: View {
-  @Environment(\.widgetFamily) private var family
-  var entry: DailyContentProvider.Entry
+  private enum ContentType {
+    case verse
+    case hadith
+    case asma
+  }
+
+  @Environment(\.widgetFamily) private var family: WidgetFamily
+  let entry: DailyContentEntry
 
   var body: some View {
     if let payload = entry.payload {
@@ -128,6 +127,7 @@ struct NurAiWidgetsEntryView: View {
     }
   }
 
+  @ViewBuilder
   private func contentView(payload: DailyContentPayload) -> some View {
     switch family {
     case .accessoryInline:
@@ -161,7 +161,7 @@ struct NurAiWidgetsEntryView: View {
         if let reference = shortReference(payload: payload), !reference.isEmpty {
           Text(reference)
             .font(.system(size: 11, weight: .regular))
-            .foregroundStyle(.secondary)
+            .foregroundStyle(Color.secondary)
             .lineLimit(1)
         }
       }
@@ -174,8 +174,18 @@ struct NurAiWidgetsEntryView: View {
       .lineLimit(2)
   }
 
+  private func selectedContentType(payload: DailyContentPayload) -> ContentType {
+    if payload.verse != nil {
+      return .verse
+    }
+    if payload.hadith != nil {
+      return .hadith
+    }
+    return .asma
+  }
+
   private func shortTitle(payload: DailyContentPayload) -> String {
-    switch entry.configuration.contentType {
+    switch selectedContentType(payload: payload) {
     case .verse:
       return payload.verse?.title ?? String(localized: "content_type_verse")
     case .hadith:
@@ -186,7 +196,7 @@ struct NurAiWidgetsEntryView: View {
   }
 
   private func shortBody(payload: DailyContentPayload) -> String {
-    switch entry.configuration.contentType {
+    switch selectedContentType(payload: payload) {
     case .verse:
       return payload.verse?.text ?? String(localized: "widget_loading")
     case .hadith:
@@ -200,7 +210,7 @@ struct NurAiWidgetsEntryView: View {
   }
 
   private func shortReference(payload: DailyContentPayload) -> String? {
-    switch entry.configuration.contentType {
+    switch selectedContentType(payload: payload) {
     case .verse:
       return payload.verse?.ref
     case .hadith:
@@ -211,7 +221,7 @@ struct NurAiWidgetsEntryView: View {
   }
 
   private func inlineText(payload: DailyContentPayload) -> String {
-    switch entry.configuration.contentType {
+    switch selectedContentType(payload: payload) {
     case .verse:
       return "\(shortTitle(payload: payload)): \(shortBody(payload: payload))"
     case .hadith:
@@ -225,22 +235,28 @@ struct NurAiWidgetsEntryView: View {
 struct NurAiWidgets: Widget {
   let kind: String = "NurAiWidgets"
 
+  private var supportedWidgetFamilies: [WidgetFamily] {
+    if #available(iOSApplicationExtension 16.0, *) {
+      return [
+        .accessoryInline,
+        .accessoryCircular,
+        .accessoryRectangular,
+        .systemSmall,
+        .systemMedium,
+      ]
+    }
+    return [
+      .systemSmall,
+      .systemMedium,
+    ]
+  }
+
   var body: some WidgetConfiguration {
-    AppIntentConfiguration(
-      kind: kind,
-      intent: DailyWidgetConfigurationIntent.self,
-      provider: DailyContentProvider()
-    ) { entry in
+    StaticConfiguration(kind: kind, provider: DailyContentProvider()) { entry in
       NurAiWidgetsEntryView(entry: entry)
     }
     .configurationDisplayName(LocalizedStringResource("widget_display_name"))
     .description(LocalizedStringResource("widget_description"))
-    .supportedFamilies([
-      .accessoryInline,
-      .accessoryCircular,
-      .accessoryRectangular,
-      .systemSmall,
-      .systemMedium,
-    ])
+    .supportedFamilies(supportedWidgetFamilies)
   }
 }

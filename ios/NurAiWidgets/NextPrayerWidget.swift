@@ -29,8 +29,8 @@ struct NextPrayerProvider: TimelineProvider {
   }
 
   func getTimeline(in context: Context, completion: @escaping (Timeline<NextPrayerEntry>) -> Void) {
-    let entry = NextPrayerEntry(date: Date(), payload: loadPayload())
-    let nextRefresh = Date().addingTimeInterval(15 * 60)
+    let entry: NextPrayerEntry = NextPrayerEntry(date: Date(), payload: loadPayload())
+    let nextRefresh: Date = Date().addingTimeInterval(15 * 60)
     completion(Timeline(entries: [entry], policy: .after(nextRefresh)))
   }
 
@@ -46,7 +46,7 @@ struct NextPrayerProvider: TimelineProvider {
   }
 
   private func resolveSharedDefaults() -> UserDefaults? {
-    var candidates = [defaultAppGroupId]
+    var candidates: [String] = [defaultAppGroupId]
     if let bundleId = Bundle.main.bundleIdentifier {
       candidates.append("group.\(bundleId)")
       if let dotIndex = bundleId.lastIndex(of: ".") {
@@ -68,33 +68,38 @@ struct NextPrayerWidgetView: View {
 
   var body: some View {
     if let payload = entry.payload {
+      let locationLabel: String =
+        payload.locationLabel?.isEmpty == false ? (payload.locationLabel ?? "Current") : "Current"
+      let prayerLabel: String = payload.nextPrayerLabel ?? "Prayer"
+      let prayerTime: String = payload.nextPrayerTime ?? "--:--"
+      let countdownLabel: String = payload.countdownLabel ?? ""
       VStack(alignment: .leading, spacing: 8) {
         Text("Next Prayer")
           .font(.system(size: 12, weight: .regular))
-          .foregroundStyle(.secondary)
+          .foregroundStyle(Color.secondary)
 
-        Text(payload.locationLabel?.isEmpty == false ? payload.locationLabel! : "Current")
+        Text(locationLabel)
           .font(.system(size: 11, weight: .regular))
-          .foregroundStyle(.primary.opacity(0.7))
+          .foregroundStyle(Color.primary.opacity(0.7))
           .padding(.horizontal, 8)
           .padding(.vertical, 3)
           .background(Color.secondary.opacity(0.12))
           .clipShape(Capsule())
 
-        Text("\(payload.nextPrayerLabel ?? "Prayer") \(payload.nextPrayerTime ?? "--:--")")
+        Text("\(prayerLabel) \(prayerTime)")
           .font(.system(size: 20, weight: .semibold))
-          .foregroundStyle(.primary)
+          .foregroundStyle(Color.primary)
           .lineLimit(1)
 
-        Text(payload.countdownLabel ?? "")
+        Text(countdownLabel)
           .font(.system(size: 13, weight: .regular))
-          .foregroundStyle(.secondary)
+          .foregroundStyle(Color.secondary)
           .lineLimit(1)
 
         if let enabled = payload.isNotificationsEnabled {
           Text(enabled ? "Notifications: ON" : "Notifications: OFF")
             .font(.system(size: 11, weight: .regular))
-            .foregroundStyle(.secondary.opacity(0.85))
+            .foregroundStyle(Color.secondary.opacity(0.85))
             .lineLimit(1)
         }
       }
@@ -106,10 +111,10 @@ struct NextPrayerWidgetView: View {
       VStack(alignment: .leading, spacing: 8) {
         Text("Next Prayer")
           .font(.system(size: 12, weight: .regular))
-          .foregroundStyle(.secondary)
+          .foregroundStyle(Color.secondary)
         Text("Open NurAi to update")
           .font(.system(size: 15, weight: .medium))
-          .foregroundStyle(.primary)
+          .foregroundStyle(Color.primary)
       }
       .containerBackground(for: .widget) {
         Color.clear

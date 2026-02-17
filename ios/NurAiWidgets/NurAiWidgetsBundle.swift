@@ -12,7 +12,9 @@ import SwiftUI
 struct NurAiWidgetsBundle: WidgetBundle {
     var body: some Widget {
         NurAiWidgets()
-        NurAiWidgetsControl()
-        NurAiWidgetsLiveActivity()
+        NextPrayerWidget()
+        if #available(iOSApplicationExtension 16.1, *) {
+            NurAiWidgetsLiveActivity()
+        }
     }
 }
