@@ -81,6 +81,12 @@ class ReadingProgressService {
     await _prefs?.setInt(ctx.ayahKey, ayah);
   }
 
+  /// Clear saved progress for a specific reading context.
+  static Future<void> clearContextProgress(ReadingContext ctx) async {
+    await _prefs?.remove(ctx.surahKey);
+    await _prefs?.remove(ctx.ayahKey);
+  }
+
   /// Get progress for a specific context. Returns null if none.
   static ({int surah, int ayah})? getContextProgress(ReadingContext ctx) {
     final surah = _prefs?.getInt(ctx.surahKey);

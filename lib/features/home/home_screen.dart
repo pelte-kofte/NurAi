@@ -35,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   final GlobalKey _quickActionsKey = GlobalKey();
   bool _checkedNamePrompt = false;
   Timer? _clockTicker;
+  bool _clockTickerIsPerSecond = false;
   DateTime _now = DateTime.now();
 
   @override
@@ -43,10 +44,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _maybeShowNamePrompt();
     });
-    _clockTicker = Timer.periodic(const Duration(seconds: 30), (_) {
-      if (!mounted) return;
-      setState(() => _now = DateTime.now());
-    });
+    _startClockTicker(perSecond: false);
   }
 
   @override
@@ -71,6 +69,22 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void didPushNext() {
     QuickActionsPopover.hide();
+  }
+
+  void _startClockTicker({required bool perSecond}) {
+    _clockTicker?.cancel();
+    _clockTickerIsPerSecond = perSecond;
+    final interval =
+        perSecond ? const Duration(seconds: 1) : const Duration(seconds: 30);
+    _clockTicker = Timer.periodic(interval, (_) {
+      if (!mounted) return;
+      setState(() => _now = DateTime.now());
+    });
+  }
+
+  void _ensureClockTicker({required bool perSecond}) {
+    if (_clockTicker != null && _clockTickerIsPerSecond == perSecond) return;
+    _startClockTicker(perSecond: perSecond);
   }
 
   String _getGreeting() {
@@ -271,22 +285,32 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  String? _maghribCountdown(PrayerLocation location) {
+  String? _iftarCountdown(PrayerLocation location) {
     if (!location.hasCoordinates) return null;
     final times = AdhanTimesService.computeTimes(
       _now,
       location,
       countryHint: _countryFromPrayerLocation(location),
     );
-    final diff = times.maghrib.difference(_now);
-    if (diff.isNegative || diff > const Duration(minutes: 60)) return null;
+    final nextPrayer = _nextPrayerType(times);
+    if (nextPrayer != _PrayerType.maghrib) return null;
 
-    final totalMinutes = (diff.inSeconds / 60).ceil();
-    final hours = totalMinutes ~/ 60;
-    final minutes = totalMinutes % 60;
-    final hh = hours.toString().padLeft(2, '0');
-    final mm = minutes.toString().padLeft(2, '0');
-    return '$hh:$mm';
+    final diff = times.maghrib.difference(_now);
+    if (diff.isNegative || diff >= const Duration(minutes: 60)) return null;
+
+    final totalSeconds = diff.inSeconds.clamp(0, 3599);
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  _PrayerType _nextPrayerType(AdhanDayTimes times) {
+    if (times.fajr.isAfter(_now)) return _PrayerType.fajr;
+    if (times.dhuhr.isAfter(_now)) return _PrayerType.dhuhr;
+    if (times.asr.isAfter(_now)) return _PrayerType.asr;
+    if (times.maghrib.isAfter(_now)) return _PrayerType.maghrib;
+    if (times.isha.isAfter(_now)) return _PrayerType.isha;
+    return _PrayerType.none;
   }
 
   String? _countryFromPrayerLocation(PrayerLocation location) {
@@ -309,25 +333,36 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             children: [
               _buildGreeting(),
               const SizedBox(height: 26),
-              _buildSectionHeader(
-                title: S.get('home_section_now_upcoming'),
-                icon: Icons.schedule_rounded,
-              ),
-              const SizedBox(height: 10),
-              NextPrayerPill(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const AdhanTimesScreen()),
-                  );
-                },
-              ),
-              const SizedBox(height: 10),
               ValueListenableBuilder<PrayerLocation>(
                 valueListenable: LocalPreferencesService.prayerLocation,
                 builder: (context, location, _) {
-                  final countdown = _maghribCountdown(location);
-                  if (countdown == null) return const SizedBox.shrink();
-                  return _buildCountdownCard(countdown);
+                  final countdown = _iftarCountdown(location);
+                  final showIftarCountdown = countdown != null;
+                  _ensureClockTicker(perSecond: showIftarCountdown);
+
+                  if (showIftarCountdown) {
+                    return _buildCountdownCard(countdown);
+                  }
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionHeader(
+                        title: S.get('home_section_now_upcoming'),
+                        icon: Icons.schedule_rounded,
+                      ),
+                      const SizedBox(height: 10),
+                      NextPrayerPill(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const AdhanTimesScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  );
                 },
               ),
               const SizedBox(height: 30),
@@ -460,7 +495,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFDF9F6),
+        color: const Color(0xFFF9F4EF),
         borderRadius: BorderRadius.circular(10),
         border: Border.all(color: const Color(0xFF7BAEAC), width: 1),
       ),
@@ -469,7 +504,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           const Icon(
             Icons.timelapse_rounded,
             size: 16,
-            color: Color(0xFF7BAEAC),
+            color: Color(0xE67BAEAC),
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -477,9 +512,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               S.get('home_time_to_maghrib'),
               style: const TextStyle(
                 fontFamily: 'Inter',
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: Color(0xFF5F5954),
+                fontSize: 12.5,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF6D9A98),
               ),
             ),
           ),
@@ -487,9 +522,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             countdown,
             style: const TextStyle(
               fontFamily: 'Inter',
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: Color(0xFF7BAEAC),
+              fontSize: 14.4,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF6FA9A6),
             ),
           ),
         ],
@@ -684,3 +719,5 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 }
+
+enum _PrayerType { fajr, dhuhr, asr, maghrib, isha, none }

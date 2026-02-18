@@ -1,5 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
+import 'dart:async';
 import '../../data/quran_data.dart';
 import '../../data/reading_progress_service.dart';
 import '../../data/bookmark_service.dart';
@@ -35,7 +37,7 @@ class AyahReadingScreen extends StatefulWidget {
 }
 
 class _AyahReadingScreenState extends State<AyahReadingScreen> {
-  final ScrollController _scrollController = ScrollController();
+  final ItemScrollController _itemScrollController = ItemScrollController();
   late final List<Ayah> _ayahs;
   late final bool _isJuzMode;
   late int _currentLastReadSurah;
@@ -44,8 +46,11 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   int? _scrollToAyah;
   JuzRange? _activeJuzRange;
   bool _didOpenInitialNoteEditor = false;
-
-  static const double _ayahBlockHeight = 180.0;
+  bool _usedSavedContextProgress = false;
+  int? _resumeHighlightSurah;
+  int? _resumeHighlightAyah;
+  bool _showResumeHighlight = false;
+  Timer? _resumeHighlightTimer;
 
   @override
   void initState() {
@@ -83,6 +88,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
     final ctxProgress =
         ReadingProgressService.getContextProgress(widget.readingContext);
     if (ctxProgress != null) {
+      _usedSavedContextProgress = true;
       _scrollToSurah = ctxProgress.surah;
       _scrollToAyah = ctxProgress.ayah;
       _currentLastReadSurah = ctxProgress.surah;
@@ -109,6 +115,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
       final ctxProgress =
           ReadingProgressService.getContextProgress(widget.readingContext);
       if (ctxProgress != null && ctxProgress.surah == widget.surahNumber) {
+        _usedSavedContextProgress = true;
         _scrollToSurah = ctxProgress.surah;
         _scrollToAyah = ctxProgress.ayah;
         _currentLastReadSurah = widget.surahNumber;
@@ -126,11 +133,40 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
     final index = _ayahs.indexWhere((a) =>
         a.surah == (_scrollToSurah ?? widget.surahNumber) &&
         a.ayahNumber == _scrollToAyah);
-    if (index > 0) {
-      final offset = index * _ayahBlockHeight;
-      _scrollController
-          .jumpTo(offset.clamp(0, _scrollController.position.maxScrollExtent));
+    if (index < 0) {
+      if (_usedSavedContextProgress) {
+        ReadingProgressService.clearContextProgress(widget.readingContext);
+      }
+      _scrollToSurah = null;
+      _scrollToAyah = null;
+      return;
     }
+
+    final listIndex = _isJuzMode ? index + 1 : index;
+    if (_itemScrollController.isAttached) {
+      _itemScrollController.jumpTo(index: listIndex);
+      _showResumeJumpHighlight(_ayahs[index]);
+    }
+  }
+
+  void _showResumeJumpHighlight(Ayah ayah) {
+    _resumeHighlightTimer?.cancel();
+    setState(() {
+      _resumeHighlightSurah = ayah.surah;
+      _resumeHighlightAyah = ayah.ayahNumber;
+      _showResumeHighlight = true;
+    });
+
+    _resumeHighlightTimer = Timer(const Duration(seconds: 1), () {
+      if (!mounted) return;
+      setState(() => _showResumeHighlight = false);
+    });
+  }
+
+  bool _isResumeHighlight(Ayah ayah) {
+    return _showResumeHighlight &&
+        ayah.surah == _resumeHighlightSurah &&
+        ayah.ayahNumber == _resumeHighlightAyah;
   }
 
   void _onAyahTap(Ayah ayah) {
@@ -226,7 +262,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _resumeHighlightTimer?.cancel();
     super.dispose();
   }
 
@@ -293,8 +329,8 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
           ],
         ],
       ),
-      body: ListView.builder(
-        controller: _scrollController,
+      body: ScrollablePositionedList.builder(
+        itemScrollController: _itemScrollController,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         itemCount: _ayahs.length + (_isJuzMode ? 1 : 0),
         itemBuilder: (context, index) {
@@ -324,6 +360,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
             ayah: ayah,
             surahName: QuranData.instance.getSurahName(ayah.surah),
             isLastRead: _isLastRead(ayah),
+            isResumeHighlight: _isResumeHighlight(ayah),
             isWithinJuzRange: _isAyahWithinJuzRange(ayah),
             onTap: () => _onAyahTap(ayah),
           );
@@ -338,6 +375,7 @@ class _AyahBlock extends StatefulWidget {
   final Ayah ayah;
   final String surahName;
   final bool isLastRead;
+  final bool isResumeHighlight;
   final bool isWithinJuzRange;
   final VoidCallback? onTap;
 
@@ -345,6 +383,7 @@ class _AyahBlock extends StatefulWidget {
     required this.ayah,
     required this.surahName,
     this.isLastRead = false,
+    this.isResumeHighlight = false,
     this.isWithinJuzRange = false,
     this.onTap,
   });
@@ -412,14 +451,24 @@ class _AyahBlockState extends State<_AyahBlock> {
     return GestureDetector(
       onTap: widget.onTap,
       behavior: HitTestBehavior.opaque,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 320),
+        curve: Curves.easeOut,
         margin: const EdgeInsets.only(bottom: 40),
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
-          color: widget.isLastRead
-              ? readAccent.withValues(alpha: 0.10)
-              : Colors.transparent,
+          color: widget.isResumeHighlight
+              ? readAccent.withValues(alpha: 0.16)
+              : (widget.isLastRead
+                  ? readAccent.withValues(alpha: 0.10)
+                  : Colors.transparent),
           borderRadius: BorderRadius.circular(8),
+          border: widget.isResumeHighlight
+              ? Border.all(
+                  color: readAccent.withValues(alpha: 0.42),
+                  width: 1,
+                )
+              : null,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,

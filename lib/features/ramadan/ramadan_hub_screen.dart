@@ -7,7 +7,6 @@ import '../../l10n/app_strings.dart';
 import '../../models/reading_context.dart';
 import '../reading/ayah_reading_screen.dart';
 import '../ramadan/duas_screen.dart';
-import '../settings/settings_screen.dart';
 
 const Color _mutedInfoIconColor = Color(0xFF8FA9A7);
 
@@ -190,39 +189,6 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
     );
   }
 
-  void _openSettings() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => Scaffold(
-          backgroundColor: const Color(0xFFFBF6F2),
-          appBar: AppBar(
-            backgroundColor: const Color(0xFFFBF6F2),
-            elevation: 0,
-            scrolledUnderElevation: 0,
-            leading: IconButton(
-              icon: const Icon(
-                Icons.arrow_back_ios_rounded,
-                size: 20,
-                color: Color(0xFF7A746F),
-              ),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            title: Text(
-              S.get('settings'),
-              style: const TextStyle(
-                fontFamily: 'Merriweather',
-                fontSize: 20,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF2B2725),
-              ),
-            ),
-          ),
-          body: const SettingsScreen(),
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     const hatimCtx = ReadingContext.hatim();
@@ -295,14 +261,6 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
             title: S.get('ramadan_short_duas'),
             leadingIcon: Icons.menu_book_outlined,
             onTap: _openDuas,
-          ),
-          const SizedBox(height: 22),
-          _SectionHeader(S.get('ramadan_section_iftar_adhan')),
-          const SizedBox(height: 10),
-          _SimpleNavCard(
-            title: S.get('ramadan_adhan_notifications'),
-            subtitle: S.get('ramadan_adhan_notifications_subtitle'),
-            onTap: _openSettings,
           ),
         ],
       ),

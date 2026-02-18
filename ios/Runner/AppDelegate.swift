@@ -1,7 +1,7 @@
+import ActivityKit
 import Flutter
 import UIKit
 import WidgetKit
-import ActivityKit
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -31,7 +31,13 @@ import ActivityKit
       )
       channel.setMethodCallHandler { [weak self] call, result in
         guard let self = self else {
-          result(FlutterError(code: "unavailable", message: "AppDelegate unavailable", details: nil))
+          result(
+            FlutterError(
+              code: "unavailable",
+              message: "AppDelegate unavailable",
+              details: nil
+            )
+          )
           return
         }
         switch call.method {
@@ -123,21 +129,25 @@ import ActivityKit
   }
 
   @available(iOS 16.1, *)
-  private func firstIftarActivity() -> Activity<NurAiWidgetsAttributes>? {
-    Activity<NurAiWidgetsAttributes>.activities.first
+  private func firstIftarActivity() -> Activity<IftarAttributes>? {
+    Activity<IftarAttributes>.activities.first
   }
 
   @available(iOS 16.1, *)
-  private func parseIftarState(_ args: [String: Any]) -> NurAiWidgetsAttributes.ContentState {
-    let title = (args["title"] as? String) ?? "İftara"
-    let subtitle = (args["subtitle"] as? String) ?? "Kalan süre"
+  private func parseIftarState(_ args: [String: Any]) -> IftarAttributes.ContentState {
+    let title = (args["title"] as? String) ?? "Iftara"
+    let subtitle = (args["subtitle"] as? String) ?? "Kalan sure"
     let phase = (args["phase"] as? String) ?? "countdown"
-    let targetEpochMs = (args["targetEpochMs"] as? NSNumber)?.int64Value
-      ?? Int64(Date().timeIntervalSince1970 * 1000)
-    return NurAiWidgetsAttributes.ContentState(
+    let targetEpochMs =
+      (args["endEpochMs"] as? NSNumber)?.int64Value
+      ?? (args["targetEpochMs"] as? NSNumber)?.int64Value
+      ?? Int64(Date().addingTimeInterval(1).timeIntervalSince1970 * 1000)
+    let endDate = Date(timeIntervalSince1970: TimeInterval(targetEpochMs) / 1000.0)
+
+    return IftarAttributes.ContentState(
       title: title,
       subtitle: subtitle,
-      targetEpochMs: targetEpochMs,
+      endDate: endDate,
       phase: phase
     )
   }
@@ -154,9 +164,9 @@ import ActivityKit
         result(nil)
         return
       }
-      let attributes = NurAiWidgetsAttributes(name: "Iftar")
+      let attributes = IftarAttributes(name: "Iftar")
       do {
-        _ = try Activity<NurAiWidgetsAttributes>.request(
+        _ = try Activity<IftarAttributes>.request(
           attributes: attributes,
           contentState: state,
           pushType: nil
@@ -194,7 +204,7 @@ import ActivityKit
       return
     }
     Task {
-      for activity in Activity<NurAiWidgetsAttributes>.activities {
+      for activity in Activity<IftarAttributes>.activities {
         await activity.end(using: activity.contentState, dismissalPolicy: .immediate)
       }
       result(nil)
@@ -203,11 +213,11 @@ import ActivityKit
 }
 
 @available(iOS 16.1, *)
-struct NurAiWidgetsAttributes: ActivityAttributes {
+struct IftarAttributes: ActivityAttributes {
   public struct ContentState: Codable, Hashable {
     var title: String
     var subtitle: String
-    var targetEpochMs: Int64
+    var endDate: Date
     var phase: String
   }
 
