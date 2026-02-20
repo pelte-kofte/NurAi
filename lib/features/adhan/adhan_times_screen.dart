@@ -19,6 +19,7 @@ class AdhanTimesScreen extends StatefulWidget {
 class _AdhanTimesScreenState extends State<AdhanTimesScreen> {
   bool _isLoading = true;
   String? _inlineMessage;
+  bool _isUpdatingNotifications = false;
 
   @override
   void initState() {
@@ -88,6 +89,8 @@ class _AdhanTimesScreenState extends State<AdhanTimesScreen> {
             padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
             children: [
               _buildLocationCard(location),
+              const SizedBox(height: 14),
+              _buildPrayerNotificationsCard(),
               const SizedBox(height: 14),
               _buildTodayTimesCard(rows),
             ],
@@ -202,6 +205,92 @@ class _AdhanTimesScreenState extends State<AdhanTimesScreen> {
     );
   }
 
+  Widget _buildPrayerNotificationsCard() {
+    return _CardBox(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            S.get('prayer_notifications'),
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: Color(0xFF7A746F),
+              letterSpacing: 0.4,
+            ),
+          ),
+          const SizedBox(height: 8),
+          ValueListenableBuilder<bool>(
+            valueListenable: LocalPreferencesService.adhanEnabled,
+            builder: (context, enabled, _) {
+              return _switchRow(
+                label: S.get('adhan_alarms'),
+                value: enabled,
+                busy: _isUpdatingNotifications,
+                onChanged: _toggleAdhanNotifications,
+              );
+            },
+          ),
+          const SizedBox(height: 4),
+          ValueListenableBuilder<bool>(
+            valueListenable: LocalPreferencesService.ezanAlarmSoundEnabled,
+            builder: (context, withSound, _) {
+              final notificationsEnabled =
+                  LocalPreferencesService.adhanEnabled.value;
+              return _switchRow(
+                label: S.get('ezan_alarm_sound'),
+                value: withSound,
+                enabled: notificationsEnabled && !_isUpdatingNotifications,
+                onChanged: _toggleEzanAlarmSound,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _switchRow({
+    required String label,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+    bool enabled = true,
+    bool busy = false,
+  }) {
+    return Opacity(
+      opacity: enabled ? 1 : 0.5,
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                color: Color(0xFF2B2725),
+              ),
+            ),
+          ),
+          if (busy)
+            const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+          Switch.adaptive(
+            value: value,
+            onChanged: enabled ? onChanged : null,
+            activeTrackColor: const Color(0xFF7BAEAC),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _useCurrentLocation() async {
     setState(() => _isLoading = true);
     final result = await PrayerLocationService.useCurrentLocation();
@@ -241,6 +330,56 @@ class _AdhanTimesScreenState extends State<AdhanTimesScreen> {
       _inlineMessage = null;
       _isLoading = false;
     });
+  }
+
+  Future<void> _toggleAdhanNotifications(bool value) async {
+    if (_isUpdatingNotifications) return;
+    setState(() => _isUpdatingNotifications = true);
+    try {
+      if (!value) {
+        await AdhanNotificationService.disable();
+        return;
+      }
+      final result = await AdhanNotificationService.enable();
+      if (!mounted) return;
+      switch (result) {
+        case AdhanEnableResult.enabled:
+          _inlineMessage = S.get('prayer_notif_scheduled');
+          break;
+        case AdhanEnableResult.notificationPermissionDenied:
+          _inlineMessage = S.get('prayer_notif_permission_body');
+          break;
+        case AdhanEnableResult.locationServiceDisabled:
+          _inlineMessage = S.get('location_service_disabled');
+          break;
+        case AdhanEnableResult.locationPermissionDenied:
+        case AdhanEnableResult.locationPermissionDeniedForever:
+          _inlineMessage = S.get('adhan_location_permission_fallback_note');
+          break;
+        case AdhanEnableResult.locationMissing:
+          _inlineMessage = S.get('prayer_location_needed_body');
+          break;
+        case AdhanEnableResult.locationFailed:
+          _inlineMessage = S.get('location_read_failed');
+          break;
+        case AdhanEnableResult.unavailableOnWeb:
+          _inlineMessage = S.get('location_unavailable_web');
+          break;
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUpdatingNotifications = false);
+      }
+    }
+  }
+
+  Future<void> _toggleEzanAlarmSound(bool value) async {
+    await LocalPreferencesService.setEzanAlarmSoundEnabled(value);
+    if (LocalPreferencesService.adhanEnabled.value) {
+      await AdhanNotificationService.rescheduleForToday();
+    }
+    if (!mounted) return;
+    setState(() {});
   }
 
   String? _countryFromLocation(PrayerLocation location) {

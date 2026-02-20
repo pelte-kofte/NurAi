@@ -1,6 +1,8 @@
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
+import '../../data/adhan_notification_service.dart';
 import '../../data/local_preferences_service.dart';
 import '../../data/premium_service.dart';
 import '../../data/user_profile_service.dart';
@@ -92,24 +94,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
               builder: (context, isSupported, _) {
                 if (!isSupported) return const SizedBox.shrink();
                 return _buildSwitchRow(
-                  title: 'İftar Live Activity',
+                  title: S.get('iftar_countdown_toggle'),
                   value: LocalPreferencesService.iftarLiveActivityEnabled.value,
-                  onChanged: (v) async {
-                    await LocalPreferencesService.setIftarLiveActivityEnabled(
-                        v);
-                    await IftarLiveActivityService.scheduleIftarNotifications();
-                    await IftarLiveActivityService.maybeStartOrUpdate();
-                    if (!mounted) return;
-                    if (v &&
-                        !LocalPreferencesService
-                            .iftarLiveActivityTipSeen.value) {
-                      await LocalPreferencesService.setIftarLiveActivityTipSeen(
-                          true);
-                      if (!mounted) return;
-                      _showIftarLiveActivityTip();
-                    }
-                    setState(() {});
-                  },
+                  onChanged: _onToggleIftarCountdown,
                 );
               },
             ),
@@ -121,7 +108,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(top: 2, bottom: 8),
                   child: Text(
-                    S.get('iftar_live_activity_hint'),
+                    S.get('iftar_countdown_hint'),
                     style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
@@ -584,46 +571,97 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  void _showIftarLiveActivityTip() {
-    final messenger = ScaffoldMessenger.of(context);
-    messenger.hideCurrentSnackBar();
-    messenger.showSnackBar(
-      SnackBar(
-        duration: const Duration(seconds: 4),
-        behavior: SnackBarBehavior.floating,
-        backgroundColor: const Color(0xFF7A746F),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              S.get('iftar_live_activity_tip_title'),
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFFFBF6F2),
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              S.get('iftar_live_activity_tip_body'),
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFFFBF6F2),
-              ),
-            ),
-          ],
-        ),
-        action: SnackBarAction(
-          label: S.get('iftar_live_activity_tip_ok'),
-          textColor: const Color(0xFFF6D9C4),
-          onPressed: () {},
-        ),
+  Future<void> _showIftarLiveActivityTip() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      backgroundColor: const Color(0xFFFBF6F2),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                S.get('iftar_live_activity_tip_title'),
+                style: const TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 18,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF2B2725),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                S.get('iftar_live_activity_tip_body'),
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF7A746F),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () async {
+                    await Geolocator.openAppSettings();
+                    if (ctx.mounted) Navigator.of(ctx).pop();
+                  },
+                  child: Text(S.get('open_ios_settings')),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text(S.get('ok')),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
+  }
+
+  Future<void> _onToggleIftarCountdown(bool enabled) async {
+    if (!enabled) {
+      await LocalPreferencesService.setIftarLiveActivityEnabled(false);
+      await IftarLiveActivityService.scheduleIftarNotifications();
+      await IftarLiveActivityService.maybeStartOrUpdate();
+      if (!mounted) return;
+      setState(() {});
+      return;
+    }
+
+    if (!LocalPreferencesService.iftarPermissionPromptShown.value) {
+      await LocalPreferencesService.setIftarPermissionPromptShown(true);
+      if (!mounted) return;
+      await _showIftarLiveActivityTip();
+    }
+
+    final permissionGranted =
+        await AdhanNotificationService.requestPermissions();
+    if (!permissionGranted) {
+      if (!mounted) return;
+      _showStubDialog(S.get('prayer_notif_permission_body'));
+      setState(() {});
+      return;
+    }
+
+    await LocalPreferencesService.setIftarLiveActivityEnabled(true);
+    await IftarLiveActivityService.scheduleIftarNotifications();
+    await IftarLiveActivityService.maybeStartOrUpdate();
+    if (!mounted) return;
+    setState(() {});
   }
 
   void _showStubDialog(String message) {

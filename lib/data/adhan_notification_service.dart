@@ -54,9 +54,12 @@ class AdhanNotificationService {
   static final _plugin = FlutterLocalNotificationsPlugin();
   static Timer? _maintenanceTimer;
   static const _prayerIndexes = <int>[0, 1, 2, 3, 4];
+  static const _prayerChannelIdNormal = 'prayer_times';
+  static const _prayerChannelNameNormal = 'Prayer Times';
+  static const _prayerChannelIdAlarm = 'prayer_times_alarm';
+  static const _prayerChannelNameAlarm = 'Prayer Times Alarm';
   static const _iftarWarmupOffset = Duration(hours: 1);
   static const _iftarWarmupPayload = 'iftar_live_activity_warmup';
-  static const _iftarAtMaghribPayload = 'iftar_live_activity_maghrib';
   static bool _iftarWarmupTapped = false;
 
   static Future<void> init() async {
@@ -196,6 +199,8 @@ class AdhanNotificationService {
       times.maghrib,
       times.isha,
     ];
+    final withEzanAlarmSound =
+        LocalPreferencesService.ezanAlarmSoundEnabled.value;
 
     for (var i = 0; i < _prayerIndexes.length; i++) {
       final id = _notificationIdFor(localDate, i);
@@ -224,6 +229,7 @@ class AdhanNotificationService {
         ),
         dateTime: scheduleAt,
         timezoneName: selection.timezone,
+        withSound: withEzanAlarmSound,
       );
     }
   }
@@ -257,17 +263,7 @@ class AdhanNotificationService {
         dateTime: warmupAt,
         timezoneName: timezoneName,
         payload: _iftarWarmupPayload,
-      );
-    }
-
-    if (maghrib.isAfter(now)) {
-      await _schedule(
-        id: maghribId,
-        title: 'Allah kabul etsin',
-        body: 'İftar vakti.',
-        dateTime: maghrib,
-        timezoneName: timezoneName,
-        payload: _iftarAtMaghribPayload,
+        withSound: false,
       );
     }
   }
@@ -282,6 +278,7 @@ class AdhanNotificationService {
     required String title,
     required String body,
     required DateTime dateTime,
+    required bool withSound,
     String? timezoneName,
     String? payload,
   }) async {
@@ -296,25 +293,41 @@ class AdhanNotificationService {
       dateTime.second,
     );
 
+    final details = NotificationDetails(
+      android: withSound
+          ? const AndroidNotificationDetails(
+              _prayerChannelIdAlarm,
+              _prayerChannelNameAlarm,
+              channelDescription: 'Prayer time reminders with sound',
+              importance: Importance.high,
+              priority: Priority.high,
+              playSound: true,
+            )
+          : const AndroidNotificationDetails(
+              _prayerChannelIdNormal,
+              _prayerChannelNameNormal,
+              channelDescription: 'Prayer time reminders',
+              importance: Importance.defaultImportance,
+              priority: Priority.defaultPriority,
+            ),
+      iOS: DarwinNotificationDetails(
+        // We only use standard notification sounds; no Critical Alerts.
+        presentSound: withSound,
+      ),
+    );
+
     await _plugin.zonedSchedule(
       id,
       title,
       body,
       tzDateTime,
-      const NotificationDetails(
-        android: AndroidNotificationDetails(
-          'prayer_times',
-          'Prayer Times',
-          channelDescription: 'Prayer time reminders',
-          importance: Importance.defaultImportance,
-          priority: Priority.defaultPriority,
-        ),
-        iOS: DarwinNotificationDetails(),
-      ),
+      details,
       payload: payload,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
-      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
+      androidScheduleMode: withSound
+          ? AndroidScheduleMode.exactAllowWhileIdle
+          : AndroidScheduleMode.inexactAllowWhileIdle,
     );
   }
 
@@ -414,14 +427,16 @@ class AdhanNotificationService {
       LocalPreferencesService.language.value.toLowerCase() == 'tr';
 
   static String _iftarWarmupTitle() {
-    if (_isTurkishLanguage) return 'İftara 1 saat kaldı';
-    return '1 hour left until iftar';
+    if (_isTurkishLanguage) {
+      return 'İftar sayacı hazır — Dynamic Island’da görmek için aç.';
+    }
+    return 'Iftar countdown is ready — open the app for Dynamic Island.';
   }
 
   static String _iftarWarmupBody() {
     if (_isTurkishLanguage) {
-      return 'Sayaç için dokun ve kilit ekranına ekle.';
+      return 'Canlı Etkinlik geri sayımı uygulamada başlatılır.';
     }
-    return 'Tap to start the countdown and add it to your lock screen.';
+    return 'Live Activity countdown starts when the app is opened.';
   }
 }

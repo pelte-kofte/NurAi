@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 
-import 'package:flutter/foundation.dart' show ValueNotifier, kIsWeb;
+import 'package:flutter/foundation.dart' show ValueNotifier, debugPrint, kIsWeb;
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
+import '../l10n/app_strings.dart';
 import '../models/prayer_location.dart';
 import 'adhan_notification_service.dart';
 import 'adhan_times_service.dart';
@@ -14,8 +16,6 @@ class IftarLiveActivityService {
 
   static const MethodChannel _channel = MethodChannel('nurai.widgets');
   static const Duration _countdownWindow = Duration(hours: 1);
-  static const Duration _doneStateVisibleFor = Duration(seconds: 4);
-
   static const String _methodIsSupported = 'isIftarLiveActivitySupported';
   static const String _methodStart = 'startIftarLiveActivity';
   static const String _methodUpdate = 'updateIftarLiveActivity';
@@ -25,14 +25,17 @@ class IftarLiveActivityService {
 
   static Timer? _windowStartTimer;
   static Timer? _maghribTimer;
+  static Timer? _foregroundTicker;
   static bool _initialized = false;
-  static bool _isShowingDoneState = false;
+  static bool _isForeground = true;
+  static bool _isTickUpdateInFlight = false;
+  static final _lifecycleObserver = _IftarLifecycleObserver();
 
   static Future<void> init() async {
     if (_initialized) return;
     _initialized = true;
     isSupported.value = await _querySupport();
-    LocalPreferencesService.adhanEnabled.addListener(_onConfigChanged);
+    WidgetsBinding.instance.addObserver(_lifecycleObserver);
     LocalPreferencesService.prayerLocation.addListener(_onConfigChanged);
     LocalPreferencesService.iftarLiveActivityEnabled.addListener(
       _onConfigChanged,
@@ -69,10 +72,10 @@ class IftarLiveActivityService {
 
     final now = DateTime.now();
     final location = LocalPreferencesService.prayerLocation.value;
-    final forcedByWarmupTap =
-        AdhanNotificationService.consumeIftarWarmupTapFlag();
 
     if (!_isFeatureEnabled || !location.hasCoordinates) {
+      _log(
+          'skip_start featureEnabled=$_isFeatureEnabled hasLocation=${location.hasCoordinates}');
       _cancelTimers();
       await endIfNeeded();
       return;
@@ -82,33 +85,42 @@ class IftarLiveActivityService {
     final windowStart = maghrib.subtract(_countdownWindow);
 
     if (!now.isBefore(maghrib)) {
+      _log(
+          'past_maghrib ending activity now=${now.toIso8601String()} maghrib=${maghrib.toIso8601String()}');
       _cancelTimers();
-      await _showDoneThenEnd();
+      await endIfNeeded();
       await scheduleIftarNotifications();
       return;
     }
 
-    if (now.isBefore(windowStart) && !forcedByWarmupTap) {
+    if (now.isBefore(windowStart)) {
+      _log(
+        'before_window now=${now.toIso8601String()} windowStart=${windowStart.toIso8601String()}',
+      );
       await endIfNeeded();
       _scheduleWindowTimers(windowStart: windowStart, maghrib: maghrib);
       return;
     }
 
+    _log(
+      'start_or_update now=${now.toIso8601String()} windowStart=${windowStart.toIso8601String()} maghrib=${maghrib.toIso8601String()}',
+    );
     _scheduleWindowTimers(windowStart: windowStart, maghrib: maghrib);
     await _startOrUpdateCountdown(maghrib: maghrib);
+    _startForegroundTicker(maghrib: maghrib);
   }
 
   static Future<void> endIfNeeded() async {
-    _isShowingDoneState = false;
+    _stopForegroundTicker();
     await _invokeSafely(_methodEnd, const <String, dynamic>{});
   }
 
   static bool get _isIosRuntime => !kIsWeb && Platform.isIOS;
   static bool get _isFeatureEnabled =>
-      LocalPreferencesService.adhanEnabled.value &&
       LocalPreferencesService.iftarLiveActivityEnabled.value;
 
   static void _onConfigChanged() {
+    _log('config_changed');
     unawaited(scheduleIftarNotifications());
     unawaited(maybeStartOrUpdate());
   }
@@ -123,42 +135,85 @@ class IftarLiveActivityService {
     final now = DateTime.now();
     if (now.isBefore(windowStart)) {
       _windowStartTimer = Timer(windowStart.difference(now), () {
+        _log('window_start_timer_fired');
         unawaited(maybeStartOrUpdate());
       });
     }
 
     if (now.isBefore(maghrib)) {
       _maghribTimer = Timer(maghrib.difference(now), () {
+        _log('maghrib_timer_fired');
         unawaited(maybeStartOrUpdate());
       });
     }
   }
 
-  static Future<void> _showDoneThenEnd() async {
-    if (_isShowingDoneState) return;
-    _isShowingDoneState = true;
-    await _invokeSafely(
-      _methodUpdate,
-      <String, dynamic>{
-        'title': 'Allah kabul etsin',
-        'subtitle': 'İftar vakti.',
-        'phase': 'done',
-        'targetEpochMs': DateTime.now().millisecondsSinceEpoch,
-      },
-    );
-    await Future<void>.delayed(_doneStateVisibleFor);
-    await endIfNeeded();
+  static void _startForegroundTicker({required DateTime maghrib}) {
+    _foregroundTicker?.cancel();
+    if (!_isForeground) return;
+    _foregroundTicker = Timer.periodic(const Duration(seconds: 1), (_) {
+      unawaited(_tickForegroundCountdown(maghrib: maghrib));
+    });
+  }
+
+  static void _stopForegroundTicker() {
+    _foregroundTicker?.cancel();
+    _foregroundTicker = null;
+    _isTickUpdateInFlight = false;
+  }
+
+  static Future<void> _tickForegroundCountdown(
+      {required DateTime maghrib}) async {
+    if (_isTickUpdateInFlight) return;
+    _isTickUpdateInFlight = true;
+    try {
+      final now = DateTime.now();
+      if (!_isFeatureEnabled || !_isForeground) {
+        _stopForegroundTicker();
+        return;
+      }
+      if (!now.isBefore(maghrib)) {
+        _log('foreground_tick_reached_maghrib');
+        await maybeStartOrUpdate();
+        return;
+      }
+      await _invokeSafely(
+        _methodUpdate,
+        <String, dynamic>{
+          'title': S.get('iftar_countdown_title'),
+          'subtitle': S.get('iftar_countdown_subtitle'),
+          'phase': 'countdown',
+          'targetEpochMs': maghrib.millisecondsSinceEpoch,
+        },
+      );
+    } finally {
+      _isTickUpdateInFlight = false;
+    }
+  }
+
+  static void onAppLifecycleChanged(AppLifecycleState state) {
+    final isNowForeground = state == AppLifecycleState.resumed;
+    _isForeground = isNowForeground;
+    _log('lifecycle_changed state=$state');
+    if (isNowForeground) {
+      unawaited(maybeStartOrUpdate());
+    } else {
+      _stopForegroundTicker();
+    }
+  }
+
+  static void _log(String message) {
+    debugPrint('[IftarLiveActivity] $message');
   }
 
   static Future<void> _startOrUpdateCountdown({
     required DateTime maghrib,
   }) async {
-    _isShowingDoneState = false;
     await _invokeSafely(
       _methodStart,
       <String, dynamic>{
-        'title': 'İftara',
-        'subtitle': 'Kalan süre',
+        'title': S.get('iftar_countdown_title'),
+        'subtitle': S.get('iftar_countdown_subtitle'),
         'phase': 'countdown',
         'targetEpochMs': maghrib.millisecondsSinceEpoch,
       },
@@ -208,5 +263,13 @@ class IftarLiveActivityService {
     _windowStartTimer = null;
     _maghribTimer?.cancel();
     _maghribTimer = null;
+    _stopForegroundTicker();
+  }
+}
+
+class _IftarLifecycleObserver extends WidgetsBindingObserver {
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    IftarLiveActivityService.onAppLifecycleChanged(state);
   }
 }

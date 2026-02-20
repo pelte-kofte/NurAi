@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../data/adhan_times_service.dart';
 import '../data/local_preferences_service.dart';
+import '../data/next_prayer_service.dart';
 import '../l10n/app_strings.dart';
 import '../models/prayer_location.dart';
 
@@ -28,7 +29,8 @@ class _NextPrayerPillState extends State<NextPrayerPill> {
   @override
   void initState() {
     super.initState();
-    _ticker = Timer.periodic(const Duration(seconds: 30), (_) {
+    // 1-second updates keep countdown and prayer rollover in sync.
+    _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
       if (!mounted) return;
       setState(() => _now = DateTime.now());
     });
@@ -93,50 +95,92 @@ class _NextPrayerPillState extends State<NextPrayerPill> {
       return S.get('next_prayer_set_location_cta');
     }
 
+    final now = _now.toLocal();
     final times = AdhanTimesService.computeTimes(
-      _now,
+      now,
       location,
       countryHint: _countryFromPrayerLocation(location),
     );
-    final rows = <_PrayerRow>[
-      _PrayerRow(S.get('fajr'), times.fajr),
-      _PrayerRow(S.get('dhuhr'), times.dhuhr),
-      _PrayerRow(S.get('asr'), times.asr),
-      _PrayerRow(S.get('maghrib'), times.maghrib),
-      _PrayerRow(S.get('isha'), times.isha),
-    ];
-    final next = _findNextPrayer(rows);
+    final next =
+        NextPrayerService.findNextPrayerForToday(now: now, times: times);
     if (next == null) {
       return S.get('next_prayer_done_today');
     }
+    final nextPrayerDateTime =
+        _resolvePrayerTimeForKey(next.key, times).toLocal();
+    final remaining = NextPrayerService.remaining(
+      now: DateTime.now().toLocal(),
+      target: nextPrayerDateTime,
+    );
 
     final localizations = MaterialLocalizations.of(context);
     final timeText = localizations.formatTimeOfDay(
-      TimeOfDay.fromDateTime(next.time),
+      TimeOfDay.fromDateTime(nextPrayerDateTime),
       alwaysUse24HourFormat: MediaQuery.of(context).alwaysUse24HourFormat,
     );
+    final prayerLabel = _labelForKey(next.key);
 
-    return '${next.label} - $timeText - ${_remainingText(next.time)}';
-  }
+    assert(() {
+      final realDiff = nextPrayerDateTime.difference(DateTime.now().toLocal());
+      debugPrint(
+        '[NextPrayerPill] prayer=$prayerLabel time=$timeText '
+        'remaining=${remaining.inMinutes}m '
+        'realDiff=${realDiff.inMinutes}m',
+      );
+      return true;
+    }());
 
-  _PrayerRow? _findNextPrayer(List<_PrayerRow> rows) {
-    for (final row in rows) {
-      if (row.time.isAfter(_now)) return row;
+    if (remaining <= Duration.zero) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        setState(() => _now = DateTime.now());
+      });
     }
-    return null;
+
+    return '$prayerLabel - $timeText - ${_remainingText(remaining)}';
   }
 
-  String _remainingText(DateTime target) {
-    final diff = target.difference(_now);
-    if (diff.isNegative) return '0m';
-    final hours = diff.inHours;
-    final minutes = diff.inMinutes % 60;
+  String _remainingText(Duration remaining) {
+    final hours = remaining.inHours;
+    final minutes = remaining.inMinutes % 60;
     if (hours <= 0) {
       return '${S.get('next_prayer_in_prefix')} $minutes${S.get('next_prayer_min_short')}';
     }
     return '${S.get('next_prayer_in_prefix')} '
         '$hours${S.get('next_prayer_hour_short')} '
         '$minutes${S.get('next_prayer_min_short')}';
+  }
+
+  String _labelForKey(String key) {
+    switch (key) {
+      case 'fajr':
+        return S.get('fajr');
+      case 'dhuhr':
+        return S.get('dhuhr');
+      case 'asr':
+        return S.get('asr');
+      case 'maghrib':
+        return S.get('maghrib');
+      case 'isha':
+      default:
+        return S.get('isha');
+    }
+  }
+
+  DateTime _resolvePrayerTimeForKey(String key, AdhanDayTimes times) {
+    switch (key) {
+      case 'fajr':
+        return times.fajr;
+      case 'dhuhr':
+        return times.dhuhr;
+      case 'asr':
+        return times.asr;
+      case 'maghrib':
+        return times.maghrib;
+      case 'isha':
+      default:
+        return times.isha;
+    }
   }
 
   String? _countryFromPrayerLocation(PrayerLocation location) {
@@ -146,10 +190,4 @@ class _NextPrayerPillState extends State<NextPrayerPill> {
     if (parts.length < 2) return null;
     return parts.last.trim();
   }
-}
-
-class _PrayerRow {
-  const _PrayerRow(this.label, this.time);
-  final String label;
-  final DateTime time;
 }

@@ -28,9 +28,7 @@ struct NurAiWidgetsLiveActivity: Widget {
                 } else {
                     Text(context.state.title.isEmpty ? "Iftara" : context.state.title)
                         .font(.system(size: 16, weight: .semibold))
-                    Text(context.state.endDate, style: .timer)
-                        .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .monospacedDigit()
+                    countdownLabel(endDate: context.state.endDate, large: true)
                     Text(context.state.subtitle)
                         .font(.system(size: 13, weight: .regular))
                         .foregroundStyle(Color.secondary)
@@ -51,9 +49,7 @@ struct NurAiWidgetsLiveActivity: Widget {
                         Text("Vakit")
                             .font(.system(size: 13, weight: .semibold))
                     } else {
-                        Text(context.state.endDate, style: .timer)
-                            .font(.system(size: 13, weight: .semibold, design: .rounded))
-                            .monospacedDigit()
+                        countdownLabel(endDate: context.state.endDate, large: false)
                     }
                 }
                 DynamicIslandExpandedRegion(.bottom) {
@@ -72,8 +68,7 @@ struct NurAiWidgetsLiveActivity: Widget {
                 if context.state.phase == "done" {
                     Text("OK")
                 } else {
-                    Text(context.state.endDate, style: .timer)
-                        .monospacedDigit()
+                    countdownLabel(endDate: context.state.endDate, large: false)
                 }
             } minimal: {
                 if context.state.phase == "done" {
@@ -85,5 +80,26 @@ struct NurAiWidgetsLiveActivity: Widget {
             .widgetURL(URL(string: "nurai://ramadan"))
             .keylineTint(Color.orange)
         }
+    }
+
+    @ViewBuilder
+    private func countdownLabel(endDate: Date, large: Bool) -> some View {
+        TimelineView(.periodic(from: .now, by: 1)) { timeline in
+            let text = Self.formatRemaining(now: timeline.date, endDate: endDate)
+            Text(text)
+                .font(
+                    large
+                        ? .system(size: 24, weight: .bold, design: .rounded)
+                        : .system(size: 13, weight: .semibold, design: .rounded)
+                )
+                .monospacedDigit()
+        }
+    }
+
+    private static func formatRemaining(now: Date, endDate: Date) -> String {
+        let remaining = max(0, Int(endDate.timeIntervalSince(now)))
+        let minutes = remaining / 60
+        let seconds = remaining % 60
+        return String(format: "%02d:%02d", minutes, seconds)
     }
 }

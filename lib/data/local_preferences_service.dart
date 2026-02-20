@@ -15,7 +15,10 @@ class LocalPreferencesService {
   static const _keyPrayerLat = 'prayer_lat';
   static const _keyPrayerLng = 'prayer_lng';
   static const _keyPrayerCityName = 'prayer_city_name';
+  static const _keyEzanAlarmSound = 'pref_ezan_alarm_sound_enabled';
   static const _keyIftarLiveActivity = 'pref_iftar_live_activity_enabled';
+  static const _keyIftarPermissionPromptShown =
+      'pref_iftar_permission_prompt_shown';
   static const _keyIftarLiveActivityTipSeen = 'iftar_live_activity_tip_seen';
 
   static SharedPreferences? _prefs;
@@ -25,7 +28,9 @@ class LocalPreferencesService {
   static final adhanEnabled = ValueNotifier<bool>(false);
   static final hapticsEnabled = ValueNotifier<bool>(true);
   static final language = ValueNotifier<String>('tr');
+  static final ezanAlarmSoundEnabled = ValueNotifier<bool>(false);
   static final iftarLiveActivityEnabled = ValueNotifier<bool>(false);
+  static final iftarPermissionPromptShown = ValueNotifier<bool>(false);
   static final iftarLiveActivityTipSeen = ValueNotifier<bool>(false);
   static final prayerLocation = ValueNotifier<PrayerLocation>(
     PrayerLocation.initial(),
@@ -38,8 +43,11 @@ class LocalPreferencesService {
     adhanEnabled.value = _prefs?.getBool(_keyAdhan) ?? false;
     hapticsEnabled.value = _prefs?.getBool(_keyHaptics) ?? true;
     language.value = _prefs?.getString(_keyLanguage) ?? 'tr';
+    ezanAlarmSoundEnabled.value = _prefs?.getBool(_keyEzanAlarmSound) ?? false;
     iftarLiveActivityEnabled.value =
         _prefs?.getBool(_keyIftarLiveActivity) ?? false;
+    iftarPermissionPromptShown.value =
+        _prefs?.getBool(_keyIftarPermissionPromptShown) ?? false;
     iftarLiveActivityTipSeen.value =
         _prefs?.getBool(_keyIftarLiveActivityTipSeen) ?? false;
     prayerLocation.value = _readPrayerLocation();
@@ -79,6 +87,11 @@ class LocalPreferencesService {
     adhanEnabled.value = value;
   }
 
+  static Future<void> setEzanAlarmSoundEnabled(bool value) async {
+    await _prefs?.setBool(_keyEzanAlarmSound, value);
+    ezanAlarmSoundEnabled.value = value;
+  }
+
   // ── Haptics ────────────────────────────────────────────
 
   static Future<void> setHapticsEnabled(bool value) async {
@@ -96,6 +109,11 @@ class LocalPreferencesService {
   static Future<void> setIftarLiveActivityEnabled(bool value) async {
     await _prefs?.setBool(_keyIftarLiveActivity, value);
     iftarLiveActivityEnabled.value = value;
+  }
+
+  static Future<void> setIftarPermissionPromptShown(bool value) async {
+    await _prefs?.setBool(_keyIftarPermissionPromptShown, value);
+    iftarPermissionPromptShown.value = value;
   }
 
   static Future<void> setIftarLiveActivityTipSeen(bool value) async {
