@@ -6,7 +6,7 @@ import '../../data/reading_progress_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../models/reading_context.dart';
 import '../reading/ayah_reading_screen.dart';
-import '../ramadan/duas_screen.dart';
+import '../ramadan/ramadan_suggestions_screen.dart';
 
 const Color _mutedInfoIconColor = Color(0xFF8FA9A7);
 
@@ -185,7 +185,7 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
 
   void _openDuas() {
     Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const DuasScreen()),
+      MaterialPageRoute(builder: (_) => const RamadanSuggestionsScreen()),
     );
   }
 
@@ -258,7 +258,7 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
           _SectionHeader(S.get('ramadan_section_duas')),
           const SizedBox(height: 10),
           _SimpleNavCard(
-            title: S.get('ramadan_short_duas'),
+            title: S.get('ramadan_suggestions_entry'),
             leadingIcon: Icons.menu_book_outlined,
             onTap: _openDuas,
           ),

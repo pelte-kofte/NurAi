@@ -55,7 +55,7 @@ class QuickActionsPopover {
     final screen = MediaQuery.of(context).size;
 
     const popoverWidth = 280.0;
-    const popoverHeight = 270.0;
+    const popoverHeight = 330.0;
     const gap = 8.0;
     const edgePadding = 16.0;
 
@@ -133,13 +133,17 @@ class _PopoverContent extends StatefulWidget {
 
 class _PopoverContentState extends State<_PopoverContent> {
   String? _statusText;
+  bool _isUpdatingAdhan = false;
 
   Future<void> _onToggleAdhan(bool value) async {
+    if (_isUpdatingAdhan) return;
+    setState(() => _isUpdatingAdhan = true);
     if (!value) {
       await AdhanNotificationService.disable();
       if (!mounted) return;
       setState(() {
         _statusText = null;
+        _isUpdatingAdhan = false;
       });
       return;
     }
@@ -184,7 +188,26 @@ class _PopoverContentState extends State<_PopoverContent> {
         });
         break;
     }
-    setState(() {});
+    if (!mounted) return;
+    setState(() {
+      _isUpdatingAdhan = false;
+    });
+  }
+
+  Future<void> _onToggleEzanAlarmSound(bool value) async {
+    await LocalPreferencesService.setEzanAlarmSoundEnabled(value);
+    if (LocalPreferencesService.adhanEnabled.value) {
+      await AdhanNotificationService.rescheduleForToday();
+      if (!mounted) return;
+      setState(() {
+        _statusText = S.get('prayer_notif_scheduled');
+      });
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      _statusText = null;
+    });
   }
 
   Future<void> _showPermissionSheet({
@@ -357,51 +380,8 @@ class _PopoverContentState extends State<_PopoverContent> {
           ),
           Container(
             height: 1,
-            margin: const EdgeInsets.symmetric(vertical: 6),
-            color: const Color(0xFFEDE6E1),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: ValueListenableBuilder<bool>(
-              valueListenable: LocalPreferencesService.adhanEnabled,
-              builder: (context, enabled, _) => Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      S.get('adhan_alarms'),
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFF2B2725),
-                      ),
-                    ),
-                  ),
-                  CupertinoSwitch(
-                    value: enabled,
-                    onChanged: _onToggleAdhan,
-                    activeTrackColor: const Color(0xFF7BAEAC),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (_statusText != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              _statusText!,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: Color(0xFF7A746F),
-              ),
-            ),
-          ],
-          Container(
-            height: 1,
-            margin: const EdgeInsets.symmetric(vertical: 6),
-            color: const Color(0xFFEDE6E1),
+            margin: const EdgeInsets.symmetric(vertical: 2),
+            color: const Color(0x1A000000),
           ),
           GestureDetector(
             onTap: widget.onTasbih,
@@ -436,6 +416,89 @@ class _PopoverContentState extends State<_PopoverContent> {
               ),
             ),
           ),
+          Container(
+            height: 1,
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            color: const Color(0xFFEDE6E1),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: ValueListenableBuilder<bool>(
+              valueListenable: LocalPreferencesService.adhanEnabled,
+              builder: (context, enabled, _) => Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      S.get('adhan_alarms'),
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w400,
+                        color: Color(0xFF2B2725),
+                      ),
+                    ),
+                  ),
+                  CupertinoSwitch(
+                    value: enabled,
+                    onChanged: _isUpdatingAdhan ? null : _onToggleAdhan,
+                    activeTrackColor: const Color(0xFF7BAEAC),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Container(
+            height: 1,
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            color: const Color(0xFFEDE6E1),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: ValueListenableBuilder<bool>(
+              valueListenable: LocalPreferencesService.ezanAlarmSoundEnabled,
+              builder: (context, withSound, _) {
+                final notificationsEnabled =
+                    LocalPreferencesService.adhanEnabled.value;
+                return Opacity(
+                  opacity: notificationsEnabled ? 1 : 0.5,
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          S.get('ezan_alarm_sound'),
+                          style: const TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 14,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFF2B2725),
+                          ),
+                        ),
+                      ),
+                      CupertinoSwitch(
+                        value: withSound,
+                        onChanged: notificationsEnabled
+                            ? _onToggleEzanAlarmSound
+                            : null,
+                        activeTrackColor: const Color(0xFF7BAEAC),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+          if (_statusText != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              _statusText!,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF7A746F),
+              ),
+            ),
+          ],
         ],
       ),
     );

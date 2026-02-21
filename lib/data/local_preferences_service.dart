@@ -3,6 +3,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/prayer_location.dart';
 
+class RamadanSuggestionSelection {
+  const RamadanSuggestionSelection({
+    required this.dateKey,
+    required this.duaIndex,
+    required this.ayetIndex,
+    required this.iyilikIndex,
+  });
+
+  final String dateKey;
+  final int duaIndex;
+  final int ayetIndex;
+  final int iyilikIndex;
+}
+
 /// Lightweight local preferences with ValueNotifiers for reactive UI.
 class LocalPreferencesService {
   static const _keyAdhan = 'pref_adhan_enabled';
@@ -20,6 +34,15 @@ class LocalPreferencesService {
   static const _keyIftarPermissionPromptShown =
       'pref_iftar_permission_prompt_shown';
   static const _keyIftarLiveActivityTipSeen = 'iftar_live_activity_tip_seen';
+  static const _keyRamadanSuggestionsDate = 'pref_ramadan_suggestions_date';
+  static const _keyRamadanSuggestionsDuaIndex =
+      'pref_ramadan_suggestions_dua_index';
+  static const _keyRamadanSuggestionsAyetIndex =
+      'pref_ramadan_suggestions_ayet_index';
+  static const _keyRamadanSuggestionsIyilikIndex =
+      'pref_ramadan_suggestions_iyilik_index';
+  static const _keyRamadanSuggestionsFavorites =
+      'pref_ramadan_suggestions_favorites';
 
   static SharedPreferences? _prefs;
 
@@ -172,5 +195,44 @@ class LocalPreferencesService {
       await _prefs?.remove(_keyPrayerCityName);
     }
     prayerLocation.value = value;
+  }
+
+  static RamadanSuggestionSelection? getRamadanSuggestionSelection() {
+    final dateKey = _prefs?.getString(_keyRamadanSuggestionsDate);
+    final duaIndex = _prefs?.getInt(_keyRamadanSuggestionsDuaIndex);
+    final ayetIndex = _prefs?.getInt(_keyRamadanSuggestionsAyetIndex);
+    final iyilikIndex = _prefs?.getInt(_keyRamadanSuggestionsIyilikIndex);
+    if (dateKey == null ||
+        duaIndex == null ||
+        ayetIndex == null ||
+        iyilikIndex == null) {
+      return null;
+    }
+    return RamadanSuggestionSelection(
+      dateKey: dateKey,
+      duaIndex: duaIndex,
+      ayetIndex: ayetIndex,
+      iyilikIndex: iyilikIndex,
+    );
+  }
+
+  static Future<void> setRamadanSuggestionSelection({
+    required String dateKey,
+    required int duaIndex,
+    required int ayetIndex,
+    required int iyilikIndex,
+  }) async {
+    await _prefs?.setString(_keyRamadanSuggestionsDate, dateKey);
+    await _prefs?.setInt(_keyRamadanSuggestionsDuaIndex, duaIndex);
+    await _prefs?.setInt(_keyRamadanSuggestionsAyetIndex, ayetIndex);
+    await _prefs?.setInt(_keyRamadanSuggestionsIyilikIndex, iyilikIndex);
+  }
+
+  static String? getRamadanSuggestionFavoritesRaw() {
+    return _prefs?.getString(_keyRamadanSuggestionsFavorites);
+  }
+
+  static Future<void> setRamadanSuggestionFavoritesRaw(String value) async {
+    await _prefs?.setString(_keyRamadanSuggestionsFavorites, value);
   }
 }
