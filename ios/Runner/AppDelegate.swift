@@ -142,12 +142,20 @@ import WidgetKit
       (args["endEpochMs"] as? NSNumber)?.int64Value
       ?? (args["targetEpochMs"] as? NSNumber)?.int64Value
       ?? Int64(Date().addingTimeInterval(1).timeIntervalSince1970 * 1000)
-    let endDate = Date(timeIntervalSince1970: TimeInterval(targetEpochMs) / 1000.0)
+    let iftarDate = Date(timeIntervalSince1970: TimeInterval(targetEpochMs) / 1000.0)
+    let remainingSeconds = max(0, Int(iftarDate.timeIntervalSinceNow))
+    NSLog(
+      "[IftarLiveActivity] parse state iftarDate=%.0f now=%.0f remainingSeconds=%d phase=%@",
+      iftarDate.timeIntervalSince1970,
+      Date().timeIntervalSince1970,
+      remainingSeconds,
+      phase
+    )
 
     return IftarAttributes.ContentState(
       title: title,
       subtitle: subtitle,
-      endDate: endDate,
+      iftarDate: iftarDate,
       phase: phase
     )
   }
@@ -158,8 +166,10 @@ import WidgetKit
       return
     }
     let state = parseIftarState(args)
+    logIftarState("start", state: state)
     Task {
       if let existing = firstIftarActivity() {
+        logIftarState("start->updateExisting", state: state)
         await existing.update(using: state)
         result(nil)
         return
@@ -171,6 +181,7 @@ import WidgetKit
           contentState: state,
           pushType: nil
         )
+        logIftarState("start->requested", state: state)
         result(nil)
       } catch {
         result(
@@ -190,8 +201,10 @@ import WidgetKit
       return
     }
     let state = parseIftarState(args)
+    logIftarState("update", state: state)
     Task {
       if let existing = firstIftarActivity() {
+        logIftarState("update->existing", state: state)
         await existing.update(using: state)
       }
       result(nil)
@@ -210,6 +223,19 @@ import WidgetKit
       result(nil)
     }
   }
+
+  @available(iOS 16.1, *)
+  private func logIftarState(_ event: String, state: IftarAttributes.ContentState) {
+    let remainingSeconds = max(0, Int(state.iftarDate.timeIntervalSinceNow))
+    NSLog(
+      "[IftarLiveActivity] %@ iftarDate=%.0f now=%.0f remainingSeconds=%d phase=%@",
+      event,
+      state.iftarDate.timeIntervalSince1970,
+      Date().timeIntervalSince1970,
+      remainingSeconds,
+      state.phase
+    )
+  }
 }
 
 @available(iOS 16.1, *)
@@ -217,8 +243,45 @@ struct IftarAttributes: ActivityAttributes {
   public struct ContentState: Codable, Hashable {
     var title: String
     var subtitle: String
-    var endDate: Date
+    var iftarDate: Date
     var phase: String
+
+    enum CodingKeys: String, CodingKey {
+      case title
+      case subtitle
+      case iftarDate
+      case endDate
+      case phase
+    }
+
+    init(title: String, subtitle: String, iftarDate: Date, phase: String) {
+      self.title = title
+      self.subtitle = subtitle
+      self.iftarDate = iftarDate
+      self.phase = phase
+    }
+
+    init(from decoder: Decoder) throws {
+      let container = try decoder.container(keyedBy: CodingKeys.self)
+      title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Iftara"
+      subtitle = try container.decodeIfPresent(String.self, forKey: .subtitle) ?? "Kalan sure"
+      phase = try container.decodeIfPresent(String.self, forKey: .phase) ?? "countdown"
+      if let value = try container.decodeIfPresent(Date.self, forKey: .iftarDate) {
+        iftarDate = value
+      } else if let legacyValue = try container.decodeIfPresent(Date.self, forKey: .endDate) {
+        iftarDate = legacyValue
+      } else {
+        iftarDate = Date()
+      }
+    }
+
+    func encode(to encoder: Encoder) throws {
+      var container = encoder.container(keyedBy: CodingKeys.self)
+      try container.encode(title, forKey: .title)
+      try container.encode(subtitle, forKey: .subtitle)
+      try container.encode(iftarDate, forKey: .iftarDate)
+      try container.encode(phase, forKey: .phase)
+    }
   }
 
   var name: String

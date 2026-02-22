@@ -16,6 +16,7 @@ import 'data/ayah_notes_service.dart';
 import 'data/widget_payload_service.dart';
 import 'l10n/app_strings.dart';
 import 'features/home/home_screen.dart';
+import 'theme/app_theme.dart';
 
 /// Global route observer for lifecycle-aware screens.
 final RouteObserver<ModalRoute<void>> routeObserver =
@@ -66,18 +67,8 @@ class NurAIApp extends StatelessWidget {
                 GlobalCupertinoLocalizations.delegate,
               ],
               themeMode: currentMode,
-              theme: ThemeData(
-                useMaterial3: true,
-                fontFamily: 'Inter',
-                scaffoldBackgroundColor: const Color(0xFFFBF6F2),
-                brightness: Brightness.light,
-              ),
-              darkTheme: ThemeData(
-                useMaterial3: true,
-                fontFamily: 'Inter',
-                scaffoldBackgroundColor: const Color(0xFF1C1A19),
-                brightness: Brightness.dark,
-              ),
+              theme: AppTheme.light(),
+              darkTheme: AppTheme.dark(),
               home: const _AppLoader(),
             );
           },
@@ -216,50 +207,53 @@ class _FirstScreen extends StatelessWidget {
             fit: BoxFit.cover,
           ),
           Container(
-            color: const Color(0xFF000000).withValues(alpha: 0.23),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  AppColors.splashOverlayTop,
+                  AppColors.splashOverlayBottom,
+                ],
+              ),
+            ),
           ),
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
               child: Stack(
                 children: [
-                  const Align(
-                    alignment: Alignment(0, 0.2),
+                  Align(
+                    alignment: const Alignment(0, 0.2),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
                           'Kalbini sakinleştir.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Merriweather',
-                            fontSize: 34,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xFFF5F3EF),
-                            height: 1.2,
-                          ),
+                          style: Theme.of(context).textTheme.headlineMedium,
                         ),
                         Text(
                           'Niyetini tazele.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Merriweather',
-                            fontSize: 34,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xFFF5F3EF),
-                            height: 1.2,
-                          ),
+                          style: Theme.of(context).textTheme.headlineMedium,
                         ),
-                        SizedBox(height: 10),
+                        const SizedBox(height: 10),
                         Text(
                           'Ramazan için kısa bir durak.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            color: Color(0xFFF5F3EF),
-                            height: 1.4,
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.cardBg,
+                            fontWeight: FontWeight.w500,
+                            height: 1.45,
+                            shadows: const [
+                              Shadow(
+                                color: Color(0x6E000000),
+                                blurRadius: 8,
+                                offset: Offset(0, 2),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -272,7 +266,7 @@ class _FirstScreen extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: isStarting ? null : onTapStart,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF7BAEAC),
+                          backgroundColor: AppColors.primaryAccent,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           padding: const EdgeInsets.symmetric(vertical: 14),
@@ -306,7 +300,7 @@ class _ErrorScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6F2),
+      backgroundColor: AppColors.scaffoldBg,
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(32),
@@ -316,7 +310,7 @@ class _ErrorScreen extends StatelessWidget {
             style: const TextStyle(
               fontFamily: 'Inter',
               fontSize: 16,
-              color: Color(0xFF7A746F),
+              color: AppColors.textSecondary,
               height: 1.5,
             ),
           ),

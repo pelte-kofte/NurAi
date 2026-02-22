@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../../data/local_preferences_service.dart';
 import '../../l10n/app_strings.dart';
 
 class TasbihScreen extends StatefulWidget {
@@ -92,9 +91,7 @@ class _TasbihScreenState extends State<TasbihScreen> {
   }
 
   Future<void> _increment() async {
-    if (LocalPreferencesService.hapticsEnabled.value) {
-      HapticFeedback.lightImpact();
-    }
+    HapticFeedback.lightImpact();
     setState(() => _currentCount += 1);
     await _saveState();
   }

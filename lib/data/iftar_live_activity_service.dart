@@ -43,7 +43,7 @@ class IftarLiveActivityService {
   }
 
   static Future<void> scheduleIftarNotifications() async {
-    if (!_isIosRuntime || !isSupported.value) return;
+    if (kIsWeb) return;
 
     final now = DateTime.now();
     final location = LocalPreferencesService.prayerLocation.value;
@@ -55,15 +55,28 @@ class IftarLiveActivityService {
       now.add(const Duration(days: 1)),
     );
 
-    if (!_isFeatureEnabled || !location.hasCoordinates) return;
+    final shouldScheduleIftarAlarm =
+        LocalPreferencesService.adhanEnabled.value || _isFeatureEnabled;
+    if (!shouldScheduleIftarAlarm || !location.hasCoordinates) {
+      _log(
+        'skip_iftar_notification_schedule enabled=$shouldScheduleIftarAlarm hasLocation=${location.hasCoordinates}',
+      );
+      return;
+    }
 
     final todayMaghrib = _maghribFor(now, location);
     final targetDate =
         now.isBefore(todayMaghrib) ? now : now.add(const Duration(days: 1));
     final targetMaghrib = _maghribFor(targetDate, location);
+    final includeWarmup =
+        _isIosRuntime && isSupported.value && _isFeatureEnabled;
+    _log(
+      'schedule_iftar_notifications now=${now.toIso8601String()} targetMaghrib=${targetMaghrib.toIso8601String()} timezone=${location.timezone} includeWarmup=$includeWarmup',
+    );
     await AdhanNotificationService.scheduleIftarLiveActivityNotifications(
       maghrib: targetMaghrib,
       timezoneName: location.timezone,
+      includeWarmup: includeWarmup,
     );
   }
 

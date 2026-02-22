@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -15,6 +15,9 @@ import 'widget_payload_service.dart';
 
 @pragma('vm:entry-point')
 void adhanNotificationTapBackground(NotificationResponse response) {
+  debugPrint(
+    '[AdhanNotifications] background_notification_response payload=${response.payload} actionId=${response.actionId}',
+  );
   AdhanNotificationService.handleNotificationResponsePayload(response.payload);
 }
 
@@ -58,8 +61,11 @@ class AdhanNotificationService {
   static const _prayerChannelNameNormal = 'Prayer Times';
   static const _prayerChannelIdAlarm = 'prayer_times_alarm';
   static const _prayerChannelNameAlarm = 'Prayer Times Alarm';
+  static const _iftarChannelIdAlarm = 'iftar_alarm';
+  static const _iftarChannelNameAlarm = 'Iftar Alarm';
   static const _iftarWarmupOffset = Duration(hours: 1);
   static const _iftarWarmupPayload = 'iftar_live_activity_warmup';
+  static const _iftarAlarmPayload = 'iftar_alarm_fired';
   static bool _iftarWarmupTapped = false;
 
   static Future<void> init() async {
@@ -78,6 +84,9 @@ class AdhanNotificationService {
     await _plugin.initialize(
       const InitializationSettings(android: androidSettings, iOS: iosSettings),
       onDidReceiveNotificationResponse: (response) {
+        _log(
+          'notification_response payload=${response.payload} actionId=${response.actionId}',
+        );
         handleNotificationResponsePayload(response.payload);
       },
       onDidReceiveBackgroundNotificationResponse:
@@ -99,18 +108,32 @@ class AdhanNotificationService {
     final android = _plugin.resolvePlatformSpecificImplementation<
         AndroidFlutterLocalNotificationsPlugin>();
     if (android != null) {
-      return await android.requestNotificationsPermission() ?? false;
+      final notificationGranted =
+          await android.requestNotificationsPermission() ?? false;
+      bool? exactGranted;
+      try {
+        exactGranted =
+            await (android as dynamic).requestExactAlarmsPermission() as bool?;
+      } catch (_) {
+        exactGranted = null;
+      }
+      _log(
+        'permissions android notificationsGranted=$notificationGranted exactAlarmGranted=$exactGranted',
+      );
+      return notificationGranted;
     }
 
     final ios = _plugin.resolvePlatformSpecificImplementation<
         IOSFlutterLocalNotificationsPlugin>();
     if (ios != null) {
-      return await ios.requestPermissions(
+      final granted = await ios.requestPermissions(
             alert: true,
             badge: true,
             sound: true,
           ) ??
           false;
+      _log('permissions ios granted=$granted (alert/badge/sound requested)');
+      return granted;
     }
 
     return true;
@@ -177,6 +200,23 @@ class AdhanNotificationService {
 
     final today = DateTime.now();
     await schedulePrayerNotificationsFor(today, selection);
+    final todayMaghrib = AdhanTimesService.computeTimes(
+      today,
+      selection,
+      countryHint: _countryHintFromLocation(selection),
+    ).maghrib;
+    final targetMaghrib = today.isBefore(todayMaghrib)
+        ? todayMaghrib
+        : AdhanTimesService.computeTimes(
+            today.add(const Duration(days: 1)),
+            selection,
+            countryHint: _countryHintFromLocation(selection),
+          ).maghrib;
+    await scheduleIftarLiveActivityNotifications(
+      maghrib: targetMaghrib,
+      timezoneName: selection.timezone,
+      includeWarmup: false,
+    );
     await WidgetPayloadService.writeNextPrayerPayload();
   }
 
@@ -245,6 +285,7 @@ class AdhanNotificationService {
   static Future<void> scheduleIftarLiveActivityNotifications({
     required DateTime maghrib,
     String? timezoneName,
+    bool includeWarmup = true,
   }) async {
     if (kIsWeb) return;
     final now = DateTime.now();
@@ -255,7 +296,7 @@ class AdhanNotificationService {
     await _plugin.cancel(warmupId);
     await _plugin.cancel(maghribId);
 
-    if (warmupAt.isAfter(now)) {
+    if (includeWarmup && warmupAt.isAfter(now)) {
       await _schedule(
         id: warmupId,
         title: _iftarWarmupTitle(),
@@ -264,6 +305,26 @@ class AdhanNotificationService {
         timezoneName: timezoneName,
         payload: _iftarWarmupPayload,
         withSound: false,
+      );
+      _log(
+        'iftar_warmup_scheduled at=${warmupAt.toIso8601String()} timezone=$timezoneName channel=$_prayerChannelIdNormal sound=false',
+      );
+    }
+
+    if (maghrib.isAfter(now)) {
+      await _schedule(
+        id: maghribId,
+        title: _iftarAlarmTitle(),
+        body: _iftarAlarmBody(maghrib),
+        dateTime: maghrib,
+        timezoneName: timezoneName,
+        payload: _iftarAlarmPayload,
+        withSound: true,
+        androidChannelId: _iftarChannelIdAlarm,
+        androidChannelName: _iftarChannelNameAlarm,
+      );
+      _log(
+        'iftar_alarm_scheduled at=${maghrib.toIso8601String()} timezone=$timezoneName channel=$_iftarChannelIdAlarm sound=true',
       );
     }
   }
@@ -281,6 +342,8 @@ class AdhanNotificationService {
     required bool withSound,
     String? timezoneName,
     String? payload,
+    String? androidChannelId,
+    String? androidChannelName,
   }) async {
     final zone = _resolveLocation(timezoneName);
     final tzDateTime = tz.TZDateTime(
@@ -295,9 +358,9 @@ class AdhanNotificationService {
 
     final details = NotificationDetails(
       android: withSound
-          ? const AndroidNotificationDetails(
-              _prayerChannelIdAlarm,
-              _prayerChannelNameAlarm,
+          ? AndroidNotificationDetails(
+              androidChannelId ?? _prayerChannelIdAlarm,
+              androidChannelName ?? _prayerChannelNameAlarm,
               channelDescription: 'Prayer time reminders with sound',
               importance: Importance.high,
               priority: Priority.high,
@@ -313,6 +376,7 @@ class AdhanNotificationService {
       iOS: DarwinNotificationDetails(
         // We only use standard notification sounds; no Critical Alerts.
         presentSound: withSound,
+        sound: withSound ? 'default' : null,
       ),
     );
 
@@ -328,6 +392,9 @@ class AdhanNotificationService {
       androidScheduleMode: withSound
           ? AndroidScheduleMode.exactAllowWhileIdle
           : AndroidScheduleMode.inexactAllowWhileIdle,
+    );
+    _log(
+      'schedule id=$id payload=$payload withSound=$withSound localDate=${dateTime.toIso8601String()} tzDate=$tzDateTime timezone=$timezoneName',
     );
   }
 
@@ -414,7 +481,14 @@ class AdhanNotificationService {
   static void handleNotificationResponsePayload(String? payload) {
     if (payload == _iftarWarmupPayload) {
       _iftarWarmupTapped = true;
+      _log('trigger payload=$_iftarWarmupPayload');
+      return;
     }
+    if (payload == _iftarAlarmPayload) {
+      _log('trigger payload=$_iftarAlarmPayload');
+      return;
+    }
+    _log('trigger payload=$payload');
   }
 
   static bool consumeIftarWarmupTapFlag() {
@@ -438,5 +512,24 @@ class AdhanNotificationService {
       return 'Canlı Etkinlik geri sayımı uygulamada başlatılır.';
     }
     return 'Live Activity countdown starts when the app is opened.';
+  }
+
+  static String _iftarAlarmTitle() {
+    if (_isTurkishLanguage) {
+      return 'İftar vakti';
+    }
+    return 'It is time for iftar';
+  }
+
+  static String _iftarAlarmBody(DateTime maghrib) {
+    final hhmm = AdhanTimesService.formatHHmm(maghrib);
+    if (_isTurkishLanguage) {
+      return 'İftar saati geldi ($hhmm).';
+    }
+    return 'Iftar time has arrived ($hhmm).';
+  }
+
+  static void _log(String message) {
+    debugPrint('[AdhanNotifications] $message');
   }
 }

@@ -81,8 +81,7 @@ class S {
       'ramadan_suggestions_share': 'Paylaş',
       'ramadan_suggestions_tab_today': 'Bugün',
       'ramadan_suggestions_tab_favorites': 'Favoriler',
-      'ramadan_suggestions_favorites_empty':
-          'Henüz favori öneriniz yok.',
+      'ramadan_suggestions_favorites_empty': 'Henüz favori öneriniz yok.',
       'ramadan_suggestions_refresh': 'Yeni öneri getir',
       'ramadan_suggestions_refreshed': 'Bugünün önerileri güncellendi.',
       'ramadan_juz_select': 'Cüz Seç',
@@ -160,7 +159,7 @@ class S {
       // Settings
       'settings': 'Ayarlar',
       'language': 'Dil',
-      'appearance': 'Gorunum',
+      'appearance': 'Görünüm',
       'system': 'Sistem',
       'light': 'Açık',
       'dark': 'Koyu',

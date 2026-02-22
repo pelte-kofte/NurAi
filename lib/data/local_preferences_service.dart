@@ -20,9 +20,9 @@ class RamadanSuggestionSelection {
 /// Lightweight local preferences with ValueNotifiers for reactive UI.
 class LocalPreferencesService {
   static const _keyAdhan = 'pref_adhan_enabled';
-  static const _keyHaptics = 'pref_haptics_enabled';
   static const _keyTheme = 'theme_mode';
   static const _legacyKeyTheme = 'pref_theme_mode';
+  static const _legacyKeyHaptics = 'pref_haptics_enabled';
   static const _keyLanguage = 'pref_language';
   static const _keyPrayerLocation = 'pref_prayer_location';
   static const _keyPrayerLocationMode = 'prayer_location_mode';
@@ -47,9 +47,8 @@ class LocalPreferencesService {
   static SharedPreferences? _prefs;
 
   /// Reactive notifiers — UI can listen without Provider/Bloc.
-  static final themeMode = ValueNotifier<ThemeMode>(ThemeMode.system);
+  static final themeMode = ValueNotifier<ThemeMode>(ThemeMode.light);
   static final adhanEnabled = ValueNotifier<bool>(false);
-  static final hapticsEnabled = ValueNotifier<bool>(true);
   static final language = ValueNotifier<String>('tr');
   static final ezanAlarmSoundEnabled = ValueNotifier<bool>(false);
   static final iftarLiveActivityEnabled = ValueNotifier<bool>(false);
@@ -64,7 +63,7 @@ class LocalPreferencesService {
     // Hydrate notifiers from disk
     themeMode.value = _readThemeMode();
     adhanEnabled.value = _prefs?.getBool(_keyAdhan) ?? false;
-    hapticsEnabled.value = _prefs?.getBool(_keyHaptics) ?? true;
+    await _prefs?.remove(_legacyKeyHaptics);
     language.value = _prefs?.getString(_keyLanguage) ?? 'tr';
     ezanAlarmSoundEnabled.value = _prefs?.getBool(_keyEzanAlarmSound) ?? false;
     iftarLiveActivityEnabled.value =
@@ -81,14 +80,14 @@ class LocalPreferencesService {
   static ThemeMode _readThemeMode() {
     final raw = _prefs?.getString(_keyTheme) ??
         _prefs?.getString(_legacyKeyTheme) ??
-        'system';
+        'light';
     switch (raw) {
       case 'light':
         return ThemeMode.light;
       case 'dark':
         return ThemeMode.dark;
       default:
-        return ThemeMode.system;
+        return ThemeMode.light;
     }
   }
 
@@ -96,7 +95,7 @@ class LocalPreferencesService {
     final raw = switch (mode) {
       ThemeMode.light => 'light',
       ThemeMode.dark => 'dark',
-      _ => 'system',
+      _ => 'light',
     };
     await _prefs?.setString(_keyTheme, raw);
     await _prefs?.remove(_legacyKeyTheme);
@@ -113,13 +112,6 @@ class LocalPreferencesService {
   static Future<void> setEzanAlarmSoundEnabled(bool value) async {
     await _prefs?.setBool(_keyEzanAlarmSound, value);
     ezanAlarmSoundEnabled.value = value;
-  }
-
-  // ── Haptics ────────────────────────────────────────────
-
-  static Future<void> setHapticsEnabled(bool value) async {
-    await _prefs?.setBool(_keyHaptics, value);
-    hapticsEnabled.value = value;
   }
 
   // ── Language ───────────────────────────────────────────

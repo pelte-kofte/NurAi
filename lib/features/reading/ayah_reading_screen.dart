@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'dart:async';
@@ -7,13 +7,13 @@ import '../../data/reading_progress_service.dart';
 import '../../data/bookmark_service.dart';
 import '../../data/ayah_notes_service.dart';
 import '../../data/collective_reading_service.dart';
-import '../../data/local_preferences_service.dart';
 import '../../data/premium_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../models/ayah.dart';
 import '../../models/reading_context.dart';
 import '../premium/paywall_screen.dart';
 import '../surah/surah_list_screen.dart';
+import '../../theme/app_theme.dart';
 
 /// Displays a full surah for calm, focused reading.
 class AyahReadingScreen extends StatefulWidget {
@@ -174,9 +174,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
       _currentLastReadSurah = ayah.surah;
       _currentLastReadAyah = ayah.ayahNumber;
     });
-    if (LocalPreferencesService.hapticsEnabled.value) {
-      HapticFeedback.selectionClick();
-    }
+    HapticFeedback.selectionClick();
     ReadingProgressService.saveGlobalLastRead(ayah.surah, ayah.ayahNumber);
     ReadingProgressService.saveContextProgress(
       widget.readingContext,
@@ -234,7 +232,8 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
     final targetSurah = _scrollToSurah ?? widget.surahNumber;
     final targetAyah = _scrollToAyah;
     if (targetAyah == null) return;
-    final target = _ayahs.where((a) => a.surah == targetSurah && a.ayahNumber == targetAyah);
+    final target = _ayahs
+        .where((a) => a.surah == targetSurah && a.ayahNumber == targetAyah);
     if (target.isEmpty) return;
     _didOpenInitialNoteEditor = true;
     await _openNoteEditorForAyah(target.first);
@@ -269,9 +268,9 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6F2),
+      backgroundColor: AppColors.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF6F2),
+        backgroundColor: AppColors.scaffoldBg,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
@@ -279,7 +278,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
           icon: const Icon(
             Icons.arrow_back_ios_rounded,
             size: 20,
-            color: Color(0xFF7A746F),
+            color: AppColors.textSecondary,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -289,7 +288,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
             fontFamily: 'Merriweather',
             fontSize: 18,
             fontWeight: FontWeight.w400,
-            color: Color(0xFF2B2725),
+            color: AppColors.textPrimary,
           ),
         ),
         actions: [
@@ -298,7 +297,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
               icon: const Icon(
                 Icons.chevron_left_rounded,
                 size: 24,
-                color: Color(0xFF7A746F),
+                color: AppColors.textSecondary,
               ),
               onPressed: _canGoPreviousSurah
                   ? () => _openAdjacentSurah(widget.surahNumber - 1)
@@ -308,7 +307,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
               icon: const Icon(
                 Icons.chevron_right_rounded,
                 size: 24,
-                color: Color(0xFF7A746F),
+                color: AppColors.textSecondary,
               ),
               onPressed: _canGoNextSurah
                   ? () => _openAdjacentSurah(widget.surahNumber + 1)
@@ -318,7 +317,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
               icon: const Icon(
                 Icons.list_rounded,
                 size: 22,
-                color: Color(0xFF7A746F),
+                color: AppColors.textSecondary,
               ),
               onPressed: () {
                 Navigator.of(context).push(
@@ -339,15 +338,18 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
             return Padding(
               padding: const EdgeInsets.only(bottom: 24),
               child: Text(
-                S.get(
-                  'reading_juz_companion_subtitle',
-                ).replaceFirst('{juz}', '${widget.readingContext.juzNumber}'),
+                S
+                    .get(
+                      'reading_juz_companion_subtitle',
+                    )
+                    .replaceFirst(
+                        '{juz}', '${widget.readingContext.juzNumber}'),
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFFB5AEA8),
+                  color: AppColors.textMuted,
                   height: 1.4,
                 ),
               ),
@@ -403,13 +405,12 @@ class _AyahBlockState extends State<_AyahBlock> {
       widget.ayah.surah,
       widget.ayah.ayahNumber,
     );
-    _hasNote = AyahNotesService.hasNote(widget.ayah.surah, widget.ayah.ayahNumber);
+    _hasNote =
+        AyahNotesService.hasNote(widget.ayah.surah, widget.ayah.ayahNumber);
   }
 
   Future<void> _toggleBookmark() async {
-    if (LocalPreferencesService.hapticsEnabled.value) {
-      HapticFeedback.selectionClick();
-    }
+    HapticFeedback.selectionClick();
     final newState = await BookmarkService.toggle(
       widget.ayah.surah,
       widget.ayah.ayahNumber,
@@ -435,18 +436,19 @@ class _AyahBlockState extends State<_AyahBlock> {
     );
     if (mounted) {
       setState(() {
-        _hasNote = AyahNotesService.hasNote(widget.ayah.surah, widget.ayah.ayahNumber);
+        _hasNote =
+            AyahNotesService.hasNote(widget.ayah.surah, widget.ayah.ayahNumber);
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    const readAccent = Color(0xFF7BAEAC);
+    const readAccent = AppColors.primaryAccent;
     // Subtle color variations for Juz range
     final arabicColor = widget.isWithinJuzRange
         ? const Color(0xFF1F1D1C) // Slightly darker
-        : const Color(0xFF2B2725);
+        : AppColors.textPrimary;
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -530,7 +532,7 @@ class _AyahBlockState extends State<_AyahBlock> {
                             fontFamily: 'Merriweather',
                             fontSize: 15,
                             fontWeight: FontWeight.w400,
-                            color: Color(0xFF7A746F),
+                            color: AppColors.textSecondary,
                             height: 1.6,
                           ),
                         ),
@@ -545,7 +547,7 @@ class _AyahBlockState extends State<_AyahBlock> {
                                 ? Icons.bookmark_rounded
                                 : Icons.bookmark_border_rounded,
                             size: 20,
-                            color: const Color(0xFF7A746F),
+                            color: AppColors.textSecondary,
                           ),
                         ),
                       ),
@@ -566,9 +568,9 @@ class _AyahBlockState extends State<_AyahBlock> {
                                 size: 20,
                                 color: isPremium
                                     ? (_hasNote
-                                        ? const Color(0xFF7BAEAC)
-                                        : const Color(0xFF7A746F))
-                                    : const Color(0xFFB5AEA8),
+                                        ? AppColors.primaryAccent
+                                        : AppColors.textSecondary)
+                                    : AppColors.textMuted,
                               ),
                             ),
                           );
@@ -599,7 +601,7 @@ Future<void> showAyahNoteEditorSheet({
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
-    backgroundColor: const Color(0xFFFBF6F2),
+    backgroundColor: AppColors.scaffoldBg,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -621,7 +623,7 @@ Future<void> showAyahNoteEditorSheet({
                 fontFamily: 'Merriweather',
                 fontSize: 18,
                 fontWeight: FontWeight.w400,
-                color: Color(0xFF2B2725),
+                color: AppColors.textPrimary,
               ),
             ),
             const SizedBox(height: 6),
@@ -630,7 +632,7 @@ Future<void> showAyahNoteEditorSheet({
               style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
-                color: Color(0xFF7A746F),
+                color: AppColors.textSecondary,
               ),
             ),
             const SizedBox(height: 12),
@@ -641,17 +643,17 @@ Future<void> showAyahNoteEditorSheet({
               style: const TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 14,
-                color: Color(0xFF2B2725),
+                color: AppColors.textPrimary,
               ),
               decoration: InputDecoration(
                 hintText: S.get('note_hint'),
                 hintStyle: const TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
-                  color: Color(0xFFB5AEA8),
+                  color: AppColors.textMuted,
                 ),
                 filled: true,
-                fillColor: const Color(0xFFFDF9F6),
+                fillColor: AppColors.cardBg,
                 contentPadding: const EdgeInsets.all(12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -678,7 +680,7 @@ Future<void> showAyahNoteEditorSheet({
                   style: const TextStyle(
                     fontFamily: 'Inter',
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF7BAEAC),
+                    color: AppColors.primaryAccent,
                   ),
                 ),
               ),

@@ -11,6 +11,7 @@ import '../../data/iftar_live_activity_service.dart';
 import '../../l10n/app_strings.dart';
 import '../notes/notes_screen.dart';
 import '../premium/paywall_screen.dart';
+import '../../theme/app_theme.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, this.scrollController});
@@ -22,12 +23,12 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  static const Color _mutedIconColor = Color(0xFF8FA9A7);
+  static const Color _mutedIconColor = AppColors.iconMuted;
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: const Color(0xFFFDF9F6),
+      color: AppColors.cardBg,
       child: ListView(
         controller: widget.scrollController,
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
@@ -40,7 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 fontFamily: 'Merriweather',
                 fontSize: 20,
                 fontWeight: FontWeight.w400,
-                color: Color(0xFF2B2725),
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -80,14 +81,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             value: _themeModeLabel(LocalPreferencesService.themeMode.value),
             onTap: () => _showThemePicker(),
           ),
-          _buildSwitchRow(
-            title: S.get('haptics'),
-            value: LocalPreferencesService.hapticsEnabled.value,
-            onChanged: (v) {
-              LocalPreferencesService.setHapticsEnabled(v);
-              setState(() {});
-            },
-          ),
           if (!kIsWeb && Platform.isIOS)
             ValueListenableBuilder<bool>(
               valueListenable: IftarLiveActivityService.isSupported,
@@ -113,7 +106,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       fontFamily: 'Inter',
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFFB5AEA8),
+                      color: AppColors.textMuted,
                       height: 1.35,
                     ),
                   ),
@@ -153,7 +146,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               fontFamily: 'Inter',
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: Color(0xFF7A746F),
+              color: AppColors.textSecondary,
               letterSpacing: 0.5,
             ),
           ),
@@ -189,7 +182,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   fontFamily: 'Inter',
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF2B2725),
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
@@ -200,14 +193,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   fontFamily: 'Inter',
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF7A746F),
+                  color: AppColors.textSecondary,
                 ),
               ),
             const SizedBox(width: 4),
             Icon(
               chevron,
               size: 18,
-              color: const Color(0xFFB5AEA8),
+              color: AppColors.textMuted,
             ),
           ],
         ),
@@ -242,7 +235,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   fontFamily: 'Inter',
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF2B2725),
+                  color: AppColors.textPrimary,
                 ),
               ),
             ),
@@ -252,13 +245,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Icon(
                   Icons.lock_outline_rounded,
                   size: 16,
-                  color: Color(0xFFB5AEA8),
+                  color: AppColors.textMuted,
                 ),
               ),
             Icon(
               chevron,
               size: 18,
-              color: const Color(0xFFB5AEA8),
+              color: AppColors.textMuted,
             ),
           ],
         ),
@@ -282,7 +275,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 fontFamily: 'Inter',
                 fontSize: 15,
                 fontWeight: FontWeight.w400,
-                color: Color(0xFF2B2725),
+                color: AppColors.textPrimary,
               ),
             ),
           ),
@@ -291,7 +284,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Switch.adaptive(
               value: value,
               onChanged: onChanged,
-              activeTrackColor: const Color(0xFF7BAEAC),
+              activeTrackColor: AppColors.primaryAccent,
             ),
           ),
         ],
@@ -323,14 +316,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   String _themeModeLabel(ThemeMode mode) {
-    switch (mode) {
-      case ThemeMode.light:
-        return S.get('light');
-      case ThemeMode.dark:
-        return S.get('dark');
-      default:
-        return S.get('system');
-    }
+    return mode == ThemeMode.dark ? S.get('dark') : S.get('light');
   }
 
   void _openNotesOrPaywall(bool isPremium) {
@@ -351,7 +337,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: const Color(0xFFFBF6F2),
+      backgroundColor: AppColors.scaffoldBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -373,7 +359,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   fontFamily: 'Merriweather',
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF2B2725),
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 12),
@@ -384,7 +370,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   fontFamily: 'Inter',
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF2B2725),
+                  color: AppColors.textPrimary,
                 ),
                 decoration: InputDecoration(
                   hintText: S.get('name_hint'),
@@ -392,10 +378,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    color: Color(0xFFB5AEA8),
+                    color: AppColors.textMuted,
                   ),
                   filled: true,
-                  fillColor: const Color(0xFFFDF9F6),
+                  fillColor: AppColors.cardBg,
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   border: OutlineInputBorder(
@@ -421,7 +407,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         fontFamily: 'Inter',
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
-                        color: Color(0xFF7A746F),
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ),
@@ -439,7 +425,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         fontFamily: 'Inter',
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: Color(0xFFB57A5A),
+                        color: AppColors.secondaryAccent,
                       ),
                     ),
                   ),
@@ -475,20 +461,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _showOptionSheet(
       title: S.get('appearance'),
       options: [
-        _Option(S.get('system'), 'system'),
         _Option(S.get('light'), 'light'),
         _Option(S.get('dark'), 'dark'),
       ],
       current: switch (LocalPreferencesService.themeMode.value) {
-        ThemeMode.light => 'light',
         ThemeMode.dark => 'dark',
-        _ => 'system',
+        ThemeMode.light => 'light',
+        _ => 'light',
       },
       onSelect: (val) {
         final mode = switch (val) {
-          'light' => ThemeMode.light,
           'dark' => ThemeMode.dark,
-          _ => ThemeMode.system,
+          _ => ThemeMode.light,
         };
         LocalPreferencesService.setThemeMode(mode);
         setState(() {});
@@ -504,7 +488,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFFFBF6F2),
+      backgroundColor: AppColors.scaffoldBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -522,7 +506,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     fontFamily: 'Inter',
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: Color(0xFF7A746F),
+                    color: AppColors.textSecondary,
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -548,7 +532,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 fontWeight: isSelected
                                     ? FontWeight.w500
                                     : FontWeight.w400,
-                                color: const Color(0xFF2B2725),
+                                color: AppColors.textPrimary,
                               ),
                             ),
                           ),
@@ -556,7 +540,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             const Icon(
                               Icons.check_rounded,
                               size: 18,
-                              color: Color(0xFFB57A5A),
+                              color: AppColors.secondaryAccent,
                             ),
                         ],
                       ),
@@ -575,7 +559,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
-      backgroundColor: const Color(0xFFFBF6F2),
+      backgroundColor: AppColors.scaffoldBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -592,7 +576,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   fontFamily: 'Merriweather',
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF2B2725),
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -602,7 +586,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   fontFamily: 'Inter',
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF7A746F),
+                  color: AppColors.textSecondary,
                   height: 1.4,
                 ),
               ),
@@ -669,7 +653,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          backgroundColor: const Color(0xFFFBF6F2),
+          backgroundColor: AppColors.scaffoldBg,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           content: Text(
@@ -678,7 +662,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: Color(0xFF7A746F),
+              color: AppColors.textSecondary,
               height: 1.5,
             ),
           ),
@@ -691,7 +675,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   fontFamily: 'Inter',
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFFB57A5A),
+                  color: AppColors.secondaryAccent,
                 ),
               ),
             ),

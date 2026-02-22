@@ -7,8 +7,61 @@ struct IftarAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         var title: String
         var subtitle: String
-        var endDate: Date
+        var iftarDate: Date
         var phase: String
+
+        enum CodingKeys: String, CodingKey {
+            case title
+            case subtitle
+            case iftarDate
+            case endDate
+            case phase
+        }
+
+        init(title: String, subtitle: String, iftarDate: Date, phase: String) {
+            self.title = title
+            self.subtitle = subtitle
+            self.iftarDate = iftarDate
+            self.phase = phase
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Iftara kalan"
+            subtitle = try container.decodeIfPresent(String.self, forKey: .subtitle) ?? "Ramazan bereketi"
+            phase = try container.decodeIfPresent(String.self, forKey: .phase) ?? "countdown"
+
+            let decodedIftarDate = try container.decodeIfPresent(Date.self, forKey: .iftarDate)
+            let decodedLegacyDate = try container.decodeIfPresent(Date.self, forKey: .endDate)
+            let source: String
+            if let value = decodedIftarDate {
+                iftarDate = value
+                source = "iftarDate"
+            } else if let legacyValue = decodedLegacyDate {
+                iftarDate = legacyValue
+                source = "endDate"
+            } else {
+                iftarDate = Date()
+                source = "fallbackNow"
+            }
+
+            let remainingSeconds = max(0, Int(iftarDate.timeIntervalSinceNow))
+            NSLog(
+                "[NurAiWidgetsLiveActivity] decode source=%@ iftarDate=%.0f now=%.0f remainingSeconds=%d",
+                source,
+                iftarDate.timeIntervalSince1970,
+                Date().timeIntervalSince1970,
+                remainingSeconds
+            )
+        }
+
+        func encode(to encoder: Encoder) throws {
+            var container = encoder.container(keyedBy: CodingKeys.self)
+            try container.encode(title, forKey: .title)
+            try container.encode(subtitle, forKey: .subtitle)
+            try container.encode(iftarDate, forKey: .iftarDate)
+            try container.encode(phase, forKey: .phase)
+        }
     }
 
     var name: String
@@ -16,90 +69,93 @@ struct IftarAttributes: ActivityAttributes {
 
 @available(iOSApplicationExtension 16.1, *)
 struct NurAiWidgetsLiveActivity: Widget {
+    private let lockScreenBackgroundTint = Color(red: 0.96, green: 0.93, blue: 0.88)
+    private let lockScreenActionTint = Color(red: 0.30, green: 0.24, blue: 0.18)
+    private let islandKeylineTint = Color(red: 0.89, green: 0.61, blue: 0.28)
+
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: IftarAttributes.self) { context in
-            VStack(alignment: .leading, spacing: 6) {
-                if context.state.phase == "done" {
-                    Text("Allah kabul etsin")
-                        .font(.system(size: 20, weight: .bold))
-                    Text("Iftar vakti.")
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundStyle(Color.secondary)
-                } else {
-                    Text(context.state.title.isEmpty ? "Iftara" : context.state.title)
+            VStack(alignment: .leading, spacing: 8) {
+                HStack(spacing: 6) {
+                    Image(systemName: "moon.stars.fill")
+                        .foregroundStyle(.primary)
+                    Text("Iftara kalan")
                         .font(.system(size: 16, weight: .semibold))
-                    countdownLabel(endDate: context.state.endDate, large: true)
-                    Text(context.state.subtitle)
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundStyle(Color.secondary)
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
                 }
+
+                countdownLabel(iftarDate: context.state.iftarDate, large: true)
+
+                Text(context.state.subtitle.isEmpty ? "Ramazan bereketi" : context.state.subtitle)
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
             }
             .padding(.vertical, 4)
-            .activityBackgroundTint(Color.black.opacity(0.12))
-            .activitySystemActionForegroundColor(Color.primary)
+            .activityBackgroundTint(lockScreenBackgroundTint)
+            .activitySystemActionForegroundColor(lockScreenActionTint)
+            .widgetURL(URL(string: "nurai://ramadan"))
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Text(context.state.title.isEmpty ? "Iftara" : context.state.title)
-                        .font(.system(size: 13, weight: .semibold))
-                        .lineLimit(1)
+                    Image(systemName: "moon.stars.fill")
+                        .foregroundStyle(.primary)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    if context.state.phase == "done" {
-                        Text("Vakit")
-                            .font(.system(size: 13, weight: .semibold))
-                    } else {
-                        countdownLabel(endDate: context.state.endDate, large: false)
-                    }
+                    countdownLabel(iftarDate: context.state.iftarDate, large: false)
+                }
+                DynamicIslandExpandedRegion(.center) {
+                    Text("Iftara kalan")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
-                    if context.state.phase == "done" {
-                        Text("Allah kabul etsin")
-                            .font(.system(size: 16, weight: .bold))
-                    } else {
-                        Text(context.state.subtitle)
-                            .font(.system(size: 13, weight: .regular))
-                            .lineLimit(1)
+                    HStack(spacing: 6) {
+                        Text("Iftara kalan")
+                            .foregroundStyle(.primary)
+                        countdownLabel(iftarDate: context.state.iftarDate, large: false)
                     }
                 }
             } compactLeading: {
-                Text("I")
+                Image(systemName: "moon.stars.fill")
+                    .foregroundStyle(.primary)
             } compactTrailing: {
-                if context.state.phase == "done" {
-                    Text("OK")
-                } else {
-                    countdownLabel(endDate: context.state.endDate, large: false)
-                }
+                countdownLabel(iftarDate: context.state.iftarDate, large: false)
             } minimal: {
-                if context.state.phase == "done" {
-                    Text("OK")
-                } else {
-                    Image(systemName: "moon.stars.fill")
-                }
+                Image(systemName: "moon.fill")
+                    .foregroundStyle(.primary)
             }
             .widgetURL(URL(string: "nurai://ramadan"))
-            .keylineTint(Color.orange)
+            .keylineTint(islandKeylineTint)
         }
     }
 
     @ViewBuilder
-    private func countdownLabel(endDate: Date, large: Bool) -> some View {
-        TimelineView(.periodic(from: .now, by: 1)) { timeline in
-            let text = Self.formatRemaining(now: timeline.date, endDate: endDate)
-            Text(text)
+    private func countdownLabel(iftarDate: Date, large: Bool) -> some View {
+        if isFutureDate(iftarDate) {
+            Text(timerInterval: Date()...iftarDate, countsDown: true)
                 .font(
                     large
                         ? .system(size: 24, weight: .bold, design: .rounded)
                         : .system(size: 13, weight: .semibold, design: .rounded)
                 )
                 .monospacedDigit()
+                .foregroundStyle(.primary)
+        } else {
+            Text("--:--")
+                .font(
+                    large
+                        ? .system(size: 24, weight: .bold, design: .rounded)
+                        : .system(size: 13, weight: .semibold, design: .rounded)
+                )
+                .monospacedDigit()
+                .foregroundStyle(.primary)
         }
     }
 
-    private static func formatRemaining(now: Date, endDate: Date) -> String {
-        let remaining = max(0, Int(endDate.timeIntervalSince(now)))
-        let minutes = remaining / 60
-        let seconds = remaining % 60
-        return String(format: "%02d:%02d", minutes, seconds)
+    private func isFutureDate(_ date: Date) -> Bool {
+        date.timeIntervalSinceNow > 0
     }
 }

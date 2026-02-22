@@ -5,10 +5,11 @@ import '../../data/ramadan_daily_note_service.dart';
 import '../../data/reading_progress_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../models/reading_context.dart';
+import '../../theme/app_theme.dart';
 import '../reading/ayah_reading_screen.dart';
 import '../ramadan/ramadan_suggestions_screen.dart';
 
-const Color _mutedInfoIconColor = Color(0xFF8FA9A7);
+const Color _mutedInfoIconColor = AppColors.iconMuted;
 
 class RamadanHubScreen extends StatefulWidget {
   const RamadanHubScreen({super.key});
@@ -81,7 +82,7 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
   Future<void> _showJuzPicker() async {
     final chosenJuz = await showModalBottomSheet<int>(
       context: context,
-      backgroundColor: const Color(0xFFFBF6F2),
+      backgroundColor: AppColors.scaffoldBg,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -98,7 +99,7 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
                   fontFamily: 'Merriweather',
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF2B2725),
+                  color: AppColors.textPrimary,
                 ),
               ),
               const SizedBox(height: 14),
@@ -117,13 +118,13 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? const Color(0xFFEAF3F2)
-                            : const Color(0xFFFDF9F6),
+                            ? AppColors.cardBgMuted
+                            : AppColors.cardBg,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: isSelected
-                              ? const Color(0xFF7BAEAC)
-                              : const Color(0xFFEDE6E1),
+                              ? AppColors.primaryAccent
+                              : AppColors.cardBorder,
                           width: 1,
                         ),
                       ),
@@ -135,8 +136,8 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
                           fontWeight:
                               isSelected ? FontWeight.w500 : FontWeight.w400,
                           color: isSelected
-                              ? const Color(0xFF5F918F)
-                              : const Color(0xFF7A746F),
+                              ? AppColors.primaryAccent
+                              : AppColors.textSecondary,
                         ),
                       ),
                     ),
@@ -200,16 +201,16 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
         hatimProgress != null ? S.get('continue') : S.get('ramadan_start');
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6F2),
+      backgroundColor: AppColors.scaffoldBg,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF6F2),
+        backgroundColor: AppColors.scaffoldBg,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
           icon: const Icon(
             Icons.arrow_back_ios_rounded,
             size: 20,
-            color: Color(0xFF7A746F),
+            color: AppColors.textSecondary,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
@@ -219,7 +220,7 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
             fontFamily: 'Merriweather',
             fontSize: 22,
             fontWeight: FontWeight.w400,
-            color: Color(0xFF2B2725),
+            color: AppColors.textPrimary,
           ),
         ),
       ),
@@ -232,7 +233,7 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: Color(0xFF7A746F),
+              color: AppColors.textSecondary,
               height: 1.5,
             ),
           ),
@@ -280,9 +281,9 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
-        color: const Color(0xFFFDF9F6),
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,7 +294,7 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
               fontFamily: 'Merriweather',
               fontSize: 16,
               fontWeight: FontWeight.w400,
-              color: Color(0xFF2B2725),
+              color: AppColors.textPrimary,
             ),
           ),
           if (_isJuzCompleted) ...[
@@ -304,7 +305,7 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
                 fontFamily: 'Inter',
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
-                color: Color(0xFF7A746F),
+                color: AppColors.textSecondary,
               ),
             ),
           ],
@@ -337,7 +338,7 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
                   fontFamily: 'Inter',
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF7A746F),
+                  color: AppColors.textSecondary,
                   decoration: TextDecoration.underline,
                 ),
               ),
@@ -361,7 +362,7 @@ class _SectionHeader extends StatelessWidget {
         fontFamily: 'Inter',
         fontSize: 12,
         fontWeight: FontWeight.w500,
-        color: Color(0xFF7A746F),
+        color: AppColors.textSecondary,
         letterSpacing: 0.4,
       ),
     );
@@ -389,9 +390,9 @@ class _ReadingCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         decoration: BoxDecoration(
-          color: const Color(0xFFFDF9F6),
+          color: AppColors.cardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFF8FA9A7), width: 1),
+          border: Border.all(color: AppColors.iconMuted, width: 1),
         ),
         child: Row(
           children: [
@@ -405,7 +406,7 @@ class _ReadingCard extends StatelessWidget {
                       fontFamily: 'Merriweather',
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF2B2725),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 5),
@@ -415,7 +416,7 @@ class _ReadingCard extends StatelessWidget {
                       fontFamily: 'Inter',
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF7A746F),
+                      color: AppColors.textSecondary,
                       height: 1.4,
                     ),
                   ),
@@ -429,7 +430,7 @@ class _ReadingCard extends StatelessWidget {
                 fontFamily: 'Inter',
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF7BAEAC),
+                color: AppColors.secondaryAccent,
               ),
             ),
           ],
@@ -449,9 +450,9 @@ class _DailyNoteCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
-        color: const Color(0xFFFDF9F6),
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
+        border: Border.all(color: AppColors.cardBorder, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -470,7 +471,7 @@ class _DailyNoteCard extends StatelessWidget {
                   fontFamily: 'Inter',
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: Color(0xFF7A746F),
+                  color: AppColors.textSecondary,
                 ),
               ),
             ],
@@ -482,7 +483,7 @@ class _DailyNoteCard extends StatelessWidget {
               fontFamily: 'Merriweather',
               fontSize: 15,
               fontWeight: FontWeight.w400,
-              color: Color(0xFF7A746F),
+              color: AppColors.textSecondary,
               height: 1.5,
             ),
           ),
@@ -511,10 +512,10 @@ class _JuzActionButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: primary ? const Color(0xFFEAF3F2) : const Color(0xFFF7F0EA),
+          color: primary ? AppColors.cardBgMuted : AppColors.cardBgMuted,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: primary ? const Color(0xFF7BAEAC) : const Color(0xFFEDE6E1),
+            color: primary ? AppColors.primaryAccent : AppColors.cardBorder,
             width: 1,
           ),
         ),
@@ -524,7 +525,7 @@ class _JuzActionButton extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: primary ? const Color(0xFF5F918F) : const Color(0xFF7A746F),
+            color: primary ? AppColors.primaryAccent : AppColors.textSecondary,
           ),
         ),
       ),
@@ -556,9 +557,9 @@ class _SimpleNavCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         decoration: BoxDecoration(
-          color: const Color(0xFFFDF9F6),
+          color: AppColors.cardBg,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
+          border: Border.all(color: AppColors.cardBorder, width: 1),
         ),
         child: Row(
           children: [
@@ -576,7 +577,7 @@ class _SimpleNavCard extends StatelessWidget {
                       fontFamily: 'Merriweather',
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF2B2725),
+                      color: AppColors.textPrimary,
                     ),
                   ),
                   if (subtitle != null) ...[
@@ -587,7 +588,7 @@ class _SimpleNavCard extends StatelessWidget {
                         fontFamily: 'Inter',
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
-                        color: Color(0xFF7A746F),
+                        color: AppColors.textSecondary,
                         height: 1.4,
                       ),
                     ),
@@ -598,7 +599,7 @@ class _SimpleNavCard extends StatelessWidget {
             Icon(
               chevron,
               size: 20,
-              color: const Color(0xFF7A746F),
+              color: AppColors.textSecondary,
             ),
           ],
         ),
