@@ -117,13 +117,13 @@ struct NurAiWidgetsEntryView: View {
         .containerBackground(for: .widget) {
           Color.clear
         }
-        .widgetURL(URL(string: "nurai://home"))
+        .widgetURL(URL(string: "duaya://home"))
     } else {
       loadingView
         .containerBackground(for: .widget) {
           Color.clear
         }
-        .widgetURL(URL(string: "nurai://home"))
+        .widgetURL(URL(string: "duaya://home"))
     }
   }
 

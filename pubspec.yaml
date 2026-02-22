@@ -1,7 +1,7 @@
 name: nurai
 description: A calm, mobile-first Islamic app for Quran reading and reflection.
 publish_to: 'none'
-version: 1.0.0+12
+version: 1.0.0+14
 
 environment:
   sdk: ^3.0.0
@@ -21,6 +21,7 @@ dependencies:
   flutter_timezone: ^3.0.0
   scrollable_positioned_list: ^0.3.8
   share_plus: ^10.1.2
+  url_launcher: ^6.3.1
 
 dev_dependencies:
   flutter_test:

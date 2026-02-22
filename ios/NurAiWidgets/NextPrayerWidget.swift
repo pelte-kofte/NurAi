@@ -106,7 +106,7 @@ struct NextPrayerWidgetView: View {
       .containerBackground(for: .widget) {
         Color.clear
       }
-      .widgetURL(URL(string: "nurai://adhan"))
+      .widgetURL(URL(string: "duaya://adhan"))
     } else {
       VStack(alignment: .leading, spacing: 8) {
         Text("Next Prayer")
@@ -119,7 +119,7 @@ struct NextPrayerWidgetView: View {
       .containerBackground(for: .widget) {
         Color.clear
       }
-      .widgetURL(URL(string: "nurai://adhan"))
+      .widgetURL(URL(string: "duaya://adhan"))
     }
   }
 }

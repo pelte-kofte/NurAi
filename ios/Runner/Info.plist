@@ -26,10 +26,10 @@
 		<array>
 			<dict>
 				<key>CFBundleURLName</key>
-				<string>com.nilico.Duaya</string>
+				<string>com.nilico.duaya</string>
 				<key>CFBundleURLSchemes</key>
 				<array>
-					<string>Duaya</string>
+					<string>duaya</string>
 				</array>
 			</dict>
 		</array>

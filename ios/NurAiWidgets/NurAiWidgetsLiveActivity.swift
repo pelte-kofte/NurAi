@@ -95,7 +95,7 @@ struct NurAiWidgetsLiveActivity: Widget {
             .padding(.vertical, 4)
             .activityBackgroundTint(lockScreenBackgroundTint)
             .activitySystemActionForegroundColor(lockScreenActionTint)
-            .widgetURL(URL(string: "nurai://ramadan"))
+            .widgetURL(URL(string: "duaya://ramadan"))
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
@@ -127,7 +127,7 @@ struct NurAiWidgetsLiveActivity: Widget {
                 Image(systemName: "moon.fill")
                     .foregroundStyle(.primary)
             }
-            .widgetURL(URL(string: "nurai://ramadan"))
+            .widgetURL(URL(string: "duaya://ramadan"))
             .keylineTint(islandKeylineTint)
         }
     }

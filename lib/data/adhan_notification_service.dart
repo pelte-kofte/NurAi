@@ -59,9 +59,9 @@ class AdhanNotificationService {
   static const _prayerIndexes = <int>[0, 1, 2, 3, 4];
   static const _prayerChannelIdNormal = 'prayer_times';
   static const _prayerChannelNameNormal = 'Prayer Times';
-  static const _prayerChannelIdAlarm = 'prayer_times_alarm';
+  static const _prayerChannelIdAlarm = 'adhan_channel_v2';
   static const _prayerChannelNameAlarm = 'Prayer Times Alarm';
-  static const _iftarChannelIdAlarm = 'iftar_alarm';
+  static const _iftarChannelIdAlarm = 'iftar_alarm_v2';
   static const _iftarChannelNameAlarm = 'Iftar Alarm';
   static const _iftarWarmupOffset = Duration(hours: 1);
   static const _iftarWarmupPayload = 'iftar_live_activity_warmup';
@@ -126,13 +126,20 @@ class AdhanNotificationService {
     final ios = _plugin.resolvePlatformSpecificImplementation<
         IOSFlutterLocalNotificationsPlugin>();
     if (ios != null) {
+      final before = await ios.checkPermissions();
+      _log(
+        'permissions ios before isEnabled=${before?.isEnabled} alert=${before?.isAlertEnabled} badge=${before?.isBadgeEnabled} sound=${before?.isSoundEnabled}',
+      );
       final granted = await ios.requestPermissions(
             alert: true,
             badge: true,
             sound: true,
           ) ??
           false;
-      _log('permissions ios granted=$granted (alert/badge/sound requested)');
+      final after = await ios.checkPermissions();
+      _log(
+        'permissions ios after granted=$granted isEnabled=${after?.isEnabled} alert=${after?.isAlertEnabled} badge=${after?.isBadgeEnabled} sound=${after?.isSoundEnabled}',
+      );
       return granted;
     }
 
@@ -239,9 +246,6 @@ class AdhanNotificationService {
       times.maghrib,
       times.isha,
     ];
-    final withEzanAlarmSound =
-        LocalPreferencesService.ezanAlarmSoundEnabled.value;
-
     for (var i = 0; i < _prayerIndexes.length; i++) {
       final id = _notificationIdFor(localDate, i);
       await _plugin.cancel(id);
@@ -269,7 +273,7 @@ class AdhanNotificationService {
         ),
         dateTime: scheduleAt,
         timezoneName: selection.timezone,
-        withSound: withEzanAlarmSound,
+        withSound: true,
       );
     }
   }
@@ -307,7 +311,7 @@ class AdhanNotificationService {
         withSound: false,
       );
       _log(
-        'iftar_warmup_scheduled at=${warmupAt.toIso8601String()} timezone=$timezoneName channel=$_prayerChannelIdNormal sound=false',
+        'iftar_warmup_scheduled at=${warmupAt.toIso8601String()} timezone=$timezoneName channel=$_prayerChannelIdNormal importance=default soundEnabled=false',
       );
     }
 
@@ -324,7 +328,7 @@ class AdhanNotificationService {
         androidChannelName: _iftarChannelNameAlarm,
       );
       _log(
-        'iftar_alarm_scheduled at=${maghrib.toIso8601String()} timezone=$timezoneName channel=$_iftarChannelIdAlarm sound=true',
+        'iftar_alarm_scheduled at=${maghrib.toIso8601String()} timezone=$timezoneName channel=$_iftarChannelIdAlarm importance=high soundEnabled=true',
       );
     }
   }
@@ -356,21 +360,29 @@ class AdhanNotificationService {
       dateTime.second,
     );
 
+    final resolvedAndroidChannelId = withSound
+        ? (androidChannelId ?? _prayerChannelIdAlarm)
+        : _prayerChannelIdNormal;
+    final resolvedAndroidChannelName = withSound
+        ? (androidChannelName ?? _prayerChannelNameAlarm)
+        : _prayerChannelNameNormal;
+    final resolvedImportance =
+        withSound ? Importance.high : Importance.defaultImportance;
     final details = NotificationDetails(
       android: withSound
           ? AndroidNotificationDetails(
-              androidChannelId ?? _prayerChannelIdAlarm,
-              androidChannelName ?? _prayerChannelNameAlarm,
+              resolvedAndroidChannelId,
+              resolvedAndroidChannelName,
               channelDescription: 'Prayer time reminders with sound',
-              importance: Importance.high,
+              importance: resolvedImportance,
               priority: Priority.high,
               playSound: true,
             )
-          : const AndroidNotificationDetails(
-              _prayerChannelIdNormal,
-              _prayerChannelNameNormal,
+          : AndroidNotificationDetails(
+              resolvedAndroidChannelId,
+              resolvedAndroidChannelName,
               channelDescription: 'Prayer time reminders',
-              importance: Importance.defaultImportance,
+              importance: resolvedImportance,
               priority: Priority.defaultPriority,
             ),
       iOS: DarwinNotificationDetails(
@@ -394,7 +406,7 @@ class AdhanNotificationService {
           : AndroidScheduleMode.inexactAllowWhileIdle,
     );
     _log(
-      'schedule id=$id payload=$payload withSound=$withSound localDate=${dateTime.toIso8601String()} tzDate=$tzDateTime timezone=$timezoneName',
+      'schedule id=$id payload=$payload soundEnabled=$withSound channelId=$resolvedAndroidChannelId importance=${resolvedImportance.name} localDate=${dateTime.toIso8601String()} tzDate=$tzDateTime timezone=$timezoneName',
     );
   }
 

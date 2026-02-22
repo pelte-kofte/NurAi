@@ -2,6 +2,7 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../data/adhan_notification_service.dart';
 import '../../data/local_preferences_service.dart';
 import '../../data/premium_service.dart';
@@ -24,6 +25,12 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   static const Color _mutedIconColor = AppColors.iconMuted;
+  static final Uri _privacyPolicyUrl = Uri.parse(
+    'https://duaya-app.web.app/privacy.html',
+  );
+  static final Uri _termsOfUseUrl = Uri.parse(
+    'https://duaya-app.web.app/terms.html',
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -118,13 +125,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: S.get('send_feedback'),
             onTap: () => _showStubDialog(S.get('stub_feedback')),
           ),
+          _buildSectionTitle(S.get('legal')),
           _buildRow(
             title: S.get('privacy_policy'),
-            onTap: () => _showStubDialog(S.get('stub_link')),
+            onTap: () => _openExternalUrl(_privacyPolicyUrl),
           ),
           _buildRow(
             title: S.get('terms'),
-            onTap: () => _showStubDialog(S.get('stub_link')),
+            onTap: () => _openExternalUrl(_termsOfUseUrl),
           ),
         ],
       ),
@@ -683,6 +691,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       },
     );
+  }
+
+  Future<void> _openExternalUrl(Uri uri) async {
+    final launched = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (launched || !mounted) return;
+    _showStubDialog(S.get('link_open_failed'));
   }
 }
 
