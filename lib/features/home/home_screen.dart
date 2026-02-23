@@ -14,6 +14,7 @@ import '../../main.dart';
 import '../../models/prayer_location.dart';
 import '../../models/reading_context.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/corner_ornaments.dart';
 import '../../widgets/next_prayer_pill.dart';
 import '../../widgets/quick_actions_popover.dart';
 import '../adhan/adhan_times_screen.dart';
@@ -324,8 +325,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
+    final scaffoldColor = Theme.of(context).scaffoldBackgroundColor;
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: scaffoldColor,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
@@ -475,7 +477,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppColors.iconMuted),
+        Icon(icon, size: 16, color: AppColors.indigoAccent),
         const SizedBox(width: 8),
         Text(
           title,
@@ -547,6 +549,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           title: S.get('daily_ayah'),
           body: ayah.turkishReadable,
           source: ayah.reference,
+          showTopCornerOrnaments: true,
         );
       case HomeDailyContentType.hadith:
         final hadith = DailyContentService.todayHadith;
@@ -567,6 +570,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           title: S.get('daily_quote_title'),
           body: quote.text,
           source: quote.source,
+          showQuoteOrnaments: true,
         );
     }
   }
@@ -575,15 +579,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     required String title,
     required String body,
     String? source,
+    bool showQuoteOrnaments = false,
+    bool showTopCornerOrnaments = false,
   }) {
     final cleanSource = source?.trim() ?? '';
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
       decoration: BoxDecoration(
-        color: AppColors.cardBg,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.primaryAccent, width: 1.5),
+        border: Border.all(color: AppColors.indigoAccent, width: 1.5),
         boxShadow: const [
           BoxShadow(
             color: Color(0x182B2721),
@@ -592,43 +597,82 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: AppColors.secondaryAccent,
-              letterSpacing: 0.8,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            body,
-            style: const TextStyle(
-              fontFamily: 'Merriweather',
-              fontSize: 20,
-              fontWeight: FontWeight.w400,
-              color: AppColors.textPrimary,
-              height: 1.6,
-            ),
-          ),
-          if (cleanSource.isNotEmpty) ...[
-            const SizedBox(height: 16),
-            Text(
-              cleanSource,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w400,
-                color: AppColors.textSecondary,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12.5),
+        child: Stack(
+          clipBehavior: Clip.hardEdge,
+          children: [
+            if (showTopCornerOrnaments)
+              const Positioned.fill(
+                child: CornerOrnaments(
+                  bottomLeftAsset: 'assets/images/ornaments/top_left.png',
+                  bottomRightAsset: 'assets/images/ornaments/top_right.png',
+                  opacity: 0.15,
+                  size: 92,
+                  bottomOffset: -20,
+                  sideOffset: -18,
+                  rotation: 0.08,
+                ),
+              ),
+            if (showQuoteOrnaments) ...[
+              const Positioned.fill(
+                child: CornerOrnaments(
+                  bottomLeftAsset: 'assets/images/ornaments/top_left.png',
+                  bottomRightAsset: 'assets/images/ornaments/top_right.png',
+                  opacity: 0.13,
+                  size: 86,
+                  bottomOffset: -20,
+                  sideOffset: -16,
+                  rotation: 0.12,
+                ),
+              ),
+            ],
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.indigoAccent,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    body,
+                    style: TextStyle(
+                      fontFamily: 'Merriweather',
+                      fontSize: 20,
+                      fontWeight: FontWeight.w400,
+                      color: Theme.of(context).colorScheme.onSurface,
+                      height: 1.6,
+                    ),
+                  ),
+                  if (cleanSource.isNotEmpty) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      cleanSource,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Theme.of(context)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.74),
+                      ),
+                    ),
+                  ],
+                ],
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }

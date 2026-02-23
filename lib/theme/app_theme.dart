@@ -7,7 +7,8 @@ class AppColors {
   static const Color cardBorder = Color(0xFFE4DDD4);
 
   static const Color primaryAccent = Color(0xFF5FA8A4); // Turquoise
-  static const Color secondaryAccent = Color(0xFF5E609E); // Indigo
+  static const Color indigoAccent = Color(0xFF5E609E);
+  static const Color secondaryAccent = indigoAccent; // Indigo
 
   static const Color textPrimary = Color(0xFF2F2A26);
   static const Color textSecondary = Color(0xFF736B64);

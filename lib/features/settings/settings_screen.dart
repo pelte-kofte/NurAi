@@ -24,7 +24,6 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  static const Color _mutedIconColor = AppColors.iconMuted;
   static final Uri _privacyPolicyUrl = Uri.parse(
     'https://duaya-app.web.app/privacy.html',
   );
@@ -34,8 +33,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final surface = Theme.of(context).colorScheme.surface;
     return Material(
-      color: AppColors.cardBg,
+      color: surface,
       child: ListView(
         controller: widget.scrollController,
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
@@ -140,21 +140,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSectionTitle(String title, {IconData? icon}) {
+    final mutedIconColor = Theme.of(context).colorScheme.tertiary;
+    final sectionTextColor =
+        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72);
     return Padding(
       padding: const EdgeInsets.only(top: 6, bottom: 4),
       child: Row(
         children: [
           if (icon != null) ...[
-            Icon(icon, size: 16, color: _mutedIconColor),
+            Icon(icon, size: 16, color: mutedIconColor),
             const SizedBox(width: 8),
           ],
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: AppColors.textSecondary,
+              color: sectionTextColor,
               letterSpacing: 0.5,
             ),
           ),
@@ -169,6 +172,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     String? value,
     required VoidCallback onTap,
   }) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final mutedIconColor = Theme.of(context).colorScheme.tertiary;
     final chevron = Directionality.of(context) == TextDirection.rtl
         ? Icons.chevron_left_rounded
         : Icons.chevron_right_rounded;
@@ -180,35 +185,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Row(
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 17, color: _mutedIconColor),
+              Icon(icon, size: 17, color: mutedIconColor),
               const SizedBox(width: 10),
             ],
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textPrimary,
+                  color: onSurface,
                 ),
               ),
             ),
             if (value != null)
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textSecondary,
+                  color: onSurface.withValues(alpha: 0.74),
                 ),
               ),
             const SizedBox(width: 4),
             Icon(
               chevron,
               size: 18,
-              color: AppColors.textMuted,
+              color: onSurface.withValues(alpha: 0.55),
             ),
           ],
         ),
@@ -222,6 +227,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required bool locked,
     required VoidCallback onTap,
   }) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
+    final mutedIconColor = Theme.of(context).colorScheme.tertiary;
     final chevron = Directionality.of(context) == TextDirection.rtl
         ? Icons.chevron_left_rounded
         : Icons.chevron_right_rounded;
@@ -233,17 +240,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Row(
           children: [
             if (icon != null) ...[
-              Icon(icon, size: 17, color: _mutedIconColor),
+              Icon(icon, size: 17, color: mutedIconColor),
               const SizedBox(width: 10),
             ],
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textPrimary,
+                  color: onSurface,
                 ),
               ),
             ),
@@ -259,7 +266,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Icon(
               chevron,
               size: 18,
-              color: AppColors.textMuted,
+              color: onSurface.withValues(alpha: 0.55),
             ),
           ],
         ),
@@ -272,6 +279,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required bool value,
     required ValueChanged<bool> onChanged,
   }) {
+    final onSurface = Theme.of(context).colorScheme.onSurface;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
@@ -279,11 +287,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Expanded(
             child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 15,
                 fontWeight: FontWeight.w400,
-                color: AppColors.textPrimary,
+                color: onSurface,
               ),
             ),
           ),

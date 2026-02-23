@@ -97,9 +97,10 @@ class LocalPreferencesService {
       ThemeMode.dark => 'dark',
       _ => 'light',
     };
+    // Notify immediately so UI theme updates without waiting for disk I/O.
+    themeMode.value = mode;
     await _prefs?.setString(_keyTheme, raw);
     await _prefs?.remove(_legacyKeyTheme);
-    themeMode.value = mode;
   }
 
   // ── Adhan ──────────────────────────────────────────────
