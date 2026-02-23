@@ -14,7 +14,7 @@ import '../../main.dart';
 import '../../models/prayer_location.dart';
 import '../../models/reading_context.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/corner_ornaments.dart';
+import '../../widgets/corner_ornaments_painter.dart';
 import '../../widgets/next_prayer_pill.dart';
 import '../../widgets/quick_actions_popover.dart';
 import '../adhan/adhan_times_screen.dart';
@@ -549,7 +549,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           title: S.get('daily_ayah'),
           body: ayah.turkishReadable,
           source: ayah.reference,
-          showTopCornerOrnaments: true,
+          showCornerOrnaments: true,
         );
       case HomeDailyContentType.hadith:
         final hadith = DailyContentService.todayHadith;
@@ -570,7 +570,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           title: S.get('daily_quote_title'),
           body: quote.text,
           source: quote.source,
-          showQuoteOrnaments: true,
+          showCornerOrnaments: true,
         );
     }
   }
@@ -579,8 +579,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     required String title,
     required String body,
     String? source,
-    bool showQuoteOrnaments = false,
-    bool showTopCornerOrnaments = false,
+    bool showCornerOrnaments = false,
   }) {
     final cleanSource = source?.trim() ?? '';
     return Container(
@@ -602,31 +601,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         child: Stack(
           clipBehavior: Clip.hardEdge,
           children: [
-            if (showTopCornerOrnaments)
+            if (showCornerOrnaments)
               const Positioned.fill(
-                child: CornerOrnaments(
-                  bottomLeftAsset: 'assets/images/ornaments/top_left.png',
-                  bottomRightAsset: 'assets/images/ornaments/top_right.png',
-                  opacity: 0.15,
-                  size: 92,
-                  bottomOffset: -20,
-                  sideOffset: -18,
-                  rotation: 0.08,
+                child: IgnorePointer(
+                  child: CornerOrnamentsPaint(
+                    opacity: 0.14,
+                    strokeWidth: 1.15,
+                    placement: CornerOrnamentPlacement.top,
+                  ),
                 ),
               ),
-            if (showQuoteOrnaments) ...[
-              const Positioned.fill(
-                child: CornerOrnaments(
-                  bottomLeftAsset: 'assets/images/ornaments/top_left.png',
-                  bottomRightAsset: 'assets/images/ornaments/top_right.png',
-                  opacity: 0.13,
-                  size: 86,
-                  bottomOffset: -20,
-                  sideOffset: -16,
-                  rotation: 0.12,
-                ),
-              ),
-            ],
             Padding(
               padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
               child: Column(
