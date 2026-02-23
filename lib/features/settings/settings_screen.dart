@@ -300,7 +300,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Switch.adaptive(
               value: value,
               onChanged: onChanged,
-              activeTrackColor: AppColors.primaryAccent,
+              activeTrackColor: Theme.of(context).colorScheme.primary,
             ),
           ),
         ],
@@ -437,11 +437,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                     child: Text(
                       S.get('save'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
                         fontWeight: FontWeight.w500,
-                        color: AppColors.secondaryAccent,
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                     ),
                   ),
@@ -553,10 +553,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             ),
                           ),
                           if (isSelected)
-                            const Icon(
+                            Icon(
                               Icons.check_rounded,
                               size: 18,
-                              color: AppColors.secondaryAccent,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                         ],
                       ),
@@ -687,11 +687,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onPressed: () => Navigator.of(ctx).pop(),
               child: Text(
                 S.get('ok'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.secondaryAccent,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),

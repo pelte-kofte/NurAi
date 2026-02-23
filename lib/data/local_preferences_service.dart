@@ -1,7 +1,10 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
+
 import '../models/prayer_location.dart';
+import 'secure_storage_service.dart';
 
 class RamadanSuggestionSelection {
   const RamadanSuggestionSelection({
@@ -44,9 +47,12 @@ class LocalPreferencesService {
   static const _keyRamadanSuggestionsFavorites =
       'pref_ramadan_suggestions_favorites';
 
+  static const _secureKeyPrayerLat = 'secure_prayer_lat';
+  static const _secureKeyPrayerLng = 'secure_prayer_lng';
+
   static SharedPreferences? _prefs;
 
-  /// Reactive notifiers — UI can listen without Provider/Bloc.
+  /// Reactive notifiers - UI can listen without Provider/Bloc.
   static final themeMode = ValueNotifier<ThemeMode>(ThemeMode.light);
   static final adhanEnabled = ValueNotifier<bool>(false);
   static final language = ValueNotifier<String>('tr');
@@ -72,10 +78,10 @@ class LocalPreferencesService {
         _prefs?.getBool(_keyIftarPermissionPromptShown) ?? false;
     iftarLiveActivityTipSeen.value =
         _prefs?.getBool(_keyIftarLiveActivityTipSeen) ?? false;
-    prayerLocation.value = _readPrayerLocation();
+    prayerLocation.value = await _readPrayerLocation();
   }
 
-  // ── Theme ──────────────────────────────────────────────
+  // Theme
 
   static ThemeMode _readThemeMode() {
     final raw = _prefs?.getString(_keyTheme) ??
@@ -103,7 +109,7 @@ class LocalPreferencesService {
     await _prefs?.remove(_legacyKeyTheme);
   }
 
-  // ── Adhan ──────────────────────────────────────────────
+  // Adhan
 
   static Future<void> setAdhanEnabled(bool value) async {
     await _prefs?.setBool(_keyAdhan, value);
@@ -115,7 +121,7 @@ class LocalPreferencesService {
     ezanAlarmSoundEnabled.value = value;
   }
 
-  // ── Language ───────────────────────────────────────────
+  // Language
 
   static Future<void> setLanguage(String lang) async {
     await _prefs?.setString(_keyLanguage, lang);
@@ -138,22 +144,85 @@ class LocalPreferencesService {
   }
 
   // Prayer location
-  static PrayerLocation _readPrayerLocation() {
+  static Future<PrayerLocation> _readPrayerLocation() async {
+    PrayerLocation? decoded;
     final raw = _prefs?.getString(_keyPrayerLocation);
     if (raw != null && raw.isNotEmpty) {
       try {
         final json = jsonDecode(raw) as Map<String, dynamic>;
-        return PrayerLocation.fromJson(json);
+        decoded = PrayerLocation.fromJson(json);
       } catch (_) {
         // Fall through to legacy keys.
       }
     }
 
+    double? secureLat = _parseDouble(
+      await SecureStorageService.read(_secureKeyPrayerLat),
+    );
+    double? secureLng = _parseDouble(
+      await SecureStorageService.read(_secureKeyPrayerLng),
+    );
+
+    var migratedFromLegacy = false;
+
+    final decodedLat = decoded?.lat;
+    final decodedLng = decoded?.lng;
+    if ((secureLat == null || secureLng == null) &&
+        decodedLat != null &&
+        decodedLng != null) {
+      secureLat = decodedLat;
+      secureLng = decodedLng;
+      migratedFromLegacy = true;
+    }
+
+    final legacyLat = _prefs?.getDouble(_keyPrayerLat);
+    final legacyLng = _prefs?.getDouble(_keyPrayerLng);
+    if ((secureLat == null || secureLng == null) &&
+        legacyLat != null &&
+        legacyLng != null) {
+      secureLat = legacyLat;
+      secureLng = legacyLng;
+      migratedFromLegacy = true;
+    }
+
+    final normalizedCoords = _normalizeCoordinates(secureLat, secureLng);
+    secureLat = normalizedCoords.$1;
+    secureLng = normalizedCoords.$2;
+
+    if (secureLat != null && secureLng != null && migratedFromLegacy) {
+      await SecureStorageService.write(
+          _secureKeyPrayerLat, secureLat.toString());
+      await SecureStorageService.write(
+          _secureKeyPrayerLng, secureLng.toString());
+    }
+
+    await _prefs?.remove(_keyPrayerLat);
+    await _prefs?.remove(_keyPrayerLng);
+
+    if (decoded != null) {
+      if (decoded.lat != null || decoded.lng != null) {
+        final sanitizedMap = Map<String, dynamic>.from(decoded.toJson())
+          ..['lat'] = null
+          ..['lng'] = null;
+        await _prefs?.setString(_keyPrayerLocation, jsonEncode(sanitizedMap));
+      }
+      return PrayerLocation(
+        mode: decoded.mode,
+        lat: secureLat,
+        lng: secureLng,
+        cityName: decoded.cityName,
+        cityId: decoded.cityId,
+        timezone: decoded.timezone,
+        updatedAt: decoded.updatedAt,
+      );
+    }
+
     final modeRaw = _prefs?.getString(_keyPrayerLocationMode);
-    final lat = _prefs?.getDouble(_keyPrayerLat);
-    final lng = _prefs?.getDouble(_keyPrayerLng);
     final cityName = _prefs?.getString(_keyPrayerCityName);
-    if (modeRaw == null && lat == null && lng == null && cityName == null) {
+    if (modeRaw == null &&
+        cityName == null &&
+        secureLat == null &&
+        secureLng == null) {
       return PrayerLocation.initial();
     }
 
@@ -162,32 +231,50 @@ class LocalPreferencesService {
         : PrayerLocationMode.city;
     return PrayerLocation(
       mode: mode,
-      lat: lat,
-      lng: lng,
+      lat: secureLat,
+      lng: secureLng,
       cityName: cityName,
       updatedAt: DateTime.now(),
     );
   }
 
   static Future<void> setPrayerLocation(PrayerLocation value) async {
-    await _prefs?.setString(_keyPrayerLocation, jsonEncode(value.toJson()));
+    final normalizedCoords = _normalizeCoordinates(value.lat, value.lng);
+    final lat = normalizedCoords.$1;
+    final lng = normalizedCoords.$2;
+
+    if (lat != null && lng != null) {
+      await SecureStorageService.write(_secureKeyPrayerLat, lat.toString());
+      await SecureStorageService.write(_secureKeyPrayerLng, lng.toString());
+    } else {
+      await SecureStorageService.delete(_secureKeyPrayerLat);
+      await SecureStorageService.delete(_secureKeyPrayerLng);
+    }
+
+    final sanitizedMap = Map<String, dynamic>.from(value.toJson())
+      ..['lat'] = null
+      ..['lng'] = null;
+    await _prefs?.setString(_keyPrayerLocation, jsonEncode(sanitizedMap));
+
     await _prefs?.setString(_keyPrayerLocationMode, value.mode.name);
-    if (value.lat != null) {
-      await _prefs?.setDouble(_keyPrayerLat, value.lat!);
-    } else {
-      await _prefs?.remove(_keyPrayerLat);
-    }
-    if (value.lng != null) {
-      await _prefs?.setDouble(_keyPrayerLng, value.lng!);
-    } else {
-      await _prefs?.remove(_keyPrayerLng);
-    }
+    await _prefs?.remove(_keyPrayerLat);
+    await _prefs?.remove(_keyPrayerLng);
+
     if (value.cityName != null && value.cityName!.trim().isNotEmpty) {
       await _prefs?.setString(_keyPrayerCityName, value.cityName!.trim());
     } else {
       await _prefs?.remove(_keyPrayerCityName);
     }
-    prayerLocation.value = value;
+
+    prayerLocation.value = PrayerLocation(
+      mode: value.mode,
+      lat: lat,
+      lng: lng,
+      cityName: value.cityName,
+      cityId: value.cityId,
+      timezone: value.timezone,
+      updatedAt: value.updatedAt,
+    );
   }
 
   static RamadanSuggestionSelection? getRamadanSuggestionSelection() {
@@ -227,5 +314,15 @@ class LocalPreferencesService {
 
   static Future<void> setRamadanSuggestionFavoritesRaw(String value) async {
     await _prefs?.setString(_keyRamadanSuggestionsFavorites, value);
+  }
+
+  static (double?, double?) _normalizeCoordinates(double? lat, double? lng) {
+    if (lat == null || lng == null) return (null, null);
+    return (lat, lng);
+  }
+
+  static double? _parseDouble(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+    return double.tryParse(value);
   }
 }

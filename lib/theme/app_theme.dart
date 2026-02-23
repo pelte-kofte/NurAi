@@ -1,59 +1,84 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  static const Color scaffoldBg = Color(0xFFF6F1EA);
-  static const Color cardBg = Color(0xFFFEFAF6);
-  static const Color cardBgMuted = Color(0xFFF9F4EE);
-  static const Color cardBorder = Color(0xFFE4DDD4);
+  // --- Background ---
+  static const Color scaffoldBg = Color(0xFFFBF6F2);
+  static const Color cardBg = Color(0xFFFDF9F6);
+  static const Color cardBgMuted = Color(0xFFF9F4EF);
+  static const Color cardBorder = Color(0xFFEDE6E1);
 
-  static const Color primaryAccent = Color(0xFF5FA8A4); // Turquoise
-  static const Color indigoAccent = Color(0xFF5E609E);
-  static const Color secondaryAccent = indigoAccent; // Indigo
+  // --- Accents ---
+  static const Color turquoiseAccent = Color(0xFF7BAEAC); // Primary
+  static const Color indigoAccent = Color(0xFF5E609E);    // Secondary
+  static const Color earthAccent = Color(0xFFB57A5A);     // Muted earth
 
-  static const Color textPrimary = Color(0xFF2F2A26);
-  static const Color textSecondary = Color(0xFF736B64);
+  // Aliases for use in ColorScheme
+  static const Color primaryAccent = turquoiseAccent;
+  static const Color secondaryAccent = indigoAccent;
+
+  // --- Text ---
+  static const Color textPrimary = Color(0xFF2B2725);
+  static const Color textSecondary = Color(0xFF7A746F);
   static const Color textMuted = Color(0xFFA79F97);
+
+  // --- Icons ---
   static const Color iconMuted = Color(0xFF8EA8A6);
 
+  // --- Splash ---
   static const Color splashOverlayTop = Color(0x5C171411);
   static const Color splashOverlayBottom = Color(0x91302A23);
 }
 
 class AppTheme {
   static ThemeData light() {
-    final base = ThemeData(
-      useMaterial3: true,
-      fontFamily: 'Inter',
+    const colorScheme = ColorScheme(
       brightness: Brightness.light,
+      primary: AppColors.turquoiseAccent,
+      onPrimary: Colors.white,
+      secondary: AppColors.indigoAccent,
+      onSecondary: Colors.white,
+      tertiary: AppColors.earthAccent,
+      onTertiary: Colors.white,
+      error: Color(0xFFBA1A1A),
+      onError: Colors.white,
+      surface: AppColors.cardBg,
+      onSurface: AppColors.textPrimary,
+      surfaceContainerHighest: AppColors.cardBgMuted,
+      outline: AppColors.cardBorder,
+      shadow: Color(0x162A2420),
+      scrim: Colors.black,
+      inverseSurface: Color(0xFF2B2725),
+      onInverseSurface: Color(0xFFF7F2EC),
+      inversePrimary: Color(0xFFADD4D2),
     );
 
-    final textTheme = base.textTheme.copyWith(
-      headlineMedium: const TextStyle(
+    const textTheme = TextTheme(
+      headlineMedium: TextStyle(
         fontFamily: 'Merriweather',
         fontSize: 34,
         fontWeight: FontWeight.w400,
         color: AppColors.cardBg,
         height: 1.2,
       ),
-      titleLarge: const TextStyle(
+      titleLarge: TextStyle(
         fontFamily: 'Merriweather',
         fontSize: 22,
         fontWeight: FontWeight.w400,
         color: AppColors.textPrimary,
       ),
-      titleMedium: const TextStyle(
+      titleMedium: TextStyle(
         fontFamily: 'Merriweather',
         fontSize: 18,
         fontWeight: FontWeight.w400,
         color: AppColors.textPrimary,
       ),
-      bodyMedium: const TextStyle(
+      bodyMedium: TextStyle(
         fontFamily: 'Inter',
         fontSize: 14,
         fontWeight: FontWeight.w400,
         color: AppColors.textSecondary,
       ),
-      bodySmall: const TextStyle(
+      bodySmall: TextStyle(
         fontFamily: 'Inter',
         fontSize: 12,
         fontWeight: FontWeight.w400,
@@ -61,32 +86,14 @@ class AppTheme {
       ),
     );
 
-    const colorScheme = ColorScheme(
-      brightness: Brightness.light,
-      primary: AppColors.primaryAccent,
-      onPrimary: Colors.white,
-      secondary: AppColors.secondaryAccent,
-      onSecondary: Colors.white,
-      error: Color(0xFFBA1A1A),
-      onError: Colors.white,
-      surface: AppColors.cardBg,
-      onSurface: AppColors.textPrimary,
-      tertiary: AppColors.iconMuted,
-      onTertiary: AppColors.textPrimary,
-      surfaceContainerHighest: AppColors.cardBgMuted,
-      outline: AppColors.cardBorder,
-      shadow: Color(0x162A2420),
-      scrim: Colors.black,
-      inverseSurface: Color(0xFF2F2A26),
-      onInverseSurface: Color(0xFFF7F2EC),
-      inversePrimary: Color(0xFF92CCC8),
-    );
-
-    return base.copyWith(
+    return ThemeData(
+      useMaterial3: true,
+      fontFamily: 'Inter',
       colorScheme: colorScheme,
       textTheme: textTheme,
       scaffoldBackgroundColor: AppColors.scaffoldBg,
       cardColor: AppColors.cardBg,
+      dividerColor: AppColors.cardBorder,
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.scaffoldBg,
         surfaceTintColor: Colors.transparent,
@@ -107,23 +114,23 @@ class AppTheme {
 
     const colorScheme = ColorScheme(
       brightness: Brightness.dark,
-      primary: AppColors.primaryAccent,
+      primary: AppColors.turquoiseAccent,
       onPrimary: Colors.white,
-      secondary: AppColors.secondaryAccent,
+      secondary: AppColors.indigoAccent,
       onSecondary: Colors.white,
+      tertiary: AppColors.earthAccent,
+      onTertiary: Colors.white,
       error: Color(0xFFFFB4AB),
       onError: Color(0xFF690005),
       surface: darkCard,
       onSurface: darkTextPrimary,
-      tertiary: AppColors.iconMuted,
-      onTertiary: darkTextPrimary,
       surfaceContainerHighest: darkCardMuted,
       outline: darkOutline,
       shadow: Color(0x66000000),
       scrim: Colors.black,
       inverseSurface: Color(0xFFF3EEE7),
       onInverseSurface: Color(0xFF1B1B1B),
-      inversePrimary: Color(0xFF3A8E89),
+      inversePrimary: Color(0xFFADD4D2),
     );
 
     return ThemeData(

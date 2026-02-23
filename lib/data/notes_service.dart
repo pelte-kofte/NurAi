@@ -1,6 +1,8 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 
+import 'secure_storage_service.dart';
+
 /// Simple local notes service for personal reflections.
 /// Fully private, no tracking, no sync.
 class NotesService {
@@ -10,24 +12,68 @@ class NotesService {
   static const _dailyMoodDateKey = 'dailyMoodDate';
   static const _dailyReflectionIdKey = 'dailyReflectionId';
 
+  static const _secureNoteKey = 'secure_personal_note';
+  static const _secureDailyMoodTextKey = 'secure_daily_mood_text';
+
   static SharedPreferences? _prefs;
   static final ValueNotifier<String> noteNotifier = ValueNotifier<String>('');
   static final ValueNotifier<int> dailyMoodRevision = ValueNotifier<int>(0);
 
+  static String _cachedNote = '';
+  static String _cachedDailyMoodText = '';
+
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
+    await _hydrateSensitiveValues();
     noteNotifier.value = getNote();
     _emitDailyMoodState();
   }
 
+  static Future<void> _hydrateSensitiveValues() async {
+    final secureNote = await SecureStorageService.read(_secureNoteKey);
+    final legacyNote = _prefs?.getString(_noteKey);
+
+    if ((secureNote == null || secureNote.isEmpty) &&
+        legacyNote != null &&
+        legacyNote.isNotEmpty) {
+      await SecureStorageService.write(_secureNoteKey, legacyNote);
+      _cachedNote = legacyNote;
+    } else {
+      _cachedNote = secureNote ?? '';
+    }
+    if (legacyNote != null) {
+      await _prefs?.remove(_noteKey);
+    }
+
+    final secureDailyMoodText =
+        await SecureStorageService.read(_secureDailyMoodTextKey);
+    final legacyDailyMoodText = _prefs?.getString(_dailyMoodTextKey);
+
+    if ((secureDailyMoodText == null || secureDailyMoodText.isEmpty) &&
+        legacyDailyMoodText != null &&
+        legacyDailyMoodText.isNotEmpty) {
+      await SecureStorageService.write(
+        _secureDailyMoodTextKey,
+        legacyDailyMoodText,
+      );
+      _cachedDailyMoodText = legacyDailyMoodText;
+    } else {
+      _cachedDailyMoodText = secureDailyMoodText ?? '';
+    }
+    if (legacyDailyMoodText != null) {
+      await _prefs?.remove(_dailyMoodTextKey);
+    }
+  }
+
   /// Get the current note content.
   static String getNote() {
-    return _prefs?.getString(_noteKey) ?? '';
+    return _cachedNote;
   }
 
   /// Save note content (auto-save, no submit button).
   static Future<void> saveNote(String content) async {
-    await _prefs?.setString(_noteKey, content);
+    await SecureStorageService.write(_secureNoteKey, content);
+    _cachedNote = content;
     await _prefs?.setString(_lastEditedKey, DateTime.now().toIso8601String());
     noteNotifier.value = content;
   }
@@ -41,13 +87,13 @@ class NotesService {
 
   static bool isDailyMoodLockedToday() {
     final date = _prefs?.getString(_dailyMoodDateKey);
-    final text = (_prefs?.getString(_dailyMoodTextKey) ?? '').trim();
+    final text = _cachedDailyMoodText.trim();
     return date == _todayKey() && text.isNotEmpty;
   }
 
   static String getTodayMoodText() {
     if (!isDailyMoodLockedToday()) return '';
-    return _prefs?.getString(_dailyMoodTextKey) ?? '';
+    return _cachedDailyMoodText;
   }
 
   static int? getTodayReflectionId() {
@@ -64,7 +110,8 @@ class NotesService {
     if (isDailyMoodLockedToday()) return false;
 
     await _prefs?.setString(_dailyMoodDateKey, _todayKey());
-    await _prefs?.setString(_dailyMoodTextKey, trimmed);
+    await SecureStorageService.write(_secureDailyMoodTextKey, trimmed);
+    _cachedDailyMoodText = trimmed;
     await _prefs?.setInt(_dailyReflectionIdKey, reflectionId);
     _emitDailyMoodState();
     return true;

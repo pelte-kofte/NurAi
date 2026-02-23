@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:io' show Platform;
 
-import 'package:flutter/foundation.dart' show ValueNotifier, debugPrint, kIsWeb;
+import 'package:flutter/foundation.dart'
+    show ValueNotifier, debugPrint, kDebugMode, kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
@@ -71,7 +72,7 @@ class IftarLiveActivityService {
     final includeWarmup =
         _isIosRuntime && isSupported.value && _isFeatureEnabled;
     _log(
-      'schedule_iftar_notifications now=${now.toIso8601String()} targetMaghrib=${targetMaghrib.toIso8601String()} timezone=${location.timezone} includeWarmup=$includeWarmup',
+      'schedule_iftar_notifications includeWarmup=$includeWarmup hasLocation=${location.hasCoordinates}',
     );
     await AdhanNotificationService.scheduleIftarLiveActivityNotifications(
       maghrib: targetMaghrib,
@@ -88,7 +89,8 @@ class IftarLiveActivityService {
 
     if (!_isFeatureEnabled || !location.hasCoordinates) {
       _log(
-          'skip_start featureEnabled=$_isFeatureEnabled hasLocation=${location.hasCoordinates}');
+        'skip_start featureEnabled=$_isFeatureEnabled hasLocation=${location.hasCoordinates}',
+      );
       _cancelTimers();
       await endIfNeeded();
       return;
@@ -99,7 +101,8 @@ class IftarLiveActivityService {
 
     if (!now.isBefore(maghrib)) {
       _log(
-          'past_maghrib ending activity now=${now.toIso8601String()} maghrib=${maghrib.toIso8601String()}');
+        'past_maghrib ending activity',
+      );
       _cancelTimers();
       await endIfNeeded();
       await scheduleIftarNotifications();
@@ -108,7 +111,7 @@ class IftarLiveActivityService {
 
     if (now.isBefore(windowStart)) {
       _log(
-        'before_window now=${now.toIso8601String()} windowStart=${windowStart.toIso8601String()}',
+        'before_window waiting_for_countdown_window',
       );
       await endIfNeeded();
       _scheduleWindowTimers(windowStart: windowStart, maghrib: maghrib);
@@ -116,7 +119,7 @@ class IftarLiveActivityService {
     }
 
     _log(
-      'start_or_update now=${now.toIso8601String()} windowStart=${windowStart.toIso8601String()} maghrib=${maghrib.toIso8601String()}',
+      'start_or_update countdown_active',
     );
     _scheduleWindowTimers(windowStart: windowStart, maghrib: maghrib);
     await _startOrUpdateCountdown(maghrib: maghrib);
@@ -216,7 +219,9 @@ class IftarLiveActivityService {
   }
 
   static void _log(String message) {
-    debugPrint('[IftarLiveActivity] $message');
+    if (kDebugMode) {
+      debugPrint('[IftarLiveActivity] $message');
+    }
   }
 
   static Future<void> _startOrUpdateCountdown({

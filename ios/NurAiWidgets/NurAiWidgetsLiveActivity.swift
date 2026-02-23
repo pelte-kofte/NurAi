@@ -2,6 +2,12 @@ import ActivityKit
 import SwiftUI
 import WidgetKit
 
+private func debugLog(_ message: String) {
+    #if DEBUG
+        print(message)
+    #endif
+}
+
 @available(iOSApplicationExtension 16.1, *)
 struct IftarAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
@@ -46,12 +52,8 @@ struct IftarAttributes: ActivityAttributes {
             }
 
             let remainingSeconds = max(0, Int(iftarDate.timeIntervalSinceNow))
-            NSLog(
-                "[NurAiWidgetsLiveActivity] decode source=%@ iftarDate=%.0f now=%.0f remainingSeconds=%d",
-                source,
-                iftarDate.timeIntervalSince1970,
-                Date().timeIntervalSince1970,
-                remainingSeconds
+            debugLog(
+                "[NurAiWidgetsLiveActivity] decode source=\(source) remainingSeconds=\(remainingSeconds)"
             )
         }
 

@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -14,7 +14,6 @@ import '../../main.dart';
 import '../../models/prayer_location.dart';
 import '../../models/reading_context.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/corner_ornaments_painter.dart';
 import '../../widgets/next_prayer_pill.dart';
 import '../../widgets/quick_actions_popover.dart';
 import '../adhan/adhan_times_screen.dart';
@@ -120,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: AppColors.cardBg,
+      backgroundColor: const Color(0xFFFDF9F6),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
@@ -142,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   fontFamily: 'Merriweather',
                   fontSize: 20,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textPrimary,
+                  color: Color(0xFF2B2725),
                 ),
               ),
               const SizedBox(height: 14),
@@ -153,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   fontFamily: 'Inter',
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textPrimary,
+                  color: Color(0xFF2B2725),
                 ),
                 decoration: InputDecoration(
                   hintText: S.get('name_hint'),
@@ -161,10 +160,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.textMuted,
+                    color: Color(0xFFB5AEA8),
                   ),
                   filled: true,
-                  fillColor: AppColors.scaffoldBg,
+                  fillColor: const Color(0xFFFBF6F2),
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   border: OutlineInputBorder(
@@ -178,7 +177,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 width: double.infinity,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.secondaryAccent,
+                    backgroundColor: const Color(0xFFB57A5A),
                     foregroundColor: Colors.white,
                     elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -220,7 +219,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                       fontFamily: 'Inter',
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.textSecondary,
+                      color: Color(0xFF7A746F),
                     ),
                   ),
                 ),
@@ -276,7 +275,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           builder: (sheetContext, scrollController) {
             return Container(
               decoration: const BoxDecoration(
-                color: AppColors.cardBg,
+                color: Color(0xFFFDF9F6),
                 borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
               ),
               child: SettingsScreen(scrollController: scrollController),
@@ -325,9 +324,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
-    final scaffoldColor = Theme.of(context).scaffoldBackgroundColor;
     return Scaffold(
-      backgroundColor: scaffoldColor,
+      backgroundColor: const Color(0xFFFBF6F2),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
@@ -386,7 +384,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   );
                 },
                 style: TextButton.styleFrom(
-                  foregroundColor: AppColors.secondaryAccent,
+                  foregroundColor: AppColors.turquoiseAccent,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -435,7 +433,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             child: Icon(
               Icons.menu_rounded,
               size: 24,
-              color: AppColors.textSecondary,
+              color: Color(0xFF7A746F),
             ),
           ),
         ),
@@ -449,7 +447,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   fontFamily: 'Merriweather',
                   fontSize: 28,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textPrimary,
+                  color: Color(0xFF2B2725),
                   height: 1.3,
                 ),
               );
@@ -463,7 +461,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             child: Icon(
               Icons.settings_rounded,
               size: 24,
-              color: AppColors.textSecondary,
+              color: Color(0xFF7A746F),
             ),
           ),
         ),
@@ -477,7 +475,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppColors.indigoAccent),
+        Icon(icon, size: 16, color: AppColors.turquoiseAccent),
         const SizedBox(width: 8),
         Text(
           title,
@@ -498,9 +496,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.cardBgMuted,
+        color: const Color(0xFFF9F4EF),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: AppColors.primaryAccent, width: 1),
+        border: Border.all(color: const Color(0xFF7BAEAC), width: 1),
       ),
       child: Row(
         children: [
@@ -517,7 +515,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 fontFamily: 'Inter',
                 fontSize: 12.5,
                 fontWeight: FontWeight.w400,
-                color: AppColors.primaryAccent,
+                color: Color(0xFF6D9A98),
               ),
             ),
           ),
@@ -527,7 +525,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               fontFamily: 'Inter',
               fontSize: 14.4,
               fontWeight: FontWeight.w700,
-              color: AppColors.primaryAccent,
+              color: Color(0xFF6FA9A6),
             ),
           ),
         ],
@@ -549,7 +547,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           title: S.get('daily_ayah'),
           body: ayah.turkishReadable,
           source: ayah.reference,
-          showCornerOrnaments: true,
         );
       case HomeDailyContentType.hadith:
         final hadith = DailyContentService.todayHadith;
@@ -570,7 +567,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           title: S.get('daily_quote_title'),
           body: quote.text,
           source: quote.source,
-          showCornerOrnaments: true,
         );
     }
   }
@@ -579,15 +575,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     required String title,
     required String body,
     String? source,
-    bool showCornerOrnaments = false,
   }) {
     final cleanSource = source?.trim() ?? '';
     return Container(
       width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
       decoration: BoxDecoration(
-        color: Theme.of(context).cardColor,
+        color: const Color(0xFFFDF9F6),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.indigoAccent, width: 1.5),
+        border: Border.all(color: const Color(0xFF7BAEAC), width: 1.5),
         boxShadow: const [
           BoxShadow(
             color: Color(0x182B2721),
@@ -596,67 +592,43 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(12.5),
-        child: Stack(
-          clipBehavior: Clip.hardEdge,
-          children: [
-            if (showCornerOrnaments)
-              const Positioned.fill(
-                child: IgnorePointer(
-                  child: CornerOrnamentsPaint(
-                    opacity: 0.14,
-                    strokeWidth: 1.15,
-                    placement: CornerOrnamentPlacement.top,
-                  ),
-                ),
-              ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.indigoAccent,
-                      letterSpacing: 0.8,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    body,
-                    style: TextStyle(
-                      fontFamily: 'Merriweather',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w400,
-                      color: Theme.of(context).colorScheme.onSurface,
-                      height: 1.6,
-                    ),
-                  ),
-                  if (cleanSource.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    Text(
-                      cleanSource,
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.74),
-                      ),
-                    ),
-                  ],
-                ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: AppColors.indigoAccent,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            body,
+            style: const TextStyle(
+              fontFamily: 'Merriweather',
+              fontSize: 20,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFF2B2725),
+              height: 1.6,
+            ),
+          ),
+          if (cleanSource.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Text(
+              cleanSource,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF7A746F),
               ),
             ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -702,9 +674,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.cardBg,
+          color: const Color(0xFFFDF9F6),
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: AppColors.cardBorder, width: 1),
+          border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
         ),
         child: Row(
           children: [
@@ -718,7 +690,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                       fontFamily: 'Merriweather',
                       fontSize: 15,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.textPrimary,
+                      color: Color(0xFF2B2725),
                       height: 1.4,
                     ),
                   ),
@@ -730,7 +702,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                         fontFamily: 'Inter',
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
-                        color: AppColors.textSecondary,
+                        color: Color(0xFF7A746F),
                       ),
                     ),
                   ],
@@ -740,7 +712,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             const Icon(
               Icons.arrow_forward_ios_rounded,
               size: 14,
-              color: AppColors.textMuted,
+              color: Color(0xFFB5AEA8),
             ),
           ],
         ),

@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:flutter/foundation.dart' show debugPrint, kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -15,10 +15,24 @@ import 'widget_payload_service.dart';
 
 @pragma('vm:entry-point')
 void adhanNotificationTapBackground(NotificationResponse response) {
-  debugPrint(
-    '[AdhanNotifications] background_notification_response payload=${response.payload} actionId=${response.actionId}',
-  );
+  if (kDebugMode) {
+    debugPrint(
+      '[AdhanNotifications] background_notification_response payload=${_redactPayload(response.payload)} actionId=${response.actionId ?? 'none'}',
+    );
+  }
   AdhanNotificationService.handleNotificationResponsePayload(response.payload);
+}
+
+String _redactPayload(String? payload) {
+  if (payload == null || payload.trim().isEmpty) return 'none';
+  switch (payload) {
+    case 'iftar_live_activity_warmup':
+      return 'iftar_live_activity_warmup';
+    case 'iftar_alarm_fired':
+      return 'iftar_alarm_fired';
+    default:
+      return 'redacted';
+  }
 }
 
 enum AdhanEnableResult {
@@ -85,7 +99,7 @@ class AdhanNotificationService {
       const InitializationSettings(android: androidSettings, iOS: iosSettings),
       onDidReceiveNotificationResponse: (response) {
         _log(
-          'notification_response payload=${response.payload} actionId=${response.actionId}',
+          'notification_response payload=${_redactPayload(response.payload)} actionId=${response.actionId ?? 'none'}',
         );
         handleNotificationResponsePayload(response.payload);
       },
@@ -311,7 +325,7 @@ class AdhanNotificationService {
         withSound: false,
       );
       _log(
-        'iftar_warmup_scheduled at=${warmupAt.toIso8601String()} timezone=$timezoneName channel=$_prayerChannelIdNormal importance=default soundEnabled=false',
+        'iftar_warmup_scheduled channel=$_prayerChannelIdNormal importance=default soundEnabled=false',
       );
     }
 
@@ -328,7 +342,7 @@ class AdhanNotificationService {
         androidChannelName: _iftarChannelNameAlarm,
       );
       _log(
-        'iftar_alarm_scheduled at=${maghrib.toIso8601String()} timezone=$timezoneName channel=$_iftarChannelIdAlarm importance=high soundEnabled=true',
+        'iftar_alarm_scheduled channel=$_iftarChannelIdAlarm importance=high soundEnabled=true',
       );
     }
   }
@@ -406,7 +420,7 @@ class AdhanNotificationService {
           : AndroidScheduleMode.inexactAllowWhileIdle,
     );
     _log(
-      'schedule id=$id payload=$payload soundEnabled=$withSound channelId=$resolvedAndroidChannelId importance=${resolvedImportance.name} localDate=${dateTime.toIso8601String()} tzDate=$tzDateTime timezone=$timezoneName',
+      'schedule id=$id payload=${_redactPayload(payload)} soundEnabled=$withSound channelId=$resolvedAndroidChannelId importance=${resolvedImportance.name}',
     );
   }
 
@@ -493,14 +507,14 @@ class AdhanNotificationService {
   static void handleNotificationResponsePayload(String? payload) {
     if (payload == _iftarWarmupPayload) {
       _iftarWarmupTapped = true;
-      _log('trigger payload=$_iftarWarmupPayload');
+      _log('trigger event=iftar_live_activity_warmup');
       return;
     }
     if (payload == _iftarAlarmPayload) {
-      _log('trigger payload=$_iftarAlarmPayload');
+      _log('trigger event=iftar_alarm_fired');
       return;
     }
-    _log('trigger payload=$payload');
+    _log('trigger event=other payload=${_redactPayload(payload)}');
   }
 
   static bool consumeIftarWarmupTapFlag() {
@@ -542,6 +556,8 @@ class AdhanNotificationService {
   }
 
   static void _log(String message) {
-    debugPrint('[AdhanNotifications] $message');
+    if (kDebugMode) {
+      debugPrint('[AdhanNotifications] $message');
+    }
   }
 }

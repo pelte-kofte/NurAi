@@ -18,6 +18,12 @@ import WidgetKit
   private let dailyContentPayloadKey = "daily_content_payload"
   private let nextPrayerWidgetKind = "NextPrayerWidget"
   private let dailyContentWidgetKind = "NurAiWidgets"
+  
+  private func debugLog(_ message: String) {
+    #if DEBUG
+      print(message)
+    #endif
+  }
 
   override func application(
     _ application: UIApplication,
@@ -144,12 +150,8 @@ import WidgetKit
       ?? Int64(Date().addingTimeInterval(1).timeIntervalSince1970 * 1000)
     let iftarDate = Date(timeIntervalSince1970: TimeInterval(targetEpochMs) / 1000.0)
     let remainingSeconds = max(0, Int(iftarDate.timeIntervalSinceNow))
-    NSLog(
-      "[IftarLiveActivity] parse state iftarDate=%.0f now=%.0f remainingSeconds=%d phase=%@",
-      iftarDate.timeIntervalSince1970,
-      Date().timeIntervalSince1970,
-      remainingSeconds,
-      phase
+    debugLog(
+      "[IftarLiveActivity] parse state phase=\(phase) remainingSeconds=\(remainingSeconds)"
     )
 
     return IftarAttributes.ContentState(
@@ -227,13 +229,8 @@ import WidgetKit
   @available(iOS 16.1, *)
   private func logIftarState(_ event: String, state: IftarAttributes.ContentState) {
     let remainingSeconds = max(0, Int(state.iftarDate.timeIntervalSinceNow))
-    NSLog(
-      "[IftarLiveActivity] %@ iftarDate=%.0f now=%.0f remainingSeconds=%d phase=%@",
-      event,
-      state.iftarDate.timeIntervalSince1970,
-      Date().timeIntervalSince1970,
-      remainingSeconds,
-      state.phase
+    debugLog(
+      "[IftarLiveActivity] \(event) phase=\(state.phase) remainingSeconds=\(remainingSeconds)"
     )
   }
 }
