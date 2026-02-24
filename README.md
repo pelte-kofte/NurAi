@@ -325,6 +325,7 @@ The extension source files are added in repo, but you still need to register the
 ## Serverless Iftar Live Activity limitations
 
 - This implementation is fully serverless (no push), so Live Activity reliability depends on the app being opened around iftar time.
+- iOS background limits mean exact start at `Maghrib - 60 min` is not guaranteed while the app is fully closed.
 - If the app is never opened during the `Maghrib - 60 min` to `Maghrib` window, the countdown may not start automatically.
 - Local notifications still fire at `Maghrib - 60 min` and `Maghrib` (when notifications are enabled), and tapping the `Maghrib - 60 min` one triggers countdown start on app open.
 - On app launch/resume, the app reevaluates current time and repairs stale state (start remaining countdown in-window, or end if Maghrib already passed).

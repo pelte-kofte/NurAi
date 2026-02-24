@@ -1,10 +1,11 @@
 import ActivityKit
 import Flutter
 import UIKit
+import UserNotifications
 import WidgetKit
 
 @main
-@objc class AppDelegate: FlutterAppDelegate {
+@objc class AppDelegate: FlutterAppDelegate, UNUserNotificationCenterDelegate {
   private let channelName = "nurai.widgets"
   private let methodSetPayload = "setNextPrayerPayload"
   private let methodSetDailyContentPayload = "setDailyContentPayload"
@@ -30,6 +31,7 @@ import WidgetKit
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
     GeneratedPluginRegistrant.register(with: self)
+    UNUserNotificationCenter.current().delegate = self
     if let controller = window?.rootViewController as? FlutterViewController {
       let channel = FlutterMethodChannel(
         name: channelName,
@@ -105,6 +107,18 @@ import WidgetKit
       }
     }
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  override func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    willPresent notification: UNNotification,
+    withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+  ) {
+    if #available(iOS 14.0, *) {
+      completionHandler([.banner, .list, .sound])
+    } else {
+      completionHandler([.alert, .sound])
+    }
   }
 
   private func writePayload(_ payload: String, key: String) {
@@ -186,6 +200,7 @@ import WidgetKit
         logIftarState("start->requested", state: state)
         result(nil)
       } catch {
+        self.debugLog("[IftarLiveActivity] activity_start_failed error=\(error.localizedDescription)")
         result(
           FlutterError(
             code: "activity_start_failed",

@@ -274,9 +274,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           maxChildSize: 0.95,
           builder: (sheetContext, scrollController) {
             return Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFFFDF9F6),
-                borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+              decoration: BoxDecoration(
+                color: Theme.of(sheetContext).colorScheme.surface,
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(18)),
               ),
               child: SettingsScreen(scrollController: scrollController),
             );

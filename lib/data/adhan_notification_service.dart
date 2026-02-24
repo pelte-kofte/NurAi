@@ -80,7 +80,13 @@ class AdhanNotificationService {
   static const _iftarWarmupOffset = Duration(hours: 1);
   static const _iftarWarmupPayload = 'iftar_live_activity_warmup';
   static const _iftarAlarmPayload = 'iftar_alarm_fired';
-  static bool _iftarWarmupTapped = false;
+  static Future<void> Function(String? payload)? _notificationTapHandler;
+
+  static void setNotificationTapHandler(
+    Future<void> Function(String? payload)? handler,
+  ) {
+    _notificationTapHandler = handler;
+  }
 
   static Future<void> init() async {
     if (kIsWeb) return;
@@ -506,21 +512,26 @@ class AdhanNotificationService {
 
   static void handleNotificationResponsePayload(String? payload) {
     if (payload == _iftarWarmupPayload) {
-      _iftarWarmupTapped = true;
       _log('trigger event=iftar_live_activity_warmup');
+      final handler = _notificationTapHandler;
+      if (handler != null) {
+        unawaited(handler(payload));
+      }
       return;
     }
     if (payload == _iftarAlarmPayload) {
       _log('trigger event=iftar_alarm_fired');
+      final handler = _notificationTapHandler;
+      if (handler != null) {
+        unawaited(handler(payload));
+      }
       return;
     }
     _log('trigger event=other payload=${_redactPayload(payload)}');
-  }
-
-  static bool consumeIftarWarmupTapFlag() {
-    final wasTapped = _iftarWarmupTapped;
-    _iftarWarmupTapped = false;
-    return wasTapped;
+    final handler = _notificationTapHandler;
+    if (handler != null) {
+      unawaited(handler(payload));
+    }
   }
 
   static bool get _isTurkishLanguage =>

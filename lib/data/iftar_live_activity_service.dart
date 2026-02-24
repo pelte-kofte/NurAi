@@ -36,8 +36,15 @@ class IftarLiveActivityService {
     if (_initialized) return;
     _initialized = true;
     isSupported.value = await _querySupport();
+    AdhanNotificationService.setNotificationTapHandler((payload) async {
+      if (payload == 'iftar_live_activity_warmup' ||
+          payload == 'iftar_alarm_fired') {
+        await maybeStartOrUpdate();
+      }
+    });
     WidgetsBinding.instance.addObserver(_lifecycleObserver);
     LocalPreferencesService.prayerLocation.addListener(_onConfigChanged);
+    LocalPreferencesService.adhanEnabled.addListener(_onConfigChanged);
     LocalPreferencesService.iftarLiveActivityEnabled.addListener(
       _onConfigChanged,
     );
@@ -79,10 +86,19 @@ class IftarLiveActivityService {
       timezoneName: location.timezone,
       includeWarmup: includeWarmup,
     );
+    if (shouldStartNow(now, targetMaghrib)) {
+      _log('schedule_trigger_start window_active');
+      await startOrUpdate(targetMaghrib);
+    }
   }
 
   static Future<void> maybeStartOrUpdate() async {
-    if (!_isIosRuntime || !isSupported.value) return;
+    if (!_isIosRuntime || !isSupported.value) {
+      _log(
+        'skip_start iosRuntime=$_isIosRuntime isSupported=${isSupported.value}',
+      );
+      return;
+    }
 
     final now = DateTime.now();
     final location = LocalPreferencesService.prayerLocation.value;
@@ -109,21 +125,14 @@ class IftarLiveActivityService {
       return;
     }
 
-    if (now.isBefore(windowStart)) {
-      _log(
-        'before_window waiting_for_countdown_window',
-      );
+    _scheduleWindowTimers(windowStart: windowStart, maghrib: maghrib);
+    if (!shouldStartNow(now, maghrib)) {
+      _log('outside_start_window waiting_for_warmup_window');
       await endIfNeeded();
-      _scheduleWindowTimers(windowStart: windowStart, maghrib: maghrib);
       return;
     }
-
-    _log(
-      'start_or_update countdown_active',
-    );
-    _scheduleWindowTimers(windowStart: windowStart, maghrib: maghrib);
-    await _startOrUpdateCountdown(maghrib: maghrib);
-    _startForegroundTicker(maghrib: maghrib);
+    _log('start_or_update countdown_active');
+    await startOrUpdate(maghrib);
   }
 
   static Future<void> endIfNeeded() async {
@@ -244,8 +253,10 @@ class IftarLiveActivityService {
   ) async {
     try {
       await _channel.invokeMethod<void>(method, payload);
-    } catch (_) {
-      // Best effort only.
+    } catch (error, stackTrace) {
+      _log(
+        'native_call_failed method=$method error=$error stack=$stackTrace',
+      );
     }
   }
 
@@ -253,10 +264,30 @@ class IftarLiveActivityService {
     if (!_isIosRuntime) return false;
     try {
       final result = await _channel.invokeMethod<bool>(_methodIsSupported);
-      return result ?? false;
-    } catch (_) {
+      final isEnabled = result ?? false;
+      _log('support isSupported=$isEnabled areActivitiesEnabled=$isEnabled');
+      return isEnabled;
+    } catch (error) {
+      _log('support_query_failed error=$error');
       return false;
     }
+  }
+
+  static bool shouldStartNow(DateTime now, DateTime iftarDate) {
+    final location = LocalPreferencesService.prayerLocation.value;
+    if (!_isIosRuntime) return false;
+    if (!isSupported.value) return false;
+    if (!_isFeatureEnabled) return false;
+    if (!location.hasCoordinates) return false;
+    if (!now.isBefore(iftarDate)) return false;
+
+    final remaining = iftarDate.difference(now);
+    return remaining <= _countdownWindow && remaining > Duration.zero;
+  }
+
+  static Future<void> startOrUpdate(DateTime iftarDate) async {
+    await _startOrUpdateCountdown(maghrib: iftarDate);
+    _startForegroundTicker(maghrib: iftarDate);
   }
 
   static DateTime _maghribFor(DateTime day, PrayerLocation location) {

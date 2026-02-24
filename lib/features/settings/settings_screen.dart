@@ -82,11 +82,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             value: _languageLabel(LocalPreferencesService.language.value),
             onTap: () => _showLanguagePicker(),
           ),
-          _buildRow(
-            title: S.get('appearance'),
-            icon: Icons.tune_rounded,
-            value: _themeModeLabel(LocalPreferencesService.themeMode.value),
-            onTap: () => _showThemePicker(),
+          ValueListenableBuilder<ThemeMode>(
+            valueListenable: LocalPreferencesService.themeMode,
+            builder: (context, mode, _) {
+              return _buildRow(
+                title: S.get('appearance'),
+                icon: Icons.tune_rounded,
+                value: _themeModeLabel(mode),
+                onTap: () => _showThemePicker(),
+              );
+            },
           ),
           if (!kIsWeb && Platform.isIOS)
             ValueListenableBuilder<bool>(
@@ -353,7 +358,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -491,7 +496,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _ => ThemeMode.light,
         };
         LocalPreferencesService.setThemeMode(mode);
-        setState(() {});
       },
     );
   }
@@ -504,7 +508,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -575,7 +579,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -669,7 +673,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          backgroundColor: AppColors.scaffoldBg,
+          backgroundColor: Theme.of(context).colorScheme.surface,
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           content: Text(
