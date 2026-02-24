@@ -58,31 +58,33 @@ class WidgetPayloadService {
   }
 
   static Map<String, dynamic> _buildPayload(DateTime now) {
+    final widgetEnabled = LocalPreferencesService.nextPrayerWidgetEnabled.value;
+    if (!widgetEnabled) {
+      return <String, dynamic>{
+        'generatedAtEpochMs': now.millisecondsSinceEpoch,
+        'isWidgetEnabled': false,
+      };
+    }
+
     final location = LocalPreferencesService.prayerLocation.value;
     final locationLabel = _locationLabel(location);
-    final notificationsEnabled = LocalPreferencesService.adhanEnabled.value;
 
     if (!location.hasCoordinates) {
       return <String, dynamic>{
-        'updatedAtEpochMs': now.millisecondsSinceEpoch,
-        'locationLabel': locationLabel,
-        'nextPrayerKey': '',
-        'nextPrayerLabel': S.get('prayer_times_no_location'),
-        'nextPrayerTime': '--:--',
-        'countdownLabel': S.get('next_prayer_set_location_cta'),
-        'isNotificationsEnabled': notificationsEnabled,
+        'generatedAtEpochMs': now.millisecondsSinceEpoch,
+        'isWidgetEnabled': true,
+        'timeZone': location.timezone ?? now.timeZoneName,
       };
     }
 
     final next = _findNextPrayer(now, location);
     return <String, dynamic>{
-      'updatedAtEpochMs': now.millisecondsSinceEpoch,
+      'generatedAtEpochMs': now.millisecondsSinceEpoch,
+      'isWidgetEnabled': true,
+      'nextPrayerName': next.label,
+      'nextPrayerTimeEpochMs': next.time.millisecondsSinceEpoch,
+      'timeZone': location.timezone ?? now.timeZoneName,
       'locationLabel': locationLabel,
-      'nextPrayerKey': next.key,
-      'nextPrayerLabel': next.label,
-      'nextPrayerTime': AdhanTimesService.formatHHmm(next.time),
-      'countdownLabel': _countdownLabel(now, next.time),
-      'isNotificationsEnabled': notificationsEnabled,
     };
   }
 
@@ -206,21 +208,6 @@ class WidgetPayloadService {
       countryHint: _countryFromPrayerLocation(location),
     );
     return _PrayerEntry('fajr', S.get('fajr'), tomorrow.fajr);
-  }
-
-  static String _countdownLabel(DateTime now, DateTime target) {
-    final diff = target.difference(now);
-    if (diff.isNegative) {
-      return '${S.get('next_prayer_in_prefix')} 0${S.get('next_prayer_min_short')}';
-    }
-    final hours = diff.inHours;
-    final minutes = diff.inMinutes % 60;
-    if (hours <= 0) {
-      return '${S.get('next_prayer_in_prefix')} $minutes${S.get('next_prayer_min_short')}';
-    }
-    return '${S.get('next_prayer_in_prefix')} '
-        '$hours${S.get('next_prayer_hour_short')} '
-        '$minutes${S.get('next_prayer_min_short')}';
   }
 
   static String _locationLabel(PrayerLocation location) {

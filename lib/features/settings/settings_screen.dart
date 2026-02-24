@@ -95,6 +95,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           if (!kIsWeb && Platform.isIOS)
             ValueListenableBuilder<bool>(
+              valueListenable: LocalPreferencesService.nextPrayerWidgetEnabled,
+              builder: (context, enabled, _) {
+                return _buildSwitchRow(
+                  title: S.get('next_prayer_widget_toggle'),
+                  value: enabled,
+                  onChanged: _onToggleNextPrayerWidget,
+                );
+              },
+            ),
+          if (!kIsWeb && Platform.isIOS)
+            Padding(
+              padding: const EdgeInsets.only(top: 2, bottom: 8),
+              child: Text(
+                S.get('next_prayer_widget_hint'),
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.textMuted,
+                  height: 1.35,
+                ),
+              ),
+            ),
+          if (!kIsWeb && Platform.isIOS)
+            ValueListenableBuilder<bool>(
               valueListenable: IftarLiveActivityService.isSupported,
               builder: (context, isSupported, _) {
                 if (!isSupported) return const SizedBox.shrink();
@@ -664,6 +689,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
     await LocalPreferencesService.setIftarLiveActivityEnabled(true);
     await IftarLiveActivityService.scheduleIftarNotifications();
     await IftarLiveActivityService.maybeStartOrUpdate();
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  Future<void> _onToggleNextPrayerWidget(bool enabled) async {
+    await LocalPreferencesService.setNextPrayerWidgetEnabled(enabled);
+    await WidgetPayloadService.writeNextPrayerPayload();
     if (!mounted) return;
     setState(() {});
   }

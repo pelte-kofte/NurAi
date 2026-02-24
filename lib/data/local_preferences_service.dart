@@ -34,6 +34,7 @@ class LocalPreferencesService {
   static const _keyPrayerCityName = 'prayer_city_name';
   static const _keyEzanAlarmSound = 'pref_ezan_alarm_sound_enabled';
   static const _keyIftarLiveActivity = 'pref_iftar_live_activity_enabled';
+  static const _keyNextPrayerWidget = 'pref_next_prayer_widget_enabled';
   static const _keyIftarPermissionPromptShown =
       'pref_iftar_permission_prompt_shown';
   static const _keyIftarLiveActivityTipSeen = 'iftar_live_activity_tip_seen';
@@ -58,6 +59,7 @@ class LocalPreferencesService {
   static final language = ValueNotifier<String>('tr');
   static final ezanAlarmSoundEnabled = ValueNotifier<bool>(false);
   static final iftarLiveActivityEnabled = ValueNotifier<bool>(false);
+  static final nextPrayerWidgetEnabled = ValueNotifier<bool>(false);
   static final iftarPermissionPromptShown = ValueNotifier<bool>(false);
   static final iftarLiveActivityTipSeen = ValueNotifier<bool>(false);
   static final prayerLocation = ValueNotifier<PrayerLocation>(
@@ -74,6 +76,8 @@ class LocalPreferencesService {
     ezanAlarmSoundEnabled.value = _prefs?.getBool(_keyEzanAlarmSound) ?? false;
     iftarLiveActivityEnabled.value =
         _prefs?.getBool(_keyIftarLiveActivity) ?? false;
+    nextPrayerWidgetEnabled.value =
+        _prefs?.getBool(_keyNextPrayerWidget) ?? false;
     iftarPermissionPromptShown.value =
         _prefs?.getBool(_keyIftarPermissionPromptShown) ?? false;
     iftarLiveActivityTipSeen.value =
@@ -131,6 +135,11 @@ class LocalPreferencesService {
   static Future<void> setIftarLiveActivityEnabled(bool value) async {
     await _prefs?.setBool(_keyIftarLiveActivity, value);
     iftarLiveActivityEnabled.value = value;
+  }
+
+  static Future<void> setNextPrayerWidgetEnabled(bool value) async {
+    await _prefs?.setBool(_keyNextPrayerWidget, value);
+    nextPrayerWidgetEnabled.value = value;
   }
 
   static Future<void> setIftarPermissionPromptShown(bool value) async {

@@ -15,7 +15,7 @@ import WidgetKit
   private let methodUpdateIftarLiveActivity = "updateIftarLiveActivity"
   private let methodEndIftarLiveActivity = "endIftarLiveActivity"
   private let defaultAppGroupId = "group.com.nilico.duaya"
-  private let payloadKey = "next_prayer_payload"
+  private let payloadKey = "next_prayer_widget_payload"
   private let dailyContentPayloadKey = "daily_content_payload"
   private let nextPrayerWidgetKind = "NextPrayerWidget"
   private let dailyContentWidgetKind = "NurAiWidgets"
@@ -143,6 +143,7 @@ import WidgetKit
 
   private func refreshWidgets() {
     if #available(iOS 14.0, *) {
+      WidgetCenter.shared.reloadAllTimelines()
       WidgetCenter.shared.reloadTimelines(ofKind: nextPrayerWidgetKind)
       WidgetCenter.shared.reloadTimelines(ofKind: dailyContentWidgetKind)
     }

@@ -164,6 +164,9 @@ class S {
       'light': 'Açık',
       'dark': 'Koyu',
       'haptics': 'Haptik geri bildirim',
+      'next_prayer_widget_toggle': 'Sıradaki Vakit Widget\'ı',
+      'next_prayer_widget_hint':
+          'Ana ekran/kilit ekranı widget\'ında sıradaki vakti gösterir.',
       'iftar_countdown_toggle': 'İftara 1 saat kala sayaç',
       'iftar_countdown_hint':
           'Uygulama iftara 1 saat kala açılırsa sayaç Dynamic Island’da otomatik başlar.',
@@ -296,7 +299,8 @@ class S {
       'suggestion_calm_1_source': 'Rad 13:28',
       'suggestion_calm_2_text': 'Kolaylaştırın, zorlaştırmayın.',
       'suggestion_calm_2_source': 'Buhari',
-      'suggestion_calm_3_text': 'Rabbinin adını an ve tüm kalbinle O\'na yönel.',
+      'suggestion_calm_3_text':
+          'Rabbinin adını an ve tüm kalbinle O\'na yönel.',
       'suggestion_calm_3_source': 'Muzzemmil 73:8',
       'suggestion_anxious_1_text': 'Allah bize yeter, O ne güzel vekildir.',
       'suggestion_anxious_1_source': 'Âl-i İmran 3:173',
@@ -471,6 +475,9 @@ class S {
       'light': 'Light',
       'dark': 'Dark',
       'haptics': 'Haptic feedback',
+      'next_prayer_widget_toggle': 'Next Prayer Widget',
+      'next_prayer_widget_hint':
+          'Shows upcoming prayer on Home Screen and Lock Screen widgets.',
       'iftar_countdown_toggle': '1-hour pre-iftar countdown',
       'iftar_countdown_hint':
           'If the app is active in the last hour before iftar, the countdown starts automatically in Dynamic Island.',

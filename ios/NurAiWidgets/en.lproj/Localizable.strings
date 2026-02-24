@@ -7,3 +7,9 @@
 "widget_display_name" = "Daily Spiritual Content";
 "widget_description" = "Shows a daily verse, hadith, or Asma ul Husna.";
 "widget_loading" = "Loading...";
+"next_prayer_widget_title" = "Next Prayer";
+"next_prayer_widget_description" = "Shows next prayer time and remaining time.";
+"next_prayer_widget_enable_short" = "Enable in Settings";
+"next_prayer_widget_enable_full" = "Enable Next Prayer Widget in Duaya Settings";
+"next_prayer_widget_no_data" = "Set location in Duaya";
+"next_prayer_widget_location_current" = "Current location";
