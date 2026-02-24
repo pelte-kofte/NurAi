@@ -5,7 +5,7 @@ import UserNotifications
 import WidgetKit
 
 @main
-@objc class AppDelegate: FlutterAppDelegate, UNUserNotificationCenterDelegate {
+@objc class AppDelegate: FlutterAppDelegate {
   private let channelName = "nurai.widgets"
   private let methodSetPayload = "setNextPrayerPayload"
   private let methodSetDailyContentPayload = "setDailyContentPayload"

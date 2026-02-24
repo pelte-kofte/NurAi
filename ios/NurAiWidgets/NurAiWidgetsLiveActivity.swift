@@ -2,6 +2,32 @@ import ActivityKit
 import SwiftUI
 import WidgetKit
 
+private struct LiveActivityAvatar: View {
+    let size: CGFloat
+
+    var body: some View {
+        ZStack {
+            Image(systemName: "moon.stars.fill")
+                .resizable()
+                .scaledToFit()
+                .padding(size * 0.22)
+                .frame(width: size, height: size)
+                .foregroundStyle(.primary)
+
+            Image("LiveActivityAvatar")
+                .renderingMode(.original)
+                .resizable()
+                .scaledToFill()
+                .frame(width: size, height: size)
+                .clipShape(Circle())
+        }
+        .frame(width: size, height: size)
+        .clipShape(Circle())
+        .overlay(Circle().stroke(.white.opacity(0.15), lineWidth: 1))
+        .accessibilityHidden(true)
+    }
+}
+
 private func debugLog(_ message: String) {
     #if DEBUG
         print(message)
@@ -79,8 +105,7 @@ struct NurAiWidgetsLiveActivity: Widget {
         ActivityConfiguration(for: IftarAttributes.self) { context in
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {
-                    Image(systemName: "moon.stars.fill")
-                        .foregroundStyle(.primary)
+                    LiveActivityAvatar(size: 30)
                     Text("Iftara kalan")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(.primary)
@@ -101,8 +126,7 @@ struct NurAiWidgetsLiveActivity: Widget {
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    Image(systemName: "moon.stars.fill")
-                        .foregroundStyle(.primary)
+                    LiveActivityAvatar(size: 30)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     countdownLabel(iftarDate: context.state.iftarDate, large: false)
@@ -121,13 +145,11 @@ struct NurAiWidgetsLiveActivity: Widget {
                     }
                 }
             } compactLeading: {
-                Image(systemName: "moon.stars.fill")
-                    .foregroundStyle(.primary)
+                LiveActivityAvatar(size: 22)
             } compactTrailing: {
                 countdownLabel(iftarDate: context.state.iftarDate, large: false)
             } minimal: {
-                Image(systemName: "moon.fill")
-                    .foregroundStyle(.primary)
+                LiveActivityAvatar(size: 20)
             }
             .widgetURL(URL(string: "duaya://ramadan"))
             .keylineTint(islandKeylineTint)
