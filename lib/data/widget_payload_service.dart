@@ -63,6 +63,7 @@ class WidgetPayloadService {
       return <String, dynamic>{
         'generatedAtEpochMs': now.millisecondsSinceEpoch,
         'isWidgetEnabled': false,
+        'upcomingPrayers': const <Map<String, dynamic>>[],
       };
     }
 
@@ -74,10 +75,12 @@ class WidgetPayloadService {
         'generatedAtEpochMs': now.millisecondsSinceEpoch,
         'isWidgetEnabled': true,
         'timeZone': location.timezone ?? now.timeZoneName,
+        'upcomingPrayers': const <Map<String, dynamic>>[],
       };
     }
 
-    final next = _findNextPrayer(now, location);
+    final upcoming = _buildUpcomingPrayers(now, location);
+    final next = upcoming.isNotEmpty ? upcoming.first : _findNextPrayer(now, location);
     return <String, dynamic>{
       'generatedAtEpochMs': now.millisecondsSinceEpoch,
       'isWidgetEnabled': true,
@@ -85,6 +88,14 @@ class WidgetPayloadService {
       'nextPrayerTimeEpochMs': next.time.millisecondsSinceEpoch,
       'timeZone': location.timezone ?? now.timeZoneName,
       'locationLabel': locationLabel,
+      'upcomingPrayers': upcoming
+          .map(
+            (entry) => <String, dynamic>{
+              'name': entry.label,
+              'timeEpochMs': entry.time.millisecondsSinceEpoch,
+            },
+          )
+          .toList(),
     };
   }
 
@@ -208,6 +219,60 @@ class WidgetPayloadService {
       countryHint: _countryFromPrayerLocation(location),
     );
     return _PrayerEntry('fajr', S.get('fajr'), tomorrow.fajr);
+  }
+
+  static List<_PrayerEntry> _buildUpcomingPrayers(
+    DateTime now,
+    PrayerLocation location,
+  ) {
+    final nowWithDrift = now.add(const Duration(seconds: 10));
+    final todayEntries = _prayerEntriesForDate(now, location);
+    final tomorrowEntries = _prayerEntriesForDate(
+      now.add(const Duration(days: 1)),
+      location,
+    );
+
+    final upcoming = <_PrayerEntry>[
+      for (final entry in todayEntries)
+        if (entry.time.isAfter(nowWithDrift)) entry,
+    ];
+
+    if (tomorrowEntries.isNotEmpty) {
+      final tomorrowFajr = tomorrowEntries.first;
+      final hasTomorrowFajr = upcoming.any(
+        (entry) => entry.key == tomorrowFajr.key && entry.time == tomorrowFajr.time,
+      );
+      if (!hasTomorrowFajr) {
+        upcoming.add(tomorrowFajr);
+      }
+    }
+
+    if (upcoming.length < 3) {
+      for (final entry in tomorrowEntries.skip(1)) {
+        upcoming.add(entry);
+        if (upcoming.length >= 3) break;
+      }
+    }
+
+    return upcoming;
+  }
+
+  static List<_PrayerEntry> _prayerEntriesForDate(
+    DateTime date,
+    PrayerLocation location,
+  ) {
+    final day = AdhanTimesService.computeTimes(
+      date,
+      location,
+      countryHint: _countryFromPrayerLocation(location),
+    );
+    return <_PrayerEntry>[
+      _PrayerEntry('fajr', S.get('fajr'), day.fajr),
+      _PrayerEntry('dhuhr', S.get('dhuhr'), day.dhuhr),
+      _PrayerEntry('asr', S.get('asr'), day.asr),
+      _PrayerEntry('maghrib', S.get('maghrib'), day.maghrib),
+      _PrayerEntry('isha', S.get('isha'), day.isha),
+    ];
   }
 
   static String _locationLabel(PrayerLocation location) {

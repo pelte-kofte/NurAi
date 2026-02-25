@@ -3,10 +3,19 @@ import WidgetKit
 
 private let defaultAppGroupId = "group.com.nilico.duaya"
 private let payloadKey = "next_prayer_widget_payload"
+private let rolloverDriftSeconds: TimeInterval = 10
+private let safetyRefreshInterval: TimeInterval = 20 * 60
+private let staleDataRefreshInterval: TimeInterval = 5 * 60
+private let disabledRefreshInterval: TimeInterval = 3 * 60 * 60
 
 struct NextPrayerEntry: TimelineEntry {
   let date: Date
   let payload: NextPrayerPayload?
+}
+
+struct UpcomingPrayerPayload: Decodable {
+  let name: String?
+  let timeEpochMs: Int64?
 }
 
 struct NextPrayerPayload: Decodable {
@@ -16,6 +25,12 @@ struct NextPrayerPayload: Decodable {
   let timeZone: String?
   let locationLabel: String?
   let isWidgetEnabled: Bool?
+  let upcomingPrayers: [UpcomingPrayerPayload]?
+}
+
+struct ResolvedPrayer {
+  let name: String
+  let date: Date
 }
 
 struct NextPrayerProvider: TimelineProvider {
@@ -32,17 +47,18 @@ struct NextPrayerProvider: TimelineProvider {
     let payload = loadPayload()
     let entry = NextPrayerEntry(date: now, payload: payload)
 
-    var nextRefresh = now.addingTimeInterval(20 * 60)
-    if
-      let payload,
-      payload.isWidgetEnabled == true,
-      let prayerEpochMs = payload.nextPrayerTimeEpochMs
-    {
-      let rollover = Date(timeIntervalSince1970: TimeInterval(prayerEpochMs) / 1000.0)
-        .addingTimeInterval(10)
-      if rollover > now && rollover < nextRefresh {
-        nextRefresh = rollover
+    var nextRefresh: Date
+    if payload?.isWidgetEnabled != true {
+      nextRefresh = now.addingTimeInterval(disabledRefreshInterval)
+    } else if let nextPrayer = resolveNextPrayer(payload: payload, now: now) {
+      let boundaryRefresh = nextPrayer.date.addingTimeInterval(rolloverDriftSeconds)
+      let safetyRefresh = now.addingTimeInterval(safetyRefreshInterval)
+      nextRefresh = min(boundaryRefresh, safetyRefresh)
+      if nextRefresh <= now {
+        nextRefresh = now.addingTimeInterval(staleDataRefreshInterval)
       }
+    } else {
+      nextRefresh = now.addingTimeInterval(staleDataRefreshInterval)
     }
 
     completion(Timeline(entries: [entry], policy: .after(nextRefresh)))
@@ -85,8 +101,22 @@ struct NextPrayerWidgetView: View {
     entry.payload?.isWidgetEnabled == true
   }
 
+  private var hasPrayerSourceData: Bool {
+    if let upcoming = entry.payload?.upcomingPrayers, !upcoming.isEmpty {
+      return true
+    }
+    if let legacyEpoch = entry.payload?.nextPrayerTimeEpochMs, legacyEpoch > 0 {
+      return true
+    }
+    return false
+  }
+
+  private var selectedPrayer: ResolvedPrayer? {
+    resolveNextPrayer(payload: entry.payload, now: Date())
+  }
+
   private var prayerName: String {
-    entry.payload?.nextPrayerName ?? L("next_prayer_widget_no_data")
+    selectedPrayer?.name ?? L("next_prayer_widget_no_data")
   }
 
   private var locationLabel: String {
@@ -95,18 +125,19 @@ struct NextPrayerWidgetView: View {
   }
 
   private var targetDate: Date? {
-    guard let epoch = entry.payload?.nextPrayerTimeEpochMs else { return nil }
-    return Date(timeIntervalSince1970: TimeInterval(epoch) / 1000.0)
+    selectedPrayer?.date
   }
 
   var body: some View {
     Group {
       if !isEnabled {
         disabledView
-      } else if targetDate == nil {
-        missingDataView
-      } else {
+      } else if targetDate != nil {
         contentView
+      } else if hasPrayerSourceData {
+        refreshingView
+      } else {
+        missingDataView
       }
     }
     .widgetURL(URL(string: "duaya://adhanTimes"))
@@ -165,10 +196,38 @@ struct NextPrayerWidgetView: View {
   }
 
   @ViewBuilder
+  private var refreshingView: some View {
+    switch family {
+    case .accessoryInline:
+      Text(L("next_prayer_widget_refreshing"))
+        .lineLimit(1)
+    case .accessoryCircular:
+      Image(systemName: "arrow.clockwise")
+    case .accessoryRectangular:
+      VStack(alignment: .leading, spacing: 2) {
+        Text(L("next_prayer_widget_title"))
+          .font(.system(size: 11, weight: .semibold))
+        Text(L("next_prayer_widget_refreshing"))
+          .font(.system(size: 11, weight: .regular))
+          .lineLimit(2)
+      }
+    default:
+      VStack(alignment: .leading, spacing: 6) {
+        Text(L("next_prayer_widget_title"))
+          .font(.system(size: 12, weight: .regular))
+          .foregroundStyle(.secondary)
+        Text(L("next_prayer_widget_refreshing"))
+          .font(.system(size: 15, weight: .medium))
+          .lineLimit(2)
+      }
+    }
+  }
+
+  @ViewBuilder
   private var contentView: some View {
     switch family {
     case .accessoryInline:
-      Text("\(prayerName) \(timeText()) • \(remainingText())")
+      Text("\(prayerName) \(timeText()) | \(remainingText())")
         .lineLimit(1)
     case .accessoryCircular:
       VStack(spacing: 2) {
@@ -260,6 +319,42 @@ struct NextPrayerWidgetView: View {
   private func L(_ key: String) -> String {
     NSLocalizedString(key, comment: "")
   }
+}
+
+private func resolveNextPrayer(payload: NextPrayerPayload?, now: Date) -> ResolvedPrayer? {
+  guard let payload, payload.isWidgetEnabled == true else { return nil }
+
+  let threshold = now.addingTimeInterval(rolloverDriftSeconds)
+  let fromUpcoming: [ResolvedPrayer] =
+    (payload.upcomingPrayers ?? []).compactMap { item in
+      guard
+        let name = item.name?.trimmingCharacters(in: .whitespacesAndNewlines),
+        !name.isEmpty,
+        let epochMs = item.timeEpochMs
+      else {
+        return nil
+      }
+      let date = Date(timeIntervalSince1970: TimeInterval(epochMs) / 1000.0)
+      return ResolvedPrayer(name: name, date: date)
+    }
+
+  let sortedUpcoming = fromUpcoming.sorted { $0.date < $1.date }
+  if let next = sortedUpcoming.first(where: { $0.date > threshold }) {
+    return next
+  }
+
+  if
+    let name = payload.nextPrayerName?.trimmingCharacters(in: .whitespacesAndNewlines),
+    !name.isEmpty,
+    let legacyEpochMs = payload.nextPrayerTimeEpochMs
+  {
+    let legacyDate = Date(timeIntervalSince1970: TimeInterval(legacyEpochMs) / 1000.0)
+    if legacyDate > threshold {
+      return ResolvedPrayer(name: name, date: legacyDate)
+    }
+  }
+
+  return nil
 }
 
 private extension View {

@@ -1,30 +1,36 @@
 import ActivityKit
 import SwiftUI
+import UIKit
 import WidgetKit
 
-private struct LiveActivityAvatar: View {
+private struct LiveActivityAvatarView: View {
     let size: CGFloat
 
     var body: some View {
-        ZStack {
-            Image(systemName: "moon.stars.fill")
-                .resizable()
-                .scaledToFit()
-                .padding(size * 0.22)
-                .frame(width: size, height: size)
-                .foregroundStyle(.primary)
-
-            Image("LiveActivityAvatar")
+        Group {
+            if hasAvatarAsset {
+                Image("LiveActivityAvatar", bundle: .main)
+                    .renderingMode(.original)
+                    .resizable()
+                    .scaledToFill()
+            } else {
+                Image(systemName: "moon.stars.fill")
                 .renderingMode(.original)
                 .resizable()
-                .scaledToFill()
-                .frame(width: size, height: size)
-                .clipShape(Circle())
+                    .scaledToFit()
+                    .padding(size * 0.22)
+                    .foregroundStyle(.white)
+                    .background(Color(red: 0.12, green: 0.22, blue: 0.27))
+            }
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
-        .overlay(Circle().stroke(.white.opacity(0.15), lineWidth: 1))
+        .overlay(Circle().stroke(.white.opacity(0.18), lineWidth: 1))
         .accessibilityHidden(true)
+    }
+
+    private var hasAvatarAsset: Bool {
+        UIImage(named: "LiveActivityAvatar", in: .main, compatibleWith: nil) != nil
     }
 }
 
@@ -97,18 +103,22 @@ struct IftarAttributes: ActivityAttributes {
 
 @available(iOSApplicationExtension 16.1, *)
 struct NurAiWidgetsLiveActivity: Widget {
-    private let lockScreenBackgroundTint = Color(red: 0.96, green: 0.93, blue: 0.88)
-    private let lockScreenActionTint = Color(red: 0.30, green: 0.24, blue: 0.18)
-    private let islandKeylineTint = Color(red: 0.89, green: 0.61, blue: 0.28)
+    private let lockScreenBackgroundTint = Color(red: 0.10, green: 0.14, blue: 0.21)
+    private let lockScreenActionTint = Color(red: 0.93, green: 0.96, blue: 0.97)
+    private let lockPrimaryText = Color(red: 0.97, green: 0.98, blue: 0.99)
+    private let lockSecondaryText = Color(red: 0.85, green: 0.90, blue: 0.92)
+    private let accentEarth = Color(red: 0.71, green: 0.48, blue: 0.35) // #B57A5A
+    private let islandText = Color.white
+    private let islandKeylineTint = Color(red: 0.71, green: 0.48, blue: 0.35)
 
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: IftarAttributes.self) { context in
             VStack(alignment: .leading, spacing: 8) {
                 HStack(spacing: 6) {
-                    LiveActivityAvatar(size: 30)
-                    Text("Iftara kalan")
+                    LiveActivityAvatarView(size: 30)
+                    Text(context.state.title.isEmpty ? "Iftara kalan" : context.state.title)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(lockPrimaryText)
                         .lineLimit(1)
                 }
 
@@ -116,40 +126,45 @@ struct NurAiWidgetsLiveActivity: Widget {
 
                 Text(context.state.subtitle.isEmpty ? "Ramazan bereketi" : context.state.subtitle)
                     .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(lockSecondaryText)
                     .lineLimit(1)
             }
             .padding(.vertical, 4)
+            .padding(.horizontal, 2)
+            .tint(accentEarth)
             .activityBackgroundTint(lockScreenBackgroundTint)
             .activitySystemActionForegroundColor(lockScreenActionTint)
             .widgetURL(URL(string: "duaya://ramadan"))
         } dynamicIsland: { context in
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
-                    LiveActivityAvatar(size: 30)
+                    LiveActivityAvatarView(size: 30)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
                     countdownLabel(iftarDate: context.state.iftarDate, large: false)
+                        .foregroundStyle(islandText)
                 }
                 DynamicIslandExpandedRegion(.center) {
-                    Text("Iftara kalan")
+                    Text(context.state.title.isEmpty ? "Iftara kalan" : context.state.title)
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(islandText)
                         .lineLimit(1)
                 }
                 DynamicIslandExpandedRegion(.bottom) {
                     HStack(spacing: 6) {
-                        Text("Iftara kalan")
-                            .foregroundStyle(.primary)
+                        Text(context.state.title.isEmpty ? "Iftara kalan" : context.state.title)
+                            .foregroundStyle(accentEarth)
                         countdownLabel(iftarDate: context.state.iftarDate, large: false)
+                            .foregroundStyle(islandText)
                     }
                 }
             } compactLeading: {
-                LiveActivityAvatar(size: 22)
+                LiveActivityAvatarView(size: 22)
             } compactTrailing: {
                 countdownLabel(iftarDate: context.state.iftarDate, large: false)
+                    .foregroundStyle(islandText)
             } minimal: {
-                LiveActivityAvatar(size: 20)
+                LiveActivityAvatarView(size: 20)
             }
             .widgetURL(URL(string: "duaya://ramadan"))
             .keylineTint(islandKeylineTint)
@@ -166,7 +181,7 @@ struct NurAiWidgetsLiveActivity: Widget {
                         : .system(size: 13, weight: .semibold, design: .rounded)
                 )
                 .monospacedDigit()
-                .foregroundStyle(.primary)
+                .foregroundStyle(lockPrimaryText)
         } else {
             Text("--:--")
                 .font(
@@ -175,7 +190,7 @@ struct NurAiWidgetsLiveActivity: Widget {
                         : .system(size: 13, weight: .semibold, design: .rounded)
                 )
                 .monospacedDigit()
-                .foregroundStyle(.primary)
+                .foregroundStyle(lockPrimaryText)
         }
     }
 

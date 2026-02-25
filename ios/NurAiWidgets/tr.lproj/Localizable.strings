@@ -13,3 +13,4 @@
 "next_prayer_widget_enable_full" = "Duaya Ayarlar'dan Siradaki Vakit Widget'ini etkinlestirin";
 "next_prayer_widget_no_data" = "Konumu Duaya'da ayarlayin";
 "next_prayer_widget_location_current" = "Mevcut konum";
+"next_prayer_widget_refreshing" = "Guncelleniyor";

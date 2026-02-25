@@ -90,6 +90,9 @@ class IftarLiveActivityService {
       _log('schedule_trigger_start window_active');
       await startOrUpdate(targetMaghrib);
     }
+    if (_isForeground && now.isBefore(todayMaghrib)) {
+      unawaited(maybeStartOrUpdate());
+    }
   }
 
   static Future<void> maybeStartOrUpdate() async {
