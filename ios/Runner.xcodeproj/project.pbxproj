@@ -13,6 +13,7 @@
 		3B3967161E833CAA004F5970 /* AppFrameworkInfo.plist in Resources */ = {isa = PBXBuildFile; fileRef = 3B3967151E833CAA004F5970 /* AppFrameworkInfo.plist */; };
 		4AA675902F4325780094DC91 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4AA6758F2F4325780094DC91 /* WidgetKit.framework */; };
 		4AA675922F4325780094DC91 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4AA675912F4325780094DC91 /* SwiftUI.framework */; };
+		4AB1D5022F5000010094DC91 /* NurAiWidgetsExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 4AA6758E2F4325780094DC91 /* NurAiWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		5E7311A362845A150EDD6FE8 /* Pods_Runner.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7D06878201D24762EBC4A72C /* Pods_Runner.framework */; };
 		74858FAF1ED2DC5600515810 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74858FAE1ED2DC5600515810 /* AppDelegate.swift */; };
 		97C146FC1CF9000F007C117D /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FA1CF9000F007C117D /* Main.storyboard */; };
@@ -47,6 +48,17 @@
 			files = (
 			);
 			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4AB1D5032F5000010094DC91 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				4AB1D5022F5000010094DC91 /* NurAiWidgetsExtension.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -271,6 +283,7 @@
 				97C146EA1CF9000F007C117D /* Sources */,
 				97C146EB1CF9000F007C117D /* Frameworks */,
 				97C146EC1CF9000F007C117D /* Resources */,
+				4AB1D5032F5000010094DC91 /* Embed App Extensions */,
 				3B06AD1E1E4923F5004D2608 /* Thin Binary */,
 				9705A1C41CF9048500538489 /* Embed Frameworks */,
 				E51A0EF885966404421B664D /* [CP] Embed Pods Frameworks */,
@@ -682,7 +695,7 @@
 				INFOPLIST_FILE = NurAiWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = NurAiWidgets;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -728,7 +741,7 @@
 				INFOPLIST_FILE = NurAiWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = NurAiWidgets;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -771,7 +784,7 @@
 				INFOPLIST_FILE = NurAiWidgets/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = NurAiWidgets;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

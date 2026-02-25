@@ -12,7 +12,6 @@ import '../../data/iftar_live_activity_service.dart';
 import '../../l10n/app_strings.dart';
 import '../notes/notes_screen.dart';
 import '../premium/paywall_screen.dart';
-import '../../theme/app_theme.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, this.scrollController});
@@ -33,7 +32,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final surface = Theme.of(context).colorScheme.surface;
+    final colorScheme = Theme.of(context).colorScheme;
+    final surface = colorScheme.surface;
     return Material(
       color: surface,
       child: ListView(
@@ -44,11 +44,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               S.get('settings'),
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Merriweather',
                 fontSize: 20,
                 fontWeight: FontWeight.w400,
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
               ),
             ),
           ),
@@ -109,11 +109,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
               padding: const EdgeInsets.only(top: 2, bottom: 8),
               child: Text(
                 S.get('next_prayer_widget_hint'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textMuted,
+                  color: colorScheme.onSurface.withValues(alpha: 0.62),
                   height: 1.35,
                 ),
               ),
@@ -139,11 +139,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   padding: const EdgeInsets.only(top: 2, bottom: 8),
                   child: Text(
                     S.get('iftar_countdown_hint'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.textMuted,
+                      color: colorScheme.onSurface.withValues(alpha: 0.62),
                       height: 1.35,
                     ),
                   ),
@@ -285,12 +285,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             if (locked)
-              const Padding(
-                padding: EdgeInsets.only(right: 6),
+              Padding(
+                padding: const EdgeInsets.only(right: 6),
                 child: Icon(
                   Icons.lock_outline_rounded,
                   size: 16,
-                  color: AppColors.textMuted,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.62),
                 ),
               ),
             Icon(
@@ -401,33 +404,36 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Text(
                 S.get('display_name'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Merriweather',
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(ctx).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: controller,
                 textInputAction: TextInputAction.done,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(ctx).colorScheme.onSurface,
                 ),
                 decoration: InputDecoration(
                   hintText: S.get('name_hint'),
-                  hintStyle: const TextStyle(
+                  hintStyle: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.textMuted,
+                    color: Theme.of(ctx)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.62),
                   ),
                   filled: true,
-                  fillColor: AppColors.cardBg,
+                  fillColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   border: OutlineInputBorder(
@@ -449,11 +455,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     },
                     child: Text(
                       S.get('clear'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
-                        color: AppColors.textSecondary,
+                        color: Theme.of(ctx)
+                            .colorScheme
+                            .onSurface
+                            .withValues(alpha: 0.72),
                       ),
                     ),
                   ),
@@ -547,11 +556,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.textSecondary,
+                    color: Theme.of(ctx)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.72),
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -577,7 +589,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 fontWeight: isSelected
                                     ? FontWeight.w500
                                     : FontWeight.w400,
-                                color: AppColors.textPrimary,
+                                color: Theme.of(ctx).colorScheme.onSurface,
                               ),
                             ),
                           ),
@@ -617,21 +629,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Text(
                 S.get('iftar_live_activity_tip_title'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Merriweather',
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textPrimary,
+                  color: Theme.of(ctx).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 S.get('iftar_live_activity_tip_body'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(ctx)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.72),
                   height: 1.4,
                 ),
               ),
@@ -710,11 +725,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           content: Text(
             message,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: AppColors.textSecondary,
+              color:
+                  Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.72),
               height: 1.5,
             ),
           ),

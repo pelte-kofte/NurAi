@@ -21,8 +21,6 @@ class NextPrayerPill extends StatefulWidget {
 }
 
 class _NextPrayerPillState extends State<NextPrayerPill> {
-  static const Color _secondaryIconColor = Color(0x992B2725);
-
   Timer? _ticker;
   DateTime _now = DateTime.now();
 
@@ -47,6 +45,7 @@ class _NextPrayerPillState extends State<NextPrayerPill> {
     return ValueListenableBuilder<PrayerLocation>(
       valueListenable: LocalPreferencesService.prayerLocation,
       builder: (context, location, _) {
+        final colorScheme = Theme.of(context).colorScheme;
         final text = _buildPillText(context, location);
         return GestureDetector(
           onTap: widget.onTap,
@@ -57,15 +56,15 @@ class _NextPrayerPillState extends State<NextPrayerPill> {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             alignment: Alignment.centerLeft,
             decoration: BoxDecoration(
-              color: const Color(0xFFF3ECE7),
+              color: colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(999),
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.schedule_rounded,
                   size: 17,
-                  color: _secondaryIconColor,
+                  color: colorScheme.onSurface.withValues(alpha: 0.62),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
@@ -74,11 +73,11 @@ class _NextPrayerPillState extends State<NextPrayerPill> {
                     textAlign: TextAlign.start,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF5F5954),
+                      color: colorScheme.onSurface.withValues(alpha: 0.78),
                     ),
                   ),
                 ),

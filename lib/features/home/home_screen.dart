@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 
@@ -119,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
-      backgroundColor: const Color(0xFFFDF9F6),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
       ),
@@ -137,33 +137,36 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             children: [
               Text(
                 S.get('name_prompt_title'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Merriweather',
                   fontSize: 20,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF2B2725),
+                  color: Theme.of(ctx).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 14),
               TextField(
                 controller: controller,
                 textInputAction: TextInputAction.done,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF2B2725),
+                  color: Theme.of(ctx).colorScheme.onSurface,
                 ),
                 decoration: InputDecoration(
                   hintText: S.get('name_hint'),
-                  hintStyle: const TextStyle(
+                  hintStyle: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    color: Color(0xFFB5AEA8),
+                    color: Theme.of(ctx)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.55),
                   ),
                   filled: true,
-                  fillColor: const Color(0xFFFBF6F2),
+                  fillColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
                   contentPadding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   border: OutlineInputBorder(
@@ -215,11 +218,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   },
                   child: Text(
                     S.get('skip'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF7A746F),
+                      color: Theme.of(ctx)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -325,8 +331,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6F2),
+      backgroundColor: colorScheme.surface,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
@@ -423,18 +430,19 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   Widget _buildGreeting() {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         GestureDetector(
           key: _quickActionsKey,
           onTap: _toggleQuickActions,
-          child: const Padding(
-            padding: EdgeInsets.only(top: 6, right: 12),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 6, right: 12),
             child: Icon(
               Icons.menu_rounded,
               size: 24,
-              color: Color(0xFF7A746F),
+              color: colorScheme.onSurface.withValues(alpha: 0.72),
             ),
           ),
         ),
@@ -444,11 +452,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             builder: (context, displayName, _) {
               return Text(
                 _buildGreetingText(displayName),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Merriweather',
                   fontSize: 28,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF2B2725),
+                  color: colorScheme.onSurface,
                   height: 1.3,
                 ),
               );
@@ -457,12 +465,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         ),
         GestureDetector(
           onTap: _openSettingsModal,
-          child: const Padding(
-            padding: EdgeInsets.only(top: 6),
+          child: Padding(
+            padding: const EdgeInsets.only(top: 6),
             child: Icon(
               Icons.settings_rounded,
               size: 24,
-              color: Color(0xFF7A746F),
+              color: colorScheme.onSurface.withValues(alpha: 0.72),
             ),
           ),
         ),
@@ -474,17 +482,18 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     required String title,
     required IconData icon,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
-        Icon(icon, size: 16, color: AppColors.turquoiseAccent),
+        Icon(icon, size: 16, color: colorScheme.primary),
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: AppColors.textSecondary,
+            color: colorScheme.onSurface.withValues(alpha: 0.72),
             letterSpacing: 0.4,
           ),
         ),
@@ -493,40 +502,41 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   Widget _buildCountdownCard(String countdown) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF9F4EF),
+        color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: const Color(0xFF7BAEAC), width: 1),
+        border: Border.all(color: colorScheme.primary, width: 1),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.timelapse_rounded,
             size: 16,
-            color: Color(0xE67BAEAC),
+            color: colorScheme.primary.withValues(alpha: 0.9),
           ),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               S.get('home_time_to_maghrib'),
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12.5,
                 fontWeight: FontWeight.w400,
-                color: Color(0xFF6D9A98),
+                color: colorScheme.onSurface.withValues(alpha: 0.78),
               ),
             ),
           ),
           Text(
             countdown,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 14.4,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF6FA9A6),
+              color: colorScheme.primary,
             ),
           ),
         ],
@@ -577,19 +587,20 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     required String body,
     String? source,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     final cleanSource = source?.trim() ?? '';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFDF9F6),
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFF7BAEAC), width: 1.5),
-        boxShadow: const [
+        border: Border.all(color: colorScheme.primary, width: 1.5),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x182B2721),
+            color: colorScheme.shadow,
             blurRadius: 14,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -598,22 +609,22 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: AppColors.indigoAccent,
+              color: colorScheme.secondary,
               letterSpacing: 0.8,
             ),
           ),
           const SizedBox(height: 16),
           Text(
             body,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Merriweather',
               fontSize: 20,
               fontWeight: FontWeight.w400,
-              color: Color(0xFF2B2725),
+              color: colorScheme.onSurface,
               height: 1.6,
             ),
           ),
@@ -621,11 +632,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             const SizedBox(height: 16),
             Text(
               cleanSource,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
-                color: Color(0xFF7A746F),
+                color: colorScheme.onSurface.withValues(alpha: 0.72),
               ),
             ),
           ],
@@ -669,15 +680,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     String? subtitle,
     required VoidCallback onTap,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: const Color(0xFFFDF9F6),
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: const Color(0xFFEDE6E1), width: 1),
+          border: Border.all(color: colorScheme.outline, width: 1),
         ),
         child: Row(
           children: [
@@ -687,11 +699,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Merriweather',
                       fontSize: 15,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF2B2725),
+                      color: colorScheme.onSurface,
                       height: 1.4,
                     ),
                   ),
@@ -699,21 +711,21 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     const SizedBox(height: 3),
                     Text(
                       subtitle,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
-                        color: Color(0xFF7A746F),
+                        color: colorScheme.onSurface.withValues(alpha: 0.72),
                       ),
                     ),
                   ],
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.arrow_forward_ios_rounded,
               size: 14,
-              color: Color(0xFFB5AEA8),
+              color: colorScheme.onSurface.withValues(alpha: 0.5),
             ),
           ],
         ),

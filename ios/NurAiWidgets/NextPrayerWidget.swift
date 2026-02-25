@@ -110,9 +110,7 @@ struct NextPrayerWidgetView: View {
       }
     }
     .widgetURL(URL(string: "duaya://adhanTimes"))
-    .containerBackground(for: .widget) {
-      Color.clear
-    }
+    .nurAiWidgetBackground()
   }
 
   @ViewBuilder
@@ -261,6 +259,19 @@ struct NextPrayerWidgetView: View {
 
   private func L(_ key: String) -> String {
     NSLocalizedString(key, comment: "")
+  }
+}
+
+private extension View {
+  @ViewBuilder
+  func nurAiWidgetBackground() -> some View {
+    if #available(iOSApplicationExtension 17.0, *) {
+      containerBackground(for: .widget) {
+        Color.clear
+      }
+    } else {
+      background(Color.clear)
+    }
   }
 }
 

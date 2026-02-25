@@ -220,7 +220,7 @@ class _PopoverContentState extends State<_PopoverContent> {
     await showModalBottomSheet<void>(
       context: context,
       useSafeArea: true,
-      backgroundColor: const Color(0xFFFBF6F2),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -233,21 +233,24 @@ class _PopoverContentState extends State<_PopoverContent> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Merriweather',
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF2B2725),
+                  color: Theme.of(ctx).colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 8),
               Text(
                 body,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
                   fontWeight: FontWeight.w400,
-                  color: Color(0xFF7A746F),
+                  color: Theme.of(ctx)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.72),
                   height: 1.4,
                 ),
               ),
@@ -281,18 +284,19 @@ class _PopoverContentState extends State<_PopoverContent> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: widget.width,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0x14000000)),
-        boxShadow: const [
+        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.35)),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x14000000),
+            color: colorScheme.shadow,
             blurRadius: 12,
-            offset: Offset(0, 4),
+            offset: const Offset(0, 4),
           ),
         ],
       ),
@@ -304,11 +308,11 @@ class _PopoverContentState extends State<_PopoverContent> {
             padding: const EdgeInsets.only(bottom: 10),
             child: Text(
               S.get('quick_actions'),
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF7A746F),
+                color: colorScheme.onSurface.withValues(alpha: 0.72),
                 letterSpacing: 0.6,
               ),
             ),
@@ -320,22 +324,25 @@ class _PopoverContentState extends State<_PopoverContent> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
                 children: [
-                  const Icon(Icons.explore_rounded,
-                      size: 18, color: Color(0xFF7BAEAC)),
+                  Icon(Icons.explore_rounded,
+                      size: 18, color: colorScheme.primary),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       S.get('qibla'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
-                        color: Color(0xFF2B2725),
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),
-                  const Icon(Icons.chevron_right_rounded,
-                      size: 16, color: Color(0xFFB5AEA8)),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    size: 16,
+                    color: colorScheme.onSurface.withValues(alpha: 0.55),
+                  ),
                 ],
               ),
             ),
@@ -343,7 +350,7 @@ class _PopoverContentState extends State<_PopoverContent> {
           Container(
             height: 1,
             margin: const EdgeInsets.symmetric(vertical: 2),
-            color: const Color(0x1A000000),
+            color: colorScheme.outline.withValues(alpha: 0.35),
           ),
           GestureDetector(
             onTap: widget.onAdhanTimes,
@@ -352,27 +359,27 @@ class _PopoverContentState extends State<_PopoverContent> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.schedule_rounded,
                     size: 18,
-                    color: Color(0xFF7BAEAC),
+                    color: colorScheme.primary,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       S.get('adhan_times'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
-                        color: Color(0xFF2B2725),
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right_rounded,
                     size: 16,
-                    color: Color(0xFFB5AEA8),
+                    color: colorScheme.onSurface.withValues(alpha: 0.55),
                   ),
                 ],
               ),
@@ -381,7 +388,7 @@ class _PopoverContentState extends State<_PopoverContent> {
           Container(
             height: 1,
             margin: const EdgeInsets.symmetric(vertical: 2),
-            color: const Color(0x1A000000),
+            color: colorScheme.outline.withValues(alpha: 0.35),
           ),
           GestureDetector(
             onTap: widget.onTasbih,
@@ -390,27 +397,27 @@ class _PopoverContentState extends State<_PopoverContent> {
               padding: const EdgeInsets.symmetric(vertical: 8),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.touch_app_rounded,
                     size: 18,
-                    color: Color(0xFF7BAEAC),
+                    color: colorScheme.primary,
                   ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       S.get('tasbih'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
-                        color: Color(0xFF2B2725),
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),
-                  const Icon(
+                  Icon(
                     Icons.chevron_right_rounded,
                     size: 16,
-                    color: Color(0xFFB5AEA8),
+                    color: colorScheme.onSurface.withValues(alpha: 0.55),
                   ),
                 ],
               ),
@@ -419,7 +426,7 @@ class _PopoverContentState extends State<_PopoverContent> {
           Container(
             height: 1,
             margin: const EdgeInsets.symmetric(vertical: 6),
-            color: const Color(0xFFEDE6E1),
+            color: colorScheme.outline,
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
@@ -430,18 +437,18 @@ class _PopoverContentState extends State<_PopoverContent> {
                   Expanded(
                     child: Text(
                       S.get('adhan_alarms'),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 14,
                         fontWeight: FontWeight.w400,
-                        color: Color(0xFF2B2725),
+                        color: colorScheme.onSurface,
                       ),
                     ),
                   ),
                   CupertinoSwitch(
                     value: enabled,
                     onChanged: _isUpdatingAdhan ? null : _onToggleAdhan,
-                    activeTrackColor: const Color(0xFF7BAEAC),
+                    activeTrackColor: colorScheme.primary,
                   ),
                 ],
               ),
@@ -450,7 +457,7 @@ class _PopoverContentState extends State<_PopoverContent> {
           Container(
             height: 1,
             margin: const EdgeInsets.symmetric(vertical: 6),
-            color: const Color(0xFFEDE6E1),
+            color: colorScheme.outline,
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 6),
@@ -466,11 +473,11 @@ class _PopoverContentState extends State<_PopoverContent> {
                       Expanded(
                         child: Text(
                           S.get('ezan_alarm_sound'),
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 14,
                             fontWeight: FontWeight.w400,
-                            color: Color(0xFF2B2725),
+                            color: colorScheme.onSurface,
                           ),
                         ),
                       ),
@@ -479,7 +486,7 @@ class _PopoverContentState extends State<_PopoverContent> {
                         onChanged: notificationsEnabled
                             ? _onToggleEzanAlarmSound
                             : null,
-                        activeTrackColor: const Color(0xFF7BAEAC),
+                        activeTrackColor: colorScheme.primary,
                       ),
                     ],
                   ),
@@ -491,11 +498,11 @@ class _PopoverContentState extends State<_PopoverContent> {
             const SizedBox(height: 4),
             Text(
               _statusText!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
-                color: Color(0xFF7A746F),
+                color: colorScheme.onSurface.withValues(alpha: 0.72),
               ),
             ),
           ],

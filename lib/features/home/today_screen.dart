@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../data/daily_ayah_service.dart';
-import '../../theme/app_theme.dart';
 import '../../data/daily_content_service.dart';
 import '../../data/quran_data.dart';
 import '../../l10n/app_strings.dart';
@@ -11,6 +10,7 @@ class TodayScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final dailyAyah = DailyAyahService.getTodayAyahWithContext(
       QuranData.instance.ayahs,
       QuranData.instance.getSurahName,
@@ -18,18 +18,15 @@ class TodayScreen extends StatelessWidget {
     final quote = DailyContentService.getQuoteForDate(DateTime.now());
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6F2),
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF6F2),
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
         title: Text(
           S.get('today_screen_title'),
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Merriweather',
             fontSize: 20,
             fontWeight: FontWeight.w400,
-            color: Color(0xFF2B2725),
+            color: colorScheme.onSurface,
           ),
         ),
       ),
@@ -38,11 +35,12 @@ class TodayScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildVerseCard(dailyAyah),
+            _buildVerseCard(context, dailyAyah),
             const SizedBox(height: 14),
             ValueListenableBuilder<int>(
               valueListenable: DailyContentService.revision,
               builder: (context, _, __) => _buildContentCard(
+                context: context,
                 title: S.get('daily_hadith_title'),
                 body: DailyContentService.todayHadith?.text ??
                     S.get('daily_hadith_empty'),
@@ -53,6 +51,7 @@ class TodayScreen extends StatelessWidget {
             ValueListenableBuilder<int>(
               valueListenable: DailyContentService.revision,
               builder: (context, _, __) => _buildContentCard(
+                context: context,
                 title: S.get('daily_word_title'),
                 body: DailyContentService.todayWord?.text ??
                     S.get('daily_word_empty'),
@@ -60,6 +59,7 @@ class TodayScreen extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             _buildContentCard(
+              context: context,
               title: S.get('daily_quote_title'),
               body: quote.text,
               source: quote.source,
@@ -71,25 +71,26 @@ class TodayScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildVerseCard(DailyAyah dailyAyah) {
+  Widget _buildVerseCard(BuildContext context, DailyAyah dailyAyah) {
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: const Color(0xFFFDF9F6),
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEDE6E1)),
+        border: Border.all(color: colorScheme.outline),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             S.get('daily_ayah'),
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
               fontWeight: FontWeight.w500,
-              color: AppColors.indigoAccent,
+              color: colorScheme.secondary,
               letterSpacing: 0.6,
             ),
           ),
@@ -98,33 +99,33 @@ class TodayScreen extends StatelessWidget {
             dailyAyah.arabic,
             textAlign: TextAlign.right,
             textDirection: TextDirection.rtl,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Amiri',
               fontSize: 24,
               fontWeight: FontWeight.w400,
-              color: Color(0xFF2B2725),
+              color: colorScheme.onSurface,
               height: 1.8,
             ),
           ),
           const SizedBox(height: 14),
           Text(
             dailyAyah.turkishReadable,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Merriweather',
               fontSize: 15,
               fontWeight: FontWeight.w400,
-              color: Color(0xFF2B2725),
+              color: colorScheme.onSurface,
               height: 1.6,
             ),
           ),
           const SizedBox(height: 10),
           Text(
             dailyAyah.reference,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 12,
               fontWeight: FontWeight.w400,
-              color: Color(0xFF7A746F),
+              color: colorScheme.onSurface.withValues(alpha: 0.72),
             ),
           ),
         ],
@@ -133,18 +134,20 @@ class TodayScreen extends StatelessWidget {
   }
 
   Widget _buildContentCard({
+    required BuildContext context,
     required String title,
     required String body,
     String? source,
     bool showQuoteOrnaments = false,
   }) {
+    final colorScheme = Theme.of(context).colorScheme;
     final cleanSource = source?.trim() ?? '';
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFFFDF9F6),
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFEDE6E1)),
+        border: Border.all(color: colorScheme.outline),
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(10.5),
@@ -195,22 +198,22 @@ class TodayScreen extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
-                      color: AppColors.indigoAccent,
+                      color: colorScheme.secondary,
                       letterSpacing: 0.6,
                     ),
                   ),
                   const SizedBox(height: 12),
                   Text(
                     body,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Merriweather',
                       fontSize: 15,
                       fontWeight: FontWeight.w400,
-                      color: Color(0xFF2B2725),
+                      color: colorScheme.onSurface,
                       height: 1.6,
                     ),
                   ),
@@ -218,11 +221,11 @@ class TodayScreen extends StatelessWidget {
                     const SizedBox(height: 10),
                     Text(
                       '- $cleanSource',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
-                        color: Color(0xFF7A746F),
+                        color: colorScheme.onSurface.withValues(alpha: 0.72),
                       ),
                     ),
                   ],

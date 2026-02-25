@@ -114,15 +114,11 @@ struct NurAiWidgetsEntryView: View {
   var body: some View {
     if let payload = entry.payload {
       contentView(payload: payload)
-        .containerBackground(for: .widget) {
-          Color.clear
-        }
+        .nurAiWidgetBackground()
         .widgetURL(URL(string: "duaya://home"))
     } else {
       loadingView
-        .containerBackground(for: .widget) {
-          Color.clear
-        }
+        .nurAiWidgetBackground()
         .widgetURL(URL(string: "duaya://home"))
     }
   }
@@ -228,6 +224,19 @@ struct NurAiWidgetsEntryView: View {
       return "\(shortTitle(payload: payload)): \(shortBody(payload: payload))"
     case .asma:
       return shortBody(payload: payload)
+    }
+  }
+}
+
+private extension View {
+  @ViewBuilder
+  func nurAiWidgetBackground() -> some View {
+    if #available(iOSApplicationExtension 17.0, *) {
+      containerBackground(for: .widget) {
+        Color.clear
+      }
+    } else {
+      background(Color.clear)
     }
   }
 }
