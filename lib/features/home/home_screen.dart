@@ -554,10 +554,19 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           QuranData.instance.ayahs,
           QuranData.instance.getSurahName,
         );
-        return _buildPrimaryCard(
-          title: S.get('daily_ayah'),
-          body: ayah.turkishReadable,
-          source: ayah.reference,
+        return FutureBuilder<String>(
+          future: DailyAyahService.getAyahReadableText(
+            surah: ayah.surahNumber,
+            ayah: ayah.ayahNumber,
+            locale: Locale(LocalPreferencesService.language.value),
+          ),
+          builder: (context, snapshot) {
+            return _buildPrimaryCard(
+              title: S.get('daily_ayah'),
+              body: snapshot.data ?? ayah.turkishReadable,
+              source: ayah.reference,
+            );
+          },
         );
       case HomeDailyContentType.hadith:
         final hadith = DailyContentService.todayHadith;
@@ -573,11 +582,19 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           body: reminder?.text ?? S.get('daily_word_empty'),
         );
       case HomeDailyContentType.quote:
-        final quote = DailyContentService.getQuoteForDate(date);
-        return _buildPrimaryCard(
-          title: S.get('daily_quote_title'),
-          body: quote.text,
-          source: quote.source,
+        return FutureBuilder<DailyQuoteItem>(
+          future: DailyContentService.getQuoteForDate(
+            date,
+            Locale(LocalPreferencesService.language.value),
+          ),
+          builder: (context, snapshot) {
+            final quote = snapshot.data;
+            return _buildPrimaryCard(
+              title: S.get('daily_quote_title'),
+              body: quote?.text ?? '',
+              source: quote?.source,
+            );
+          },
         );
     }
   }

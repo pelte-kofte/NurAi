@@ -159,12 +159,12 @@ import WidgetKit
     let title = (args["title"] as? String) ?? "Iftara"
     let subtitle = (args["subtitle"] as? String) ?? "Kalan sure"
     let phase = (args["phase"] as? String) ?? "countdown"
-    let targetEpochMs =
+    let endEpochMs =
       (args["endEpochMs"] as? NSNumber)?.int64Value
       ?? (args["targetEpochMs"] as? NSNumber)?.int64Value
       ?? Int64(Date().addingTimeInterval(1).timeIntervalSince1970 * 1000)
-    let iftarDate = Date(timeIntervalSince1970: TimeInterval(targetEpochMs) / 1000.0)
-    let remainingSeconds = max(0, Int(iftarDate.timeIntervalSinceNow))
+    let endDate = Date(timeIntervalSince1970: TimeInterval(endEpochMs) / 1000.0)
+    let remainingSeconds = max(0, Int(endDate.timeIntervalSinceNow))
     debugLog(
       "[IftarLiveActivity] parse state phase=\(phase) remainingSeconds=\(remainingSeconds)"
     )
@@ -172,7 +172,7 @@ import WidgetKit
     return IftarAttributes.ContentState(
       title: title,
       subtitle: subtitle,
-      iftarDate: iftarDate,
+      endDate: endDate,
       phase: phase
     )
   }
@@ -244,7 +244,7 @@ import WidgetKit
 
   @available(iOS 16.1, *)
   private func logIftarState(_ event: String, state: IftarAttributes.ContentState) {
-    let remainingSeconds = max(0, Int(state.iftarDate.timeIntervalSinceNow))
+    let remainingSeconds = max(0, Int(state.endDate.timeIntervalSinceNow))
     debugLog(
       "[IftarLiveActivity] \(event) phase=\(state.phase) remainingSeconds=\(remainingSeconds)"
     )
@@ -256,21 +256,21 @@ struct IftarAttributes: ActivityAttributes {
   public struct ContentState: Codable, Hashable {
     var title: String
     var subtitle: String
-    var iftarDate: Date
+    var endDate: Date
     var phase: String
 
     enum CodingKeys: String, CodingKey {
       case title
       case subtitle
-      case iftarDate
       case endDate
+      case iftarDate
       case phase
     }
 
-    init(title: String, subtitle: String, iftarDate: Date, phase: String) {
+    init(title: String, subtitle: String, endDate: Date, phase: String) {
       self.title = title
       self.subtitle = subtitle
-      self.iftarDate = iftarDate
+      self.endDate = endDate
       self.phase = phase
     }
 
@@ -279,12 +279,12 @@ struct IftarAttributes: ActivityAttributes {
       title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Iftara"
       subtitle = try container.decodeIfPresent(String.self, forKey: .subtitle) ?? "Kalan sure"
       phase = try container.decodeIfPresent(String.self, forKey: .phase) ?? "countdown"
-      if let value = try container.decodeIfPresent(Date.self, forKey: .iftarDate) {
-        iftarDate = value
-      } else if let legacyValue = try container.decodeIfPresent(Date.self, forKey: .endDate) {
-        iftarDate = legacyValue
+      if let value = try container.decodeIfPresent(Date.self, forKey: .endDate) {
+        endDate = value
+      } else if let legacyValue = try container.decodeIfPresent(Date.self, forKey: .iftarDate) {
+        endDate = legacyValue
       } else {
-        iftarDate = Date()
+        endDate = Date()
       }
     }
 
@@ -292,7 +292,7 @@ struct IftarAttributes: ActivityAttributes {
       var container = encoder.container(keyedBy: CodingKeys.self)
       try container.encode(title, forKey: .title)
       try container.encode(subtitle, forKey: .subtitle)
-      try container.encode(iftarDate, forKey: .iftarDate)
+      try container.encode(endDate, forKey: .endDate)
       try container.encode(phase, forKey: .phase)
     }
   }

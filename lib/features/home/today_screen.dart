@@ -15,7 +15,6 @@ class TodayScreen extends StatelessWidget {
       QuranData.instance.ayahs,
       QuranData.instance.getSurahName,
     );
-    final quote = DailyContentService.getQuoteForDate(DateTime.now());
 
     return Scaffold(
       backgroundColor: colorScheme.surface,
@@ -35,7 +34,20 @@ class TodayScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildVerseCard(context, dailyAyah),
+            FutureBuilder<String>(
+              future: DailyAyahService.getAyahReadableText(
+                surah: dailyAyah.surahNumber,
+                ayah: dailyAyah.ayahNumber,
+                locale: Localizations.localeOf(context),
+              ),
+              builder: (context, snapshot) {
+                return _buildVerseCard(
+                  context,
+                  dailyAyah,
+                  readableText: snapshot.data ?? dailyAyah.turkishReadable,
+                );
+              },
+            ),
             const SizedBox(height: 14),
             ValueListenableBuilder<int>(
               valueListenable: DailyContentService.revision,
@@ -58,12 +70,21 @@ class TodayScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 14),
-            _buildContentCard(
-              context: context,
-              title: S.get('daily_quote_title'),
-              body: quote.text,
-              source: quote.source,
-              showQuoteOrnaments: true,
+            FutureBuilder<DailyQuoteItem>(
+              future: DailyContentService.getQuoteForDate(
+                DateTime.now(),
+                Localizations.localeOf(context),
+              ),
+              builder: (context, snapshot) {
+                final quote = snapshot.data;
+                return _buildContentCard(
+                  context: context,
+                  title: S.get('daily_quote_title'),
+                  body: quote?.text ?? '',
+                  source: quote?.source,
+                  showQuoteOrnaments: true,
+                );
+              },
             ),
           ],
         ),
@@ -71,7 +92,11 @@ class TodayScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildVerseCard(BuildContext context, DailyAyah dailyAyah) {
+  Widget _buildVerseCard(
+    BuildContext context,
+    DailyAyah dailyAyah, {
+    required String readableText,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
@@ -109,7 +134,7 @@ class TodayScreen extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            dailyAyah.turkishReadable,
+            readableText,
             style: TextStyle(
               fontFamily: 'Merriweather',
               fontSize: 15,

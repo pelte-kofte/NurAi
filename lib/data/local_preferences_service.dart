@@ -47,6 +47,7 @@ class LocalPreferencesService {
       'pref_ramadan_suggestions_iyilik_index';
   static const _keyRamadanSuggestionsFavorites =
       'pref_ramadan_suggestions_favorites';
+  static const _releaseLanguages = <String>{'tr', 'en'};
 
   static const _secureKeyPrayerLat = 'secure_prayer_lat';
   static const _secureKeyPrayerLng = 'secure_prayer_lng';
@@ -72,7 +73,12 @@ class LocalPreferencesService {
     themeMode.value = _readThemeMode();
     adhanEnabled.value = _prefs?.getBool(_keyAdhan) ?? false;
     await _prefs?.remove(_legacyKeyHaptics);
-    language.value = _prefs?.getString(_keyLanguage) ?? 'tr';
+    final rawLanguage = _prefs?.getString(_keyLanguage) ?? 'tr';
+    final normalizedLanguage = _normalizeReleaseLanguage(rawLanguage);
+    language.value = normalizedLanguage;
+    if (rawLanguage != normalizedLanguage) {
+      await _prefs?.setString(_keyLanguage, normalizedLanguage);
+    }
     ezanAlarmSoundEnabled.value = _prefs?.getBool(_keyEzanAlarmSound) ?? false;
     iftarLiveActivityEnabled.value =
         _prefs?.getBool(_keyIftarLiveActivity) ?? false;
@@ -128,8 +134,9 @@ class LocalPreferencesService {
   // Language
 
   static Future<void> setLanguage(String lang) async {
-    await _prefs?.setString(_keyLanguage, lang);
-    language.value = lang;
+    final normalized = _normalizeReleaseLanguage(lang);
+    await _prefs?.setString(_keyLanguage, normalized);
+    language.value = normalized;
   }
 
   static Future<void> setIftarLiveActivityEnabled(bool value) async {
@@ -333,5 +340,11 @@ class LocalPreferencesService {
   static double? _parseDouble(String? value) {
     if (value == null || value.trim().isEmpty) return null;
     return double.tryParse(value);
+  }
+
+  static String _normalizeReleaseLanguage(String lang) {
+    final normalized = lang.toLowerCase();
+    if (_releaseLanguages.contains(normalized)) return normalized;
+    return 'en';
   }
 }

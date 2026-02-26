@@ -25,6 +25,23 @@ class DailyContentItem {
   }
 }
 
+class DailyQuoteItem {
+  final String text;
+  final String? source;
+
+  const DailyQuoteItem({
+    required this.text,
+    this.source,
+  });
+
+  factory DailyQuoteItem.fromJson(Map<String, dynamic> json) {
+    return DailyQuoteItem(
+      text: (json['text'] ?? '').toString(),
+      source: json['source']?.toString(),
+    );
+  }
+}
+
 enum HomeDailyContentType {
   verse,
   hadith,
@@ -39,6 +56,7 @@ class DailyContentService {
   static final revision = ValueNotifier<int>(0);
   static List<DailyContentItem> _hadith = const [];
   static List<DailyContentItem> _words = const [];
+  static final Map<String, List<DailyQuoteItem>> _quotesCacheByLang = {};
 
   static DailyContentItem? get todayHadith => _pickDeterministic(
         _hadith,
@@ -71,26 +89,22 @@ class DailyContentService {
     }
   }
 
-  static DailyContentItem getQuoteForDate(DateTime date) {
-    const quotes = <DailyContentItem>[
-      DailyContentItem(
-        id: 'quote_1',
+  static Future<DailyQuoteItem> getQuoteForDate(
+    DateTime date, [
+    Locale? locale,
+  ]) async {
+    final normalized = _normalizeQuoteLanguageCode(
+      locale?.languageCode ??
+          LocalPreferencesService.language.value,
+    );
+    final quotes = await _loadQuotesForLanguage(normalized);
+    if (quotes.isEmpty) {
+      return const DailyQuoteItem(
         text:
             'The most beloved deeds to Allah are those done regularly, even if they are small.',
         source: 'Bukhari',
-      ),
-      DailyContentItem(
-        id: 'quote_2',
-        text: 'Whoever relies upon Allah, then He is sufficient for them.',
-        source: 'At-Talaq 65:3',
-      ),
-      DailyContentItem(
-        id: 'quote_3',
-        text:
-            'Indeed, Allah does not look at your forms, but He looks at your hearts and deeds.',
-        source: 'Muslim',
-      ),
-    ];
+      );
+    }
     final index = reminderIndexForDate(date, quotes.length);
     return quotes[index];
   }
@@ -140,6 +154,30 @@ class DailyContentService {
     }
   }
 
+  static Future<List<DailyQuoteItem>> _loadQuotesForLanguage(String lang) async {
+    final normalized = _normalizeQuoteLanguageCode(lang);
+    final cached = _quotesCacheByLang[normalized];
+    if (cached != null) return cached;
+
+    final primary = await _loadQuoteList('assets/content/quotes_$normalized.json');
+    if (primary.isNotEmpty) {
+      _quotesCacheByLang[normalized] = primary;
+      return primary;
+    }
+
+    if (normalized == 'en') {
+      _quotesCacheByLang['en'] = const [];
+      return const [];
+    }
+
+    final fallback = await _loadQuoteList('assets/content/quotes_en.json');
+    _quotesCacheByLang[normalized] = fallback;
+    if (fallback.isNotEmpty) {
+      _quotesCacheByLang['en'] = fallback;
+    }
+    return fallback;
+  }
+
   static Future<List<DailyContentItem>> _loadLocalizedList({
     required String primaryPath,
     required String fallbackPath,
@@ -171,13 +209,41 @@ class DailyContentService {
     }
   }
 
+  static Future<List<DailyQuoteItem>> _loadQuoteList(String path) async {
+    try {
+      final raw = await rootBundle.loadString(path);
+      final decoded = jsonDecode(raw);
+      if (decoded is! List) return const [];
+      return decoded
+          .whereType<Map>()
+          .map((e) => e.map(
+                (key, value) => MapEntry(
+                  key.toString(),
+                  value,
+                ),
+              ))
+          .map(DailyQuoteItem.fromJson)
+          .where((e) => e.text.trim().isNotEmpty)
+          .toList(growable: false);
+    } catch (_) {
+      return const [];
+    }
+  }
+
   static String _normalizeLanguageCode(String languageCode) {
     switch (languageCode.toLowerCase()) {
       case 'tr':
       case 'en':
-      case 'ar':
-      case 'de':
-      case 'fr':
+        return languageCode.toLowerCase();
+      default:
+        return 'en';
+    }
+  }
+
+  static String _normalizeQuoteLanguageCode(String languageCode) {
+    switch (languageCode.toLowerCase()) {
+      case 'tr':
+      case 'en':
         return languageCode.toLowerCase();
       default:
         return 'en';

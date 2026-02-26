@@ -103,7 +103,7 @@ class RamadanSuggestionsBundle {
 class RamadanSuggestionsService {
   RamadanSuggestionsService._();
 
-  static const List<Map<String, String>> _duas = [
+  static const List<Map<String, String>> _duasTr = [
     {'text': 'Allah’ım kalbime huzur, dilime zikrini nasip et.', 'secondary': 'Kısa dua'},
     {'text': 'Rabbim, niyetimi halis, amellerimi bereketli eyle.', 'secondary': 'Ramazan duası'},
     {'text': 'Allah’ım, bugünümü hayırla doldur, beni hayra yönelt.'},
@@ -131,7 +131,7 @@ class RamadanSuggestionsService {
     {'text': 'Allah’ım, bugünümü hayırla tamamlamayı nasip et.'},
   ];
 
-  static const List<Map<String, String>> _ayetler = [
+  static const List<Map<String, String>> _ayetlerTr = [
     {'text': 'Kalpler ancak Allah’ı anmakla huzur bulur.', 'secondary': 'Ra’d · 28'},
     {'text': 'Şüphesiz zorlukla beraber bir kolaylık vardır.', 'secondary': 'İnşirah · 6'},
     {'text': 'Allah sabredenlerle beraberdir.', 'secondary': 'Bakara · 153'},
@@ -159,7 +159,7 @@ class RamadanSuggestionsService {
     {'text': 'Allah kuluna şah damarından daha yakındır.', 'secondary': 'Kaf · 16'},
   ];
 
-  static const List<Map<String, String>> _iyilikler = [
+  static const List<Map<String, String>> _iyiliklerTr = [
     {'text': 'Bugün birine içten bir tebessüm hediye et.', 'secondary': 'Minik öneri'},
     {'text': 'Ailenden birine teşekkür mesajı gönder.'},
     {'text': 'Bir bardak suyu niyetle birine ikram et.'},
@@ -187,6 +187,45 @@ class RamadanSuggestionsService {
     {'text': 'Geceye bir teşekkür listesiyle gir.'},
   ];
 
+  static const List<Map<String, String>> _duasEn = [
+    {'text': 'O Allah, grant peace to my heart and remembrance to my tongue.', 'secondary': 'Short dua'},
+    {'text': 'My Lord, purify my intention and bless my deeds.', 'secondary': 'Ramadan dua'},
+    {'text': 'O Allah, fill my day with goodness and guide me to what is right.'},
+    {'text': 'My Lord, grant me patience and a gentle heart.'},
+    {'text': 'O Allah, surround me with forgiveness and mercy.'},
+    {'text': 'My Lord, adorn my speech with truth and my heart with gratitude.'},
+    {'text': 'O Allah, grant my family health, my home peace, and my heart serenity.'},
+    {'text': 'My Lord, keep me steadfast on what is true and beneficial.'},
+    {'text': 'O Allah, make my actions pleasing to You today.'},
+    {'text': 'My Lord, turn my worries into ease and trust in You.'},
+  ];
+
+  static const List<Map<String, String>> _ayetlerEn = [
+    {'text': 'Surely in the remembrance of Allah do hearts find rest.', 'secondary': 'Ar-Rad 13:28'},
+    {'text': 'Indeed, with hardship comes ease.', 'secondary': 'Ash-Sharh 94:6'},
+    {'text': 'Indeed, Allah is with the patient.', 'secondary': 'Al-Baqarah 2:153'},
+    {'text': 'My Lord, increase me in knowledge.', 'secondary': 'Ta-Ha 20:114'},
+    {'text': 'Allah intends ease for you, not hardship.', 'secondary': 'Al-Baqarah 2:185'},
+    {'text': 'If you are grateful, I will surely increase you.', 'secondary': 'Ibrahim 14:7'},
+    {'text': 'Is Allah not sufficient for His servant?', 'secondary': 'Az-Zumar 39:36'},
+    {'text': 'Good and evil are not equal.', 'secondary': 'Fussilat 41:34'},
+    {'text': 'Allah commands justice and excellence.', 'secondary': 'An-Nahl 16:90'},
+    {'text': 'Call upon Me; I will respond to you.', 'secondary': 'Ghafir 40:60'},
+  ];
+
+  static const List<Map<String, String>> _iyiliklerEn = [
+    {'text': 'Offer a sincere smile to someone today.', 'secondary': 'Small kindness'},
+    {'text': 'Send a thank-you message to a family member.'},
+    {'text': 'Give water to someone with a good intention.'},
+    {'text': 'Listen fully without interrupting someone today.'},
+    {'text': 'Take on one small task at home willingly.'},
+    {'text': 'Reach out to someone you have not spoken to in a while.'},
+    {'text': 'Promise to make dua for someone, then do it.'},
+    {'text': 'Postpone one unnecessary criticism today.'},
+    {'text': 'Say one kind sentence to someone around you.'},
+    {'text': 'End the day by writing a short gratitude list.'},
+  ];
+
   static String dateKeyFor(DateTime date) {
     final y = date.year.toString().padLeft(4, '0');
     final m = date.month.toString().padLeft(2, '0');
@@ -195,27 +234,31 @@ class RamadanSuggestionsService {
   }
 
   static RamadanSuggestionsBundle deterministicBundleForDate(DateTime date) {
+    final pools = _contentPoolsForActiveLanguage();
     final dateKey = dateKeyFor(date);
-    final duaIndex = _indexFor(dateKey, RamadanSuggestionType.dua, _duas.length);
+    final duaIndex =
+        _indexFor(dateKey, RamadanSuggestionType.dua, pools.duas.length);
     final ayetIndex =
-        _indexFor(dateKey, RamadanSuggestionType.ayet, _ayetler.length);
+        _indexFor(dateKey, RamadanSuggestionType.ayet, pools.ayetler.length);
     final iyilikIndex =
-        _indexFor(dateKey, RamadanSuggestionType.iyilik, _iyilikler.length);
+        _indexFor(dateKey, RamadanSuggestionType.iyilik, pools.iyilikler.length);
 
     return RamadanSuggestionsBundle(
       dateKey: dateKey,
       duaIndex: duaIndex,
       ayetIndex: ayetIndex,
       iyilikIndex: iyilikIndex,
-      dua: _mapToItem(RamadanSuggestionType.dua, _duas[duaIndex]),
-      ayet: _mapToItem(RamadanSuggestionType.ayet, _ayetler[ayetIndex]),
-      iyilik: _mapToItem(RamadanSuggestionType.iyilik, _iyilikler[iyilikIndex]),
+      dua: _mapToItem(RamadanSuggestionType.dua, pools.duas[duaIndex]),
+      ayet: _mapToItem(RamadanSuggestionType.ayet, pools.ayetler[ayetIndex]),
+      iyilik:
+          _mapToItem(RamadanSuggestionType.iyilik, pools.iyilikler[iyilikIndex]),
     );
   }
 
   static Future<RamadanSuggestionsBundle> getTodayBundle({
     DateTime? now,
   }) async {
+    final pools = _contentPoolsForActiveLanguage();
     final date = now ?? DateTime.now();
     final dateKey = dateKeyFor(date);
 
@@ -223,22 +266,22 @@ class RamadanSuggestionsService {
     if (cached != null &&
         cached.dateKey == dateKey &&
         cached.duaIndex >= 0 &&
-        cached.duaIndex < _duas.length &&
+        cached.duaIndex < pools.duas.length &&
         cached.ayetIndex >= 0 &&
-        cached.ayetIndex < _ayetler.length &&
+        cached.ayetIndex < pools.ayetler.length &&
         cached.iyilikIndex >= 0 &&
-        cached.iyilikIndex < _iyilikler.length) {
+        cached.iyilikIndex < pools.iyilikler.length) {
       return RamadanSuggestionsBundle(
         dateKey: dateKey,
         duaIndex: cached.duaIndex,
         ayetIndex: cached.ayetIndex,
         iyilikIndex: cached.iyilikIndex,
-        dua: _mapToItem(RamadanSuggestionType.dua, _duas[cached.duaIndex]),
+        dua: _mapToItem(RamadanSuggestionType.dua, pools.duas[cached.duaIndex]),
         ayet:
-            _mapToItem(RamadanSuggestionType.ayet, _ayetler[cached.ayetIndex]),
+            _mapToItem(RamadanSuggestionType.ayet, pools.ayetler[cached.ayetIndex]),
         iyilik: _mapToItem(
           RamadanSuggestionType.iyilik,
-          _iyilikler[cached.iyilikIndex],
+          pools.iyilikler[cached.iyilikIndex],
         ),
       );
     }
@@ -348,4 +391,32 @@ class RamadanSuggestionsService {
     }
     return hash % length;
   }
+
+  static _SuggestionContentPools _contentPoolsForActiveLanguage() {
+    final lang = LocalPreferencesService.language.value.toLowerCase();
+    if (lang == 'tr') {
+      return const _SuggestionContentPools(
+        duas: _duasTr,
+        ayetler: _ayetlerTr,
+        iyilikler: _iyiliklerTr,
+      );
+    }
+    return const _SuggestionContentPools(
+      duas: _duasEn,
+      ayetler: _ayetlerEn,
+      iyilikler: _iyiliklerEn,
+    );
+  }
+}
+
+class _SuggestionContentPools {
+  const _SuggestionContentPools({
+    required this.duas,
+    required this.ayetler,
+    required this.iyilikler,
+  });
+
+  final List<Map<String, String>> duas;
+  final List<Map<String, String>> ayetler;
+  final List<Map<String, String>> iyilikler;
 }

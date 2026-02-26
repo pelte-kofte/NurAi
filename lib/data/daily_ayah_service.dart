@@ -1,4 +1,8 @@
+import 'package:flutter/widgets.dart';
+
 import '../models/ayah.dart';
+import 'quran_data.dart';
+import 'quran_english_service.dart';
 
 /// Enriched daily ayah with surah context for display.
 class DailyAyah {
@@ -74,6 +78,20 @@ class DailyAyahService {
     return DailyAyah(ayah: ayah, surahName: surahName);
   }
 
+  static Future<String> getAyahReadableText({
+    required int surah,
+    required int ayah,
+    required Locale locale,
+  }) async {
+    if (locale.languageCode.toLowerCase() == 'en') {
+      final english = await QuranEnglishService.getEnglishAyah(surah, ayah);
+      if (english != null && english.trim().isNotEmpty) {
+        return english.trim();
+      }
+    }
+    return _getTurkishAyahText(surah: surah, ayah: ayah) ?? '';
+  }
+
   /// Converts current date to a stable day index.
   static int _getDayIndex() {
     final today = DateTime.now();
@@ -111,4 +129,16 @@ class DailyAyahService {
 
   /// Exposes Ramadan status for UI hints (if needed).
   static bool get isRamadanActive => _isRamadan();
+
+  static String? _getTurkishAyahText({
+    required int surah,
+    required int ayah,
+  }) {
+    for (final item in QuranData.instance.ayahs) {
+      if (item.surah == surah && item.ayahNumber == ayah) {
+        return item.turkishReadable;
+      }
+    }
+    return null;
+  }
 }

@@ -45,21 +45,21 @@ struct IftarAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
         var title: String
         var subtitle: String
-        var iftarDate: Date
+        var endDate: Date
         var phase: String
 
         enum CodingKeys: String, CodingKey {
             case title
             case subtitle
-            case iftarDate
             case endDate
+            case iftarDate
             case phase
         }
 
-        init(title: String, subtitle: String, iftarDate: Date, phase: String) {
+        init(title: String, subtitle: String, endDate: Date, phase: String) {
             self.title = title
             self.subtitle = subtitle
-            self.iftarDate = iftarDate
+            self.endDate = endDate
             self.phase = phase
         }
 
@@ -69,21 +69,21 @@ struct IftarAttributes: ActivityAttributes {
             subtitle = try container.decodeIfPresent(String.self, forKey: .subtitle) ?? "Ramazan bereketi"
             phase = try container.decodeIfPresent(String.self, forKey: .phase) ?? "countdown"
 
-            let decodedIftarDate = try container.decodeIfPresent(Date.self, forKey: .iftarDate)
             let decodedLegacyDate = try container.decodeIfPresent(Date.self, forKey: .endDate)
+            let decodedIftarDate = try container.decodeIfPresent(Date.self, forKey: .iftarDate)
             let source: String
-            if let value = decodedIftarDate {
-                iftarDate = value
-                source = "iftarDate"
-            } else if let legacyValue = decodedLegacyDate {
-                iftarDate = legacyValue
+            if let value = decodedLegacyDate {
+                endDate = value
                 source = "endDate"
+            } else if let legacyValue = decodedIftarDate {
+                endDate = legacyValue
+                source = "iftarDate"
             } else {
-                iftarDate = Date()
+                endDate = Date()
                 source = "fallbackNow"
             }
 
-            let remainingSeconds = max(0, Int(iftarDate.timeIntervalSinceNow))
+            let remainingSeconds = max(0, Int(endDate.timeIntervalSinceNow))
             debugLog(
                 "[NurAiWidgetsLiveActivity] decode source=\(source) remainingSeconds=\(remainingSeconds)"
             )
@@ -93,7 +93,7 @@ struct IftarAttributes: ActivityAttributes {
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(title, forKey: .title)
             try container.encode(subtitle, forKey: .subtitle)
-            try container.encode(iftarDate, forKey: .iftarDate)
+            try container.encode(endDate, forKey: .endDate)
             try container.encode(phase, forKey: .phase)
         }
     }
@@ -113,24 +113,24 @@ struct NurAiWidgetsLiveActivity: Widget {
 
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: IftarAttributes.self) { context in
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(spacing: 6) {
-                    LiveActivityAvatarView(size: 30)
+            HStack(alignment: .center, spacing: 12) {
+                LiveActivityAvatarView(size: 30)
+                VStack(alignment: .leading, spacing: 4) {
                     Text(context.state.title.isEmpty ? "Iftara kalan" : context.state.title)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(lockPrimaryText)
                         .lineLimit(1)
+                    countdownLabel(endDate: context.state.endDate, large: true)
+                    Text(context.state.subtitle.isEmpty ? "Ramazan bereketi" : context.state.subtitle)
+                        .font(.system(size: 12, weight: .regular))
+                        .foregroundStyle(lockSecondaryText)
+                        .lineLimit(1)
                 }
-
-                countdownLabel(iftarDate: context.state.iftarDate, large: true)
-
-                Text(context.state.subtitle.isEmpty ? "Ramazan bereketi" : context.state.subtitle)
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(lockSecondaryText)
-                    .lineLimit(1)
+                Spacer(minLength: 0)
             }
-            .padding(.vertical, 4)
-            .padding(.horizontal, 2)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
             .tint(accentEarth)
             .activityBackgroundTint(lockScreenBackgroundTint)
             .activitySystemActionForegroundColor(lockScreenActionTint)
@@ -141,7 +141,7 @@ struct NurAiWidgetsLiveActivity: Widget {
                     LiveActivityAvatarView(size: 30)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    countdownLabel(iftarDate: context.state.iftarDate, large: false)
+                    countdownLabel(endDate: context.state.endDate, large: false)
                         .foregroundStyle(islandText)
                 }
                 DynamicIslandExpandedRegion(.center) {
@@ -154,14 +154,14 @@ struct NurAiWidgetsLiveActivity: Widget {
                     HStack(spacing: 6) {
                         Text(context.state.title.isEmpty ? "Iftara kalan" : context.state.title)
                             .foregroundStyle(accentEarth)
-                        countdownLabel(iftarDate: context.state.iftarDate, large: false)
+                        countdownLabel(endDate: context.state.endDate, large: false)
                             .foregroundStyle(islandText)
                     }
                 }
             } compactLeading: {
                 LiveActivityAvatarView(size: 22)
             } compactTrailing: {
-                countdownLabel(iftarDate: context.state.iftarDate, large: false)
+                countdownLabel(endDate: context.state.endDate, large: false)
                     .foregroundStyle(islandText)
             } minimal: {
                 LiveActivityAvatarView(size: 20)
@@ -172,29 +172,14 @@ struct NurAiWidgetsLiveActivity: Widget {
     }
 
     @ViewBuilder
-    private func countdownLabel(iftarDate: Date, large: Bool) -> some View {
-        if isFutureDate(iftarDate) {
-            Text(timerInterval: Date()...iftarDate, countsDown: true)
-                .font(
-                    large
-                        ? .system(size: 24, weight: .bold, design: .rounded)
-                        : .system(size: 13, weight: .semibold, design: .rounded)
-                )
-                .monospacedDigit()
-                .foregroundStyle(lockPrimaryText)
-        } else {
-            Text("--:--")
-                .font(
-                    large
-                        ? .system(size: 24, weight: .bold, design: .rounded)
-                        : .system(size: 13, weight: .semibold, design: .rounded)
-                )
-                .monospacedDigit()
-                .foregroundStyle(lockPrimaryText)
-        }
-    }
-
-    private func isFutureDate(_ date: Date) -> Bool {
-        date.timeIntervalSinceNow > 0
+    private func countdownLabel(endDate: Date, large: Bool) -> some View {
+        Text(timerInterval: Date()...endDate, countsDown: true)
+            .font(
+                large
+                    ? .system(size: 24, weight: .bold, design: .rounded)
+                    : .system(size: 13, weight: .semibold, design: .rounded)
+            )
+            .monospacedDigit()
+            .foregroundStyle(lockPrimaryText)
     }
 }

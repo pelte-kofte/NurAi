@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
+import 'package:flutter/widgets.dart';
 
 import 'daily_ayah_service.dart';
 import 'daily_content_service.dart';
@@ -24,7 +25,9 @@ class WidgetPayloadService {
     final now = DateTime.now();
     final payload = _buildPayload(now);
     final payloadJson = jsonEncode(payload);
-    final dailyContentPayloadJson = jsonEncode(_buildDailyContentPayload(now));
+    final dailyContentPayloadJson = jsonEncode(
+      await _buildDailyContentPayload(now),
+    );
 
     if (kIsWeb) return;
     try {
@@ -99,7 +102,9 @@ class WidgetPayloadService {
     };
   }
 
-  static Map<String, dynamic> _buildDailyContentPayload(DateTime now) {
+  static Future<Map<String, dynamic>> _buildDailyContentPayload(
+    DateTime now,
+  ) async {
     final dailyAyah = DailyAyahService.getTodayAyahWithContext(
       QuranData.instance.ayahs,
       QuranData.instance.getSurahName,
@@ -108,6 +113,11 @@ class WidgetPayloadService {
     final languageCode = LocalPreferencesService.language.value;
     final asma = _asmaForDate(now, languageCode);
     final dateString = _dateString(now);
+    final readableText = await DailyAyahService.getAyahReadableText(
+      surah: dailyAyah.surahNumber,
+      ayah: dailyAyah.ayahNumber,
+      locale: Locale(languageCode),
+    );
 
     return <String, dynamic>{
       'schema': 1,
@@ -115,7 +125,9 @@ class WidgetPayloadService {
       'date': dateString,
       'verse': <String, dynamic>{
         'title': S.get('daily_ayah'),
-        'text': dailyAyah.turkishReadable,
+        'text': readableText.isNotEmpty
+            ? readableText
+            : dailyAyah.turkishReadable,
         'ref': dailyAyah.reference,
       },
       'hadith': <String, dynamic>{

@@ -9,7 +9,7 @@ class S {
   S._();
 
   static String get _lang => LocalPreferencesService.language.value;
-  static const supportedLanguageCodes = <String>['tr', 'en', 'ar', 'de', 'fr'];
+  static const supportedLanguageCodes = <String>['tr', 'en'];
 
   /// Look up a key with fallback chain:
   /// selected language -> English -> Turkish -> raw key.

@@ -67,6 +67,9 @@ flutter:
     - assets/content/daily_words_en.json
     - assets/content/daily_words_ar.json
     - assets/content/daily_words_de.json
+    - assets/content/quotes_tr.json
+    - assets/content/quotes_en.json
+    - assets/content/quran_en.json
     - assets/adhan/cities.json
     - assets/adhan/
     - assets/ramadan/

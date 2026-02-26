@@ -57,9 +57,6 @@ class NurAIApp extends StatelessWidget {
               supportedLocales: const [
                 Locale('tr'),
                 Locale('en'),
-                Locale('ar'),
-                Locale('de'),
-                Locale('fr'),
               ],
               localizationsDelegates: const [
                 GlobalMaterialLocalizations.delegate,
@@ -229,18 +226,13 @@ class _FirstScreen extends StatelessWidget {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text(
-                          'Kalbini sakinleştir.',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        Text(
-                          'Niyetini tazele.',
+                          S.get('splash_headline'),
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.headlineMedium,
                         ),
                         const SizedBox(height: 10),
                         Text(
-                          'Ramazan için kısa bir durak.',
+                          S.get('splash_subtitle'),
                           textAlign: TextAlign.center,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -272,9 +264,9 @@ class _FirstScreen extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: const StadiumBorder(),
                         ),
-                        child: const Text(
-                          'Tap to start',
-                          style: TextStyle(
+                        child: Text(
+                          S.get('continue'),
+                          style: const TextStyle(
                             fontFamily: 'Inter',
                             fontSize: 15,
                             fontWeight: FontWeight.w500,

@@ -349,18 +349,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   String _languageLabel(String code) {
     switch (code) {
-      case 'ar':
-        return S.get('language_ar');
-      case 'de':
-        return S.get('language_de');
-      case 'fr':
-        return S.get('language_fr');
       case 'en':
         return S.get('language_en');
       case 'tr':
         return S.get('language_tr');
       default:
-        return code;
+        return S.get('language_en');
     }
   }
 
@@ -499,9 +493,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       options: [
         _Option(S.get('language_tr'), 'tr'),
         _Option(S.get('language_en'), 'en'),
-        _Option(S.get('language_ar'), 'ar'),
-        _Option(S.get('language_de'), 'de'),
-        _Option(S.get('language_fr'), 'fr'),
       ],
       current: LocalPreferencesService.language.value,
       onSelect: (val) {
