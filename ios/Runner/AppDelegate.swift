@@ -14,6 +14,7 @@ import WidgetKit
   private let methodStartIftarLiveActivity = "startIftarLiveActivity"
   private let methodUpdateIftarLiveActivity = "updateIftarLiveActivity"
   private let methodEndIftarLiveActivity = "endIftarLiveActivity"
+  private let methodEndAllIftarActivities = "endAllIftarActivities"
   private let defaultAppGroupId = "group.com.nilico.duaya"
   private let payloadKey = "next_prayer_widget_payload"
   private let dailyContentPayloadKey = "daily_content_payload"
@@ -101,6 +102,9 @@ import WidgetKit
         case self.methodEndIftarLiveActivity:
           self.endIftarLiveActivity(result: result)
 
+        case self.methodEndAllIftarActivities:
+          self.endAllIftarActivities(result: result)
+
         default:
           result(FlutterMethodNotImplemented)
         }
@@ -114,6 +118,7 @@ import WidgetKit
     willPresent notification: UNNotification,
     withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
   ) {
+    debugLog("[Notifications] willPresent foreground notification with sound")
     if #available(iOS 14.0, *) {
       completionHandler([.banner, .list, .sound])
     } else {
@@ -158,6 +163,13 @@ import WidgetKit
   private func parseIftarState(_ args: [String: Any]) -> IftarAttributes.ContentState {
     let title = (args["title"] as? String) ?? "Iftara"
     let subtitle = (args["subtitle"] as? String) ?? "Kalan sure"
+    let mode = (args["mode"] as? String) ?? "countdown"
+    let postMessage = (args["postMessage"] as? String) ?? ""
+    let postEndsAtEpochMs =
+      (args["postEndsAtEpochMs"] as? NSNumber)?.int64Value
+      ?? (args["endEpochMs"] as? NSNumber)?.int64Value
+      ?? (args["targetEpochMs"] as? NSNumber)?.int64Value
+      ?? 0
     let phase = (args["phase"] as? String) ?? "countdown"
     let endEpochMs =
       (args["endEpochMs"] as? NSNumber)?.int64Value
@@ -166,13 +178,16 @@ import WidgetKit
     let endDate = Date(timeIntervalSince1970: TimeInterval(endEpochMs) / 1000.0)
     let remainingSeconds = max(0, Int(endDate.timeIntervalSinceNow))
     debugLog(
-      "[IftarLiveActivity] parse state phase=\(phase) remainingSeconds=\(remainingSeconds)"
+      "[IftarLiveActivity] parse state mode=\(mode) phase=\(phase) remainingSeconds=\(remainingSeconds)"
     )
 
     return IftarAttributes.ContentState(
       title: title,
       subtitle: subtitle,
       endDate: endDate,
+      mode: mode,
+      postMessage: postMessage,
+      postEndsAtDate: Date(timeIntervalSince1970: TimeInterval(postEndsAtEpochMs) / 1000.0),
       phase: phase
     )
   }
@@ -242,11 +257,15 @@ import WidgetKit
     }
   }
 
+  private func endAllIftarActivities(result: @escaping FlutterResult) {
+    endIftarLiveActivity(result: result)
+  }
+
   @available(iOS 16.1, *)
   private func logIftarState(_ event: String, state: IftarAttributes.ContentState) {
     let remainingSeconds = max(0, Int(state.endDate.timeIntervalSinceNow))
     debugLog(
-      "[IftarLiveActivity] \(event) phase=\(state.phase) remainingSeconds=\(remainingSeconds)"
+      "[IftarLiveActivity] \(event) mode=\(state.mode) phase=\(state.phase) remainingSeconds=\(remainingSeconds)"
     )
   }
 }
@@ -257,6 +276,9 @@ struct IftarAttributes: ActivityAttributes {
     var title: String
     var subtitle: String
     var endDate: Date
+    var mode: String
+    var postMessage: String
+    var postEndsAtDate: Date
     var phase: String
 
     enum CodingKeys: String, CodingKey {
@@ -264,13 +286,28 @@ struct IftarAttributes: ActivityAttributes {
       case subtitle
       case endDate
       case iftarDate
+      case mode
+      case postMessage
+      case postEndsAtDate
+      case postEndsAtEpochMs
       case phase
     }
 
-    init(title: String, subtitle: String, endDate: Date, phase: String) {
+    init(
+      title: String,
+      subtitle: String,
+      endDate: Date,
+      mode: String,
+      postMessage: String,
+      postEndsAtDate: Date,
+      phase: String
+    ) {
       self.title = title
       self.subtitle = subtitle
       self.endDate = endDate
+      self.mode = mode
+      self.postMessage = postMessage
+      self.postEndsAtDate = postEndsAtDate
       self.phase = phase
     }
 
@@ -278,7 +315,6 @@ struct IftarAttributes: ActivityAttributes {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       title = try container.decodeIfPresent(String.self, forKey: .title) ?? "Iftara"
       subtitle = try container.decodeIfPresent(String.self, forKey: .subtitle) ?? "Kalan sure"
-      phase = try container.decodeIfPresent(String.self, forKey: .phase) ?? "countdown"
       if let value = try container.decodeIfPresent(Date.self, forKey: .endDate) {
         endDate = value
       } else if let legacyValue = try container.decodeIfPresent(Date.self, forKey: .iftarDate) {
@@ -286,6 +322,16 @@ struct IftarAttributes: ActivityAttributes {
       } else {
         endDate = Date()
       }
+      mode = try container.decodeIfPresent(String.self, forKey: .mode) ?? "countdown"
+      postMessage = try container.decodeIfPresent(String.self, forKey: .postMessage) ?? ""
+      if let value = try container.decodeIfPresent(Date.self, forKey: .postEndsAtDate) {
+        postEndsAtDate = value
+      } else if let epochMs = try container.decodeIfPresent(Int64.self, forKey: .postEndsAtEpochMs) {
+        postEndsAtDate = Date(timeIntervalSince1970: TimeInterval(epochMs) / 1000.0)
+      } else {
+        postEndsAtDate = endDate
+      }
+      phase = try container.decodeIfPresent(String.self, forKey: .phase) ?? "countdown"
     }
 
     func encode(to encoder: Encoder) throws {
@@ -293,6 +339,9 @@ struct IftarAttributes: ActivityAttributes {
       try container.encode(title, forKey: .title)
       try container.encode(subtitle, forKey: .subtitle)
       try container.encode(endDate, forKey: .endDate)
+      try container.encode(mode, forKey: .mode)
+      try container.encode(postMessage, forKey: .postMessage)
+      try container.encode(postEndsAtDate, forKey: .postEndsAtDate)
       try container.encode(phase, forKey: .phase)
     }
   }

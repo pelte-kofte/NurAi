@@ -21,11 +21,15 @@ class IftarLiveActivityService {
   static const String _methodStart = 'startIftarLiveActivity';
   static const String _methodUpdate = 'updateIftarLiveActivity';
   static const String _methodEnd = 'endIftarLiveActivity';
+  static const String _methodEndAll = 'endAllIftarActivities';
+  static const String _payloadPostCleanup = 'iftar_post_cleanup';
+  static const Duration _postWindow = Duration(minutes: 10);
 
   static final isSupported = ValueNotifier<bool>(false);
 
   static Timer? _windowStartTimer;
   static Timer? _maghribTimer;
+  static Timer? _postEndTimer;
   static Timer? _foregroundTicker;
   static bool _initialized = false;
   static bool _isForeground = true;
@@ -38,7 +42,8 @@ class IftarLiveActivityService {
     isSupported.value = await _querySupport();
     AdhanNotificationService.setNotificationTapHandler((payload) async {
       if (payload == 'iftar_live_activity_warmup' ||
-          payload == 'iftar_alarm_fired') {
+          payload == 'iftar_alarm_fired' ||
+          payload == _payloadPostCleanup) {
         await maybeStartOrUpdate();
       }
     });
@@ -105,6 +110,11 @@ class IftarLiveActivityService {
 
     final now = DateTime.now();
     final location = LocalPreferencesService.prayerLocation.value;
+    await _endAfterPostIfNeeded(
+      now: now,
+      location: location,
+      reason: 'safety_check',
+    );
 
     if (!_isFeatureEnabled || !location.hasCoordinates) {
       _log(
@@ -119,11 +129,19 @@ class IftarLiveActivityService {
     final windowStart = maghrib.subtract(_countdownWindow);
 
     if (!now.isBefore(maghrib)) {
-      _log(
-        'past_maghrib ending activity',
-      );
+      final postEndsAt = maghrib.add(_postWindow);
+      if (now.isBefore(postEndsAt)) {
+        await _switchToPostMode(
+          maghrib: maghrib,
+          postEndsAt: postEndsAt,
+        );
+        return;
+      }
+      _log('past_maghrib_and_post_window_finished ending activity');
       _cancelTimers();
-      await endIfNeeded();
+      await _endAllActivities(
+        reason: 'post_window_finished',
+      );
       await scheduleIftarNotifications();
       return;
     }
@@ -143,6 +161,12 @@ class IftarLiveActivityService {
     await _invokeSafely(_methodEnd, const <String, dynamic>{});
   }
 
+  static Future<void> _endAllActivities({required String reason}) async {
+    _log('live_activity_end_after_post reason=$reason');
+    _cancelTimers();
+    await _invokeSafely(_methodEndAll, const <String, dynamic>{});
+  }
+
   static bool get _isIosRuntime => !kIsWeb && Platform.isIOS;
   static bool get _isFeatureEnabled =>
       LocalPreferencesService.iftarLiveActivityEnabled.value;
@@ -159,6 +183,7 @@ class IftarLiveActivityService {
   }) {
     _windowStartTimer?.cancel();
     _maghribTimer?.cancel();
+    _postEndTimer?.cancel();
 
     final now = DateTime.now();
     if (now.isBefore(windowStart)) {
@@ -174,6 +199,29 @@ class IftarLiveActivityService {
         unawaited(maybeStartOrUpdate());
       });
     }
+  }
+
+  static void _schedulePostEndTimer({
+    required DateTime postEndsAt,
+  }) {
+    _postEndTimer?.cancel();
+    final now = DateTime.now();
+    if (!now.isBefore(postEndsAt)) {
+      unawaited(
+        _endAllActivities(
+          reason: 'post_window_finished',
+        ),
+      );
+      return;
+    }
+    _postEndTimer = Timer(postEndsAt.difference(now), () {
+      _log('post_end_timer_fired');
+      unawaited(
+        _endAllActivities(
+          reason: 'post_window_finished',
+        ),
+      );
+    });
   }
 
   static void _startForegroundTicker({required DateTime maghrib}) {
@@ -210,6 +258,9 @@ class IftarLiveActivityService {
         <String, dynamic>{
           'title': S.get('iftar_countdown_title'),
           'subtitle': S.get('iftar_countdown_subtitle'),
+          'mode': 'countdown',
+          'postMessage': '',
+          'postEndsAtEpochMs': 0,
           'phase': 'countdown',
           'targetEpochMs': maghrib.millisecondsSinceEpoch,
         },
@@ -244,8 +295,38 @@ class IftarLiveActivityService {
       <String, dynamic>{
         'title': S.get('iftar_countdown_title'),
         'subtitle': S.get('iftar_countdown_subtitle'),
+        'mode': 'countdown',
+        'postMessage': '',
+        'postEndsAtEpochMs': 0,
         'phase': 'countdown',
         'targetEpochMs': maghrib.millisecondsSinceEpoch,
+      },
+    );
+  }
+
+  static Future<void> _switchToPostMode({
+    required DateTime maghrib,
+    required DateTime postEndsAt,
+  }) async {
+    _stopForegroundTicker();
+    _schedulePostEndTimer(postEndsAt: postEndsAt);
+    await AdhanNotificationService.scheduleIftarPostCleanupNotification(
+      postEndsAt: postEndsAt,
+      timezoneName: LocalPreferencesService.prayerLocation.value.timezone,
+    );
+    _log(
+      'live_activity_mode_switch_to_post maghribEpochMs=${maghrib.millisecondsSinceEpoch} postEndsAtEpochMs=${postEndsAt.millisecondsSinceEpoch}',
+    );
+    await _invokeSafely(
+      _methodUpdate,
+      <String, dynamic>{
+        'title': S.get('iftar_post_title'),
+        'subtitle': S.get('iftar_post_subtitle'),
+        'mode': 'post',
+        'postMessage': _postMessageForLocale(),
+        'postEndsAtEpochMs': postEndsAt.millisecondsSinceEpoch,
+        'phase': 'post',
+        'targetEpochMs': postEndsAt.millisecondsSinceEpoch,
       },
     );
   }
@@ -293,6 +374,12 @@ class IftarLiveActivityService {
     _startForegroundTicker(maghrib: iftarDate);
   }
 
+  static String _postMessageForLocale() {
+    final languageCode = LocalPreferencesService.language.value.toLowerCase();
+    if (languageCode == 'tr') return S.get('iftar_post_message_tr');
+    return S.get('iftar_post_message_en');
+  }
+
   static DateTime _maghribFor(DateTime day, PrayerLocation location) {
     final times = AdhanTimesService.computeTimes(
       DateTime(day.year, day.month, day.day),
@@ -315,7 +402,33 @@ class IftarLiveActivityService {
     _windowStartTimer = null;
     _maghribTimer?.cancel();
     _maghribTimer = null;
+    _postEndTimer?.cancel();
+    _postEndTimer = null;
     _stopForegroundTicker();
+  }
+
+  static Future<void> _endAfterPostIfNeeded({
+    required DateTime now,
+    required PrayerLocation location,
+    required String reason,
+  }) async {
+    if (!_isIosRuntime || !isSupported.value || !location.hasCoordinates) {
+      return;
+    }
+    final todayMaghrib = _maghribFor(now, location);
+    final activeMaghrib = now.isBefore(todayMaghrib)
+        ? _maghribFor(now.subtract(const Duration(days: 1)), location)
+        : todayMaghrib;
+    final postEndsAt = activeMaghrib.add(_postWindow);
+    if (now.isBefore(postEndsAt)) {
+      return;
+    }
+    await _endAllActivities(
+      reason: 'post_window_finished',
+    );
+    _log(
+      'live_activity_end_after_post safety_reason=$reason maghribEpochMs=${activeMaghrib.millisecondsSinceEpoch} postEndsAtEpochMs=${postEndsAt.millisecondsSinceEpoch}',
+    );
   }
 }
 

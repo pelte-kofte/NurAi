@@ -48,6 +48,16 @@ class S {
 
       // Home
       'daily_ayah': 'Günün Ayeti',
+      'meal_label': 'Meal',
+      'quran_mode_transliteration': 'Okunuş',
+      'quran_mode_translation': 'Meal',
+      'show_more': 'Devamını göster',
+      'show_less': 'Daha az göster',
+      'meal_not_available': 'Bu ayet için meal bulunamadı.',
+      'meal_sheet_title_fallback': 'Sure {surah} Ayet {ayah}',
+      'meal_copy': 'Kopyala',
+      'meal_copied': 'Meal kopyalandı.',
+      'meal_close': 'Kapat',
       'daily_hadith_title': 'Günün Hadisi',
       'daily_word_title': 'Nazik Hatırlatma',
       'daily_hadith_empty': 'Bugün için hadis bulunamadı.',
@@ -149,6 +159,7 @@ class S {
       'next_prayer_hour_short': 'h',
       'next_prayer_min_short': 'm',
       'next_prayer_done_today': 'No upcoming prayer today',
+      'next_prayer_none_title': 'Bugün kalan vakit yok',
 
       // Notification dialog
       'notif_title': 'Bildirim İzni',
@@ -172,6 +183,10 @@ class S {
           'Uygulama iftara 1 saat kala açılırsa sayaç Dynamic Island’da otomatik başlar.',
       'iftar_countdown_title': 'İftara',
       'iftar_countdown_subtitle': 'Kalan süre',
+      'iftar_post_title': 'İftar',
+      'iftar_post_subtitle': 'Allah kabul etsin',
+      'iftar_post_message_tr': 'Allah kabul etsin',
+      'iftar_post_message_en': 'May Allah accept it',
       'iftar_live_activity_tip_title': 'İftar Live Activity',
       'iftar_live_activity_tip_body':
           'Dynamic Island’da görünmesi için Canlı Etkinlikler açık olmalı.',
@@ -358,6 +373,16 @@ class S {
 
       // Home
       'daily_ayah': 'Verse of the Day',
+      'meal_label': 'Translation',
+      'quran_mode_transliteration': 'Transliteration',
+      'quran_mode_translation': 'Translation',
+      'show_more': 'Show more',
+      'show_less': 'Show less',
+      'meal_not_available': 'Translation is not available for this ayah.',
+      'meal_sheet_title_fallback': 'Surah {surah} Ayah {ayah}',
+      'meal_copy': 'Copy',
+      'meal_copied': 'Translation copied.',
+      'meal_close': 'Close',
       'daily_hadith_title': 'Hadith of the Day',
       'daily_word_title': 'Gentle Reminder',
       'daily_hadith_empty': 'No hadith available for today.',
@@ -460,6 +485,7 @@ class S {
       'next_prayer_hour_short': 'h',
       'next_prayer_min_short': 'm',
       'next_prayer_done_today': 'No upcoming prayer today',
+      'next_prayer_none_title': 'No upcoming prayer today',
 
       // Notification dialog
       'notif_title': 'Notification Permission',
@@ -483,6 +509,10 @@ class S {
           'If the app is active in the last hour before iftar, the countdown starts automatically in Dynamic Island.',
       'iftar_countdown_title': 'To iftar',
       'iftar_countdown_subtitle': 'Time remaining',
+      'iftar_post_title': 'Iftar',
+      'iftar_post_subtitle': 'May Allah accept it',
+      'iftar_post_message_tr': 'Allah kabul etsin',
+      'iftar_post_message_en': 'May Allah accept it',
       'iftar_live_activity_tip_title': 'Iftar Live Activity',
       'iftar_live_activity_tip_body':
           'Live Activities must be enabled for it to appear in Dynamic Island.',

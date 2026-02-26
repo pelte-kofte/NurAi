@@ -95,18 +95,35 @@ class _NextPrayerPillState extends State<NextPrayerPill> {
     }
 
     final now = _now.toLocal();
-    final times = AdhanTimesService.computeTimes(
+    final todayTimes = AdhanTimesService.computeTimes(
       now,
       location,
       countryHint: _countryFromPrayerLocation(location),
     );
-    final next =
-        NextPrayerService.findNextPrayerForToday(now: now, times: times);
+    final tomorrowTimes = AdhanTimesService.computeTimes(
+      now.add(const Duration(days: 1)),
+      location,
+      countryHint: _countryFromPrayerLocation(location),
+    );
+    final next = NextPrayerService.findNextPrayer(
+      now: now,
+      todayTimes: todayTimes,
+      tomorrowTimes: tomorrowTimes,
+      logger: (message) {
+        assert(() {
+          debugPrint('[NextPrayerPill] $message');
+          return true;
+        }());
+      },
+    );
     if (next == null) {
-      return S.get('next_prayer_done_today');
+      assert(() {
+        debugPrint('[NextPrayerPill] next_prayer_none_today_shown');
+        return true;
+      }());
+      return S.get('next_prayer_none_title');
     }
-    final nextPrayerDateTime =
-        _resolvePrayerTimeForKey(next.key, times).toLocal();
+    final nextPrayerDateTime = next.time.toLocal();
     final remaining = NextPrayerService.remaining(
       now: DateTime.now().toLocal(),
       target: nextPrayerDateTime,
@@ -163,22 +180,6 @@ class _NextPrayerPillState extends State<NextPrayerPill> {
       case 'isha':
       default:
         return S.get('isha');
-    }
-  }
-
-  DateTime _resolvePrayerTimeForKey(String key, AdhanDayTimes times) {
-    switch (key) {
-      case 'fajr':
-        return times.fajr;
-      case 'dhuhr':
-        return times.dhuhr;
-      case 'asr':
-        return times.asr;
-      case 'maghrib':
-        return times.maghrib;
-      case 'isha':
-      default:
-        return times.isha;
     }
   }
 

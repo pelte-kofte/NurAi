@@ -687,7 +687,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         await AdhanNotificationService.requestPermissions();
     if (!permissionGranted) {
       if (!mounted) return;
-      _showStubDialog(S.get('prayer_notif_permission_body'));
+      await _showNotificationSoundSettingsCta();
       setState(() {});
       return;
     }
@@ -739,6 +739,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ],
+        );
+      },
+    );
+  }
+
+  Future<void> _showNotificationSoundSettingsCta() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                S.get('prayer_notif_permission_title'),
+                style: TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 19,
+                  fontWeight: FontWeight.w400,
+                  color: Theme.of(ctx).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                S.get('prayer_notif_permission_body'),
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: Theme.of(ctx)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.72),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () async {
+                    await Geolocator.openAppSettings();
+                    if (ctx.mounted) Navigator.of(ctx).pop();
+                  },
+                  child: Text(S.get('open_ios_settings')),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text(S.get('ok')),
+                ),
+              ),
+            ],
+          ),
         );
       },
     );

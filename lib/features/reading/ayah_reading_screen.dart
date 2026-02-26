@@ -8,6 +8,7 @@ import '../../data/bookmark_service.dart';
 import '../../data/ayah_notes_service.dart';
 import '../../data/collective_reading_service.dart';
 import '../../data/premium_service.dart';
+import '../../data/quran_translation_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../models/ayah.dart';
 import '../../models/reading_context.dart';
@@ -16,6 +17,8 @@ import '../surah/surah_list_screen.dart';
 import '../../theme/app_theme.dart';
 
 /// Displays a full surah for calm, focused reading.
+enum _SecondaryTextMode { transliteration, translation }
+
 class AyahReadingScreen extends StatefulWidget {
   final int surahNumber;
   final String surahName;
@@ -51,6 +54,18 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   int? _resumeHighlightAyah;
   bool _showResumeHighlight = false;
   Timer? _resumeHighlightTimer;
+  _SecondaryTextMode? _secondaryTextMode;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_secondaryTextMode != null) return;
+    final languageCode =
+        Localizations.localeOf(context).languageCode.toLowerCase();
+    _secondaryTextMode = languageCode == 'tr'
+        ? _SecondaryTextMode.transliteration
+        : _SecondaryTextMode.translation;
+  }
 
   @override
   void initState() {
@@ -328,45 +343,121 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
           ],
         ],
       ),
-      body: ScrollablePositionedList.builder(
-        itemScrollController: _itemScrollController,
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-        itemCount: _ayahs.length + (_isJuzMode ? 1 : 0),
-        itemBuilder: (context, index) {
-          // Subtle header for juz mode
-          if (_isJuzMode && index == 0) {
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 24),
-              child: Text(
-                S
-                    .get(
-                      'reading_juz_companion_subtitle',
-                    )
-                    .replaceFirst(
-                        '{juz}', '${widget.readingContext.juzNumber}'),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
+      body: Column(
+        children: [
+          _buildSecondaryModeSelector(),
+          Expanded(
+            child: ScrollablePositionedList.builder(
+              itemScrollController: _itemScrollController,
+              padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+              itemCount: _ayahs.length + (_isJuzMode ? 1 : 0),
+              itemBuilder: (context, index) {
+                // Subtle header for juz mode
+                if (_isJuzMode && index == 0) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 24),
+                    child: Text(
+                      S
+                          .get(
+                            'reading_juz_companion_subtitle',
+                          )
+                          .replaceFirst(
+                              '{juz}', '${widget.readingContext.juzNumber}'),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: AppColors.textMuted,
+                        height: 1.4,
+                      ),
+                    ),
+                  );
+                }
+
+                final ayahIndex = _isJuzMode ? index - 1 : index;
+                final ayah = _ayahs[ayahIndex];
+                final languageCode =
+                    Localizations.localeOf(context).languageCode.toLowerCase();
+                final secondaryMode =
+                    _secondaryTextMode ?? _SecondaryTextMode.transliteration;
+                return _AyahBlock(
+                  ayah: ayah,
+                  surahName: QuranData.instance.getSurahName(ayah.surah),
+                  secondaryTextMode: secondaryMode,
+                  languageCode: languageCode,
+                  isLastRead: _isLastRead(ayah),
+                  isResumeHighlight: _isResumeHighlight(ayah),
+                  isWithinJuzRange: _isAyahWithinJuzRange(ayah),
+                  onTap: () => _onAyahTap(ayah),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSecondaryModeSelector() {
+    final languageCode =
+        Localizations.localeOf(context).languageCode.toLowerCase();
+    final selectedMode =
+        _secondaryTextMode ?? _SecondaryTextMode.transliteration;
+    final options = languageCode == 'tr'
+        ? const <_SecondaryTextMode>[
+            _SecondaryTextMode.transliteration,
+            _SecondaryTextMode.translation,
+          ]
+        : const <_SecondaryTextMode>[
+            _SecondaryTextMode.translation,
+            _SecondaryTextMode.transliteration,
+          ];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 10, 24, 0),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Wrap(
+          spacing: 8,
+          children: [
+            for (final option in options)
+              ChoiceChip(
+                label: Text(
+                  option == _SecondaryTextMode.transliteration
+                      ? S.get('quran_mode_transliteration')
+                      : S.get('quran_mode_translation'),
+                ),
+                selected: selectedMode == option,
+                onSelected: (_) {
+                  if (_secondaryTextMode == option) return;
+                  setState(() => _secondaryTextMode = option);
+                },
+                labelStyle: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: AppColors.textMuted,
-                  height: 1.4,
+                  fontWeight: selectedMode == option
+                      ? FontWeight.w600
+                      : FontWeight.w400,
+                  color: selectedMode == option
+                      ? AppColors.textPrimary
+                      : AppColors.textSecondary,
                 ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                  side: BorderSide(
+                    color: selectedMode == option
+                        ? AppColors.primaryAccent.withValues(alpha: 0.45)
+                        : AppColors.textMuted.withValues(alpha: 0.18),
+                  ),
+                ),
+                selectedColor: AppColors.primaryAccent.withValues(alpha: 0.12),
+                backgroundColor: AppColors.cardBg,
+                materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                visualDensity: VisualDensity.compact,
               ),
-            );
-          }
-
-          final ayahIndex = _isJuzMode ? index - 1 : index;
-          final ayah = _ayahs[ayahIndex];
-          return _AyahBlock(
-            ayah: ayah,
-            surahName: QuranData.instance.getSurahName(ayah.surah),
-            isLastRead: _isLastRead(ayah),
-            isResumeHighlight: _isResumeHighlight(ayah),
-            isWithinJuzRange: _isAyahWithinJuzRange(ayah),
-            onTap: () => _onAyahTap(ayah),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
@@ -376,6 +467,8 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
 class _AyahBlock extends StatefulWidget {
   final Ayah ayah;
   final String surahName;
+  final _SecondaryTextMode secondaryTextMode;
+  final String languageCode;
   final bool isLastRead;
   final bool isResumeHighlight;
   final bool isWithinJuzRange;
@@ -384,6 +477,8 @@ class _AyahBlock extends StatefulWidget {
   const _AyahBlock({
     required this.ayah,
     required this.surahName,
+    required this.secondaryTextMode,
+    required this.languageCode,
     this.isLastRead = false,
     this.isResumeHighlight = false,
     this.isWithinJuzRange = false,
@@ -397,6 +492,7 @@ class _AyahBlock extends StatefulWidget {
 class _AyahBlockState extends State<_AyahBlock> {
   late bool _isBookmarked;
   late bool _hasNote;
+  bool _isSecondaryExpanded = false;
 
   @override
   void initState() {
@@ -407,6 +503,16 @@ class _AyahBlockState extends State<_AyahBlock> {
     );
     _hasNote =
         AyahNotesService.hasNote(widget.ayah.surah, widget.ayah.ayahNumber);
+  }
+
+  @override
+  void didUpdateWidget(covariant _AyahBlock oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.secondaryTextMode != widget.secondaryTextMode ||
+        oldWidget.ayah.surah != widget.ayah.surah ||
+        oldWidget.ayah.ayahNumber != widget.ayah.ayahNumber) {
+      _isSecondaryExpanded = false;
+    }
   }
 
   Future<void> _toggleBookmark() async {
@@ -525,17 +631,7 @@ class _AyahBlockState extends State<_AyahBlock> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(
-                        child: Text(
-                          widget.ayah.turkishReadable,
-                          textAlign: TextAlign.start,
-                          style: const TextStyle(
-                            fontFamily: 'Merriweather',
-                            fontSize: 15,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.textSecondary,
-                            height: 1.6,
-                          ),
-                        ),
+                        child: _buildSecondaryArea(),
                       ),
                       const SizedBox(width: 8),
                       GestureDetector(
@@ -584,6 +680,69 @@ class _AyahBlockState extends State<_AyahBlock> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildSecondaryArea() {
+    if (widget.secondaryTextMode == _SecondaryTextMode.transliteration) {
+      return _buildSecondaryText(widget.ayah.turkishReadable);
+    }
+
+    return FutureBuilder<String?>(
+      future: QuranTranslationService.getTranslation(
+        widget.ayah.surah,
+        widget.ayah.ayahNumber,
+        Locale(widget.languageCode),
+      ),
+      builder: (context, snapshot) {
+        final translation = snapshot.data?.trim();
+        final text = (translation != null && translation.isNotEmpty)
+            ? translation
+            : S.get('meal_not_available');
+        return _buildSecondaryText(text);
+      },
+    );
+  }
+
+  Widget _buildSecondaryText(String text) {
+    final isLong = text.length > 180;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          text,
+          textAlign: TextAlign.start,
+          maxLines: _isSecondaryExpanded ? null : 4,
+          overflow: _isSecondaryExpanded
+              ? TextOverflow.visible
+              : TextOverflow.ellipsis,
+          style: const TextStyle(
+            fontFamily: 'Merriweather',
+            fontSize: 15,
+            fontWeight: FontWeight.w400,
+            color: AppColors.textSecondary,
+            height: 1.6,
+          ),
+        ),
+        if (isLong)
+          Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: GestureDetector(
+              onTap: () =>
+                  setState(() => _isSecondaryExpanded = !_isSecondaryExpanded),
+              behavior: HitTestBehavior.opaque,
+              child: Text(
+                _isSecondaryExpanded ? S.get('show_less') : S.get('show_more'),
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.primaryAccent,
+                ),
+              ),
+            ),
+          ),
+      ],
     );
   }
 }

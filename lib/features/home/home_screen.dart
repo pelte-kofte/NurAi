@@ -1,12 +1,14 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../data/adhan_times_service.dart';
 import '../../data/daily_ayah_service.dart';
 import '../../data/daily_content_service.dart';
 import '../../data/local_preferences_service.dart';
 import '../../data/quran_data.dart';
+import '../../data/quran_turkish_meal_service.dart';
 import '../../data/reading_progress_service.dart';
 import '../../data/user_profile_service.dart';
 import '../../l10n/app_strings.dart';
@@ -561,10 +563,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             locale: Locale(LocalPreferencesService.language.value),
           ),
           builder: (context, snapshot) {
-            return _buildPrimaryCard(
-              title: S.get('daily_ayah'),
-              body: snapshot.data ?? ayah.turkishReadable,
-              source: ayah.reference,
+            return _buildPrimaryAyahCard(
+              ayah: ayah,
+              readableText: snapshot.data ?? ayah.turkishReadable,
             );
           },
         );
@@ -659,6 +660,177 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           ],
         ],
       ),
+    );
+  }
+
+  Widget _buildPrimaryAyahCard({
+    required DailyAyah ayah,
+    required String readableText,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: colorScheme.primary, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow,
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            S.get('daily_ayah'),
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.secondary,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 16),
+          _buildPrimaryAyahReadableLine(
+            ayah: ayah,
+            readableText: readableText,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            ayah.reference,
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w400,
+              color: colorScheme.onSurface.withValues(alpha: 0.72),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPrimaryAyahReadableLine({
+    required DailyAyah ayah,
+    required String readableText,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final text = Text(
+      readableText,
+      style: TextStyle(
+        fontFamily: 'Merriweather',
+        fontSize: 20,
+        fontWeight: FontWeight.w400,
+        color: colorScheme.onSurface,
+        height: 1.6,
+      ),
+    );
+
+    final isTurkishLine = readableText.trim().isNotEmpty &&
+        readableText.trim() == ayah.turkishReadable.trim();
+    if (!isTurkishLine) return text;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => _showTurkishMealSheet(ayah),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: text,
+      ),
+    );
+  }
+
+  Future<void> _showTurkishMealSheet(DailyAyah ayah) async {
+    final meal = await QuranTurkishMealService.getTurkishMeal(
+      ayah.surahNumber,
+      ayah.ayahNumber,
+    );
+    if (!mounted) return;
+
+    final fallback = S
+        .get('meal_sheet_title_fallback')
+        .replaceAll('{surah}', ayah.surahNumber.toString())
+        .replaceAll('{ayah}', ayah.ayahNumber.toString());
+    final surahName = QuranData.instance.getSurahName(ayah.surahNumber).trim();
+    final title = surahName.isEmpty
+        ? fallback
+        : '$surahName · ${ayah.ayahNumber}. ${S.get('ayah_label')}';
+    final body = (meal?.trim().isNotEmpty ?? false)
+        ? meal!.trim()
+        : S.get('meal_not_available');
+
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                S.get('meal_label'),
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(ctx).colorScheme.secondary,
+                  letterSpacing: 0.6,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: Theme.of(ctx).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SelectableText(
+                body,
+                style: TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: Theme.of(ctx).colorScheme.onSurface,
+                  height: 1.55,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () async {
+                      await Clipboard.setData(ClipboardData(text: body));
+                      if (!ctx.mounted) return;
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        SnackBar(content: Text(S.get('meal_copied'))),
+                      );
+                    },
+                    child: Text(S.get('meal_copy')),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: Text(S.get('meal_close')),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

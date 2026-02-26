@@ -30,6 +30,8 @@ String _redactPayload(String? payload) {
       return 'iftar_live_activity_warmup';
     case 'iftar_alarm_fired':
       return 'iftar_alarm_fired';
+    case 'iftar_post_cleanup':
+      return 'iftar_post_cleanup';
     default:
       return 'redacted';
   }
@@ -80,13 +82,20 @@ class AdhanNotificationService {
   static const _iftarWarmupOffset = Duration(hours: 1);
   static const _iftarWarmupPayload = 'iftar_live_activity_warmup';
   static const _iftarAlarmPayload = 'iftar_alarm_fired';
+  static const _iftarPostCleanupPayload = 'iftar_post_cleanup';
   static Future<void> Function(String? payload)? _notificationTapHandler;
+  static bool? _lastIosAlertPermissionEnabled;
+  static bool? _lastIosBadgePermissionEnabled;
+  static bool? _lastIosSoundPermissionEnabled;
 
   static void setNotificationTapHandler(
     Future<void> Function(String? payload)? handler,
   ) {
     _notificationTapHandler = handler;
   }
+
+  static bool get isIosSoundPermissionGranted =>
+      _lastIosSoundPermissionEnabled ?? false;
 
   static Future<void> init() async {
     if (kIsWeb) return;
@@ -157,10 +166,16 @@ class AdhanNotificationService {
           ) ??
           false;
       final after = await ios.checkPermissions();
+      _lastIosAlertPermissionEnabled = after?.isAlertEnabled;
+      _lastIosBadgePermissionEnabled = after?.isBadgeEnabled;
+      _lastIosSoundPermissionEnabled = after?.isSoundEnabled;
       _log(
         'permissions ios after granted=$granted isEnabled=${after?.isEnabled} alert=${after?.isAlertEnabled} badge=${after?.isBadgeEnabled} sound=${after?.isSoundEnabled}',
       );
-      return granted;
+      _log(
+        'permissions ios result alert=${_lastIosAlertPermissionEnabled ?? false} badge=${_lastIosBadgePermissionEnabled ?? false} sound=${_lastIosSoundPermissionEnabled ?? false}',
+      );
+      return granted && (_lastIosSoundPermissionEnabled ?? false);
     }
 
     return true;
@@ -304,6 +319,7 @@ class AdhanNotificationService {
     if (kIsWeb) return;
     await _plugin.cancel(_iftarNotificationIdFor(date, isWarmup: true));
     await _plugin.cancel(_iftarNotificationIdFor(date, isWarmup: false));
+    await _plugin.cancel(_iftarNotificationIdFor(date, isWarmup: null));
   }
 
   static Future<void> scheduleIftarLiveActivityNotifications({
@@ -353,6 +369,31 @@ class AdhanNotificationService {
     }
   }
 
+  static Future<void> scheduleIftarPostCleanupNotification({
+    required DateTime postEndsAt,
+    String? timezoneName,
+  }) async {
+    if (kIsWeb) return;
+    final now = DateTime.now();
+    if (!postEndsAt.isAfter(now)) return;
+
+    final cleanupId = _iftarNotificationIdFor(postEndsAt, isWarmup: null);
+    await _plugin.cancel(cleanupId);
+
+    await _schedule(
+      id: cleanupId,
+      title: '',
+      body: '',
+      dateTime: postEndsAt,
+      timezoneName: timezoneName,
+      payload: _iftarPostCleanupPayload,
+      withSound: false,
+    );
+    _log(
+      'iftar_post_cleanup_scheduled payload=$_iftarPostCleanupPayload at=${postEndsAt.millisecondsSinceEpoch}',
+    );
+  }
+
   static Future<void> cancelAll() async {
     if (kIsWeb) return;
     await _plugin.cancelAll();
@@ -388,6 +429,20 @@ class AdhanNotificationService {
         : _prayerChannelNameNormal;
     final resolvedImportance =
         withSound ? Importance.high : Importance.defaultImportance;
+    final iosInterruptionLevel =
+        withSound ? InterruptionLevel.active : InterruptionLevel.passive;
+    final iosPresentSound = withSound;
+    final iosSoundName = withSound ? 'default' : null;
+    final iosDetails = withSound
+        ? const DarwinNotificationDetails(
+            presentSound: true,
+            sound: 'default',
+            interruptionLevel: InterruptionLevel.active,
+          )
+        : const DarwinNotificationDetails(
+            presentSound: false,
+            interruptionLevel: InterruptionLevel.passive,
+          );
     final details = NotificationDetails(
       android: withSound
           ? AndroidNotificationDetails(
@@ -405,11 +460,10 @@ class AdhanNotificationService {
               importance: resolvedImportance,
               priority: Priority.defaultPriority,
             ),
-      iOS: DarwinNotificationDetails(
-        // We only use standard notification sounds; no Critical Alerts.
-        presentSound: withSound,
-        sound: withSound ? 'default' : null,
-      ),
+      iOS: iosDetails,
+    );
+    _log(
+      'schedule_ios id=$id scheduledEpochMs=${dateTime.millisecondsSinceEpoch} withSound=$withSound presentSound=$iosPresentSound soundName=${iosSoundName ?? 'none'} interruptionLevel=${iosInterruptionLevel.name}',
     );
 
     await _plugin.zonedSchedule(
@@ -505,9 +559,14 @@ class AdhanNotificationService {
     return ymd * 10 + prayerIndex;
   }
 
-  static int _iftarNotificationIdFor(DateTime date, {required bool isWarmup}) {
+  static int _iftarNotificationIdFor(DateTime date, {required bool? isWarmup}) {
     final ymd = date.year * 10000 + date.month * 100 + date.day;
-    return (ymd * 10 + (isWarmup ? 6 : 7));
+    final suffix = switch (isWarmup) {
+      true => 6,
+      false => 7,
+      null => 8,
+    };
+    return (ymd * 10 + suffix);
   }
 
   static void handleNotificationResponsePayload(String? payload) {
@@ -521,6 +580,14 @@ class AdhanNotificationService {
     }
     if (payload == _iftarAlarmPayload) {
       _log('trigger event=iftar_alarm_fired');
+      final handler = _notificationTapHandler;
+      if (handler != null) {
+        unawaited(handler(payload));
+      }
+      return;
+    }
+    if (payload == _iftarPostCleanupPayload) {
+      _log('trigger event=iftar_post_cleanup');
       final handler = _notificationTapHandler;
       if (handler != null) {
         unawaited(handler(payload));

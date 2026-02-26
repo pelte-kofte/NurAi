@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../data/daily_ayah_service.dart';
 import '../../data/daily_content_service.dart';
 import '../../data/quran_data.dart';
+import '../../data/quran_turkish_meal_service.dart';
 import '../../l10n/app_strings.dart';
 
 class TodayScreen extends StatelessWidget {
@@ -133,15 +135,11 @@ class TodayScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 14),
-          Text(
-            readableText,
-            style: TextStyle(
-              fontFamily: 'Merriweather',
-              fontSize: 15,
-              fontWeight: FontWeight.w400,
-              color: colorScheme.onSurface,
-              height: 1.6,
-            ),
+          _buildReadableLine(
+            context: context,
+            dailyAyah: dailyAyah,
+            readableText: readableText,
+            colorScheme: colorScheme,
           ),
           const SizedBox(height: 10),
           Text(
@@ -155,6 +153,127 @@ class TodayScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildReadableLine({
+    required BuildContext context,
+    required DailyAyah dailyAyah,
+    required String readableText,
+    required ColorScheme colorScheme,
+  }) {
+    final text = Text(
+      readableText,
+      style: TextStyle(
+        fontFamily: 'Merriweather',
+        fontSize: 15,
+        fontWeight: FontWeight.w400,
+        color: colorScheme.onSurface,
+        height: 1.6,
+      ),
+    );
+
+    final isTurkishLine = readableText.trim().isNotEmpty &&
+        readableText.trim() == dailyAyah.turkishReadable.trim();
+    if (!isTurkishLine) return text;
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: () => _showMealBottomSheet(context, dailyAyah),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: text,
+      ),
+    );
+  }
+
+  Future<void> _showMealBottomSheet(
+      BuildContext context, DailyAyah dailyAyah) async {
+    final meal = await QuranTurkishMealService.getTurkishMeal(
+      dailyAyah.surahNumber,
+      dailyAyah.ayahNumber,
+    );
+    if (!context.mounted) return;
+
+    final fallback = S
+        .get('meal_sheet_title_fallback')
+        .replaceAll('{surah}', dailyAyah.surahNumber.toString())
+        .replaceAll('{ayah}', dailyAyah.ayahNumber.toString());
+    final surahName =
+        QuranData.instance.getSurahName(dailyAyah.surahNumber).trim();
+    final title = surahName.isEmpty
+        ? fallback
+        : '$surahName · ${dailyAyah.ayahNumber}. ${S.get('ayah_label')}';
+    final body = (meal?.trim().isNotEmpty ?? false)
+        ? meal!.trim()
+        : S.get('meal_not_available');
+
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                S.get('meal_label'),
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Theme.of(ctx).colorScheme.secondary,
+                  letterSpacing: 0.6,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: Theme.of(ctx).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 12),
+              SelectableText(
+                body,
+                style: TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w400,
+                  color: Theme.of(ctx).colorScheme.onSurface,
+                  height: 1.55,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  TextButton(
+                    onPressed: () async {
+                      await Clipboard.setData(ClipboardData(text: body));
+                      if (!ctx.mounted) return;
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        SnackBar(content: Text(S.get('meal_copied'))),
+                      );
+                    },
+                    child: Text(S.get('meal_copy')),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: Text(S.get('meal_close')),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

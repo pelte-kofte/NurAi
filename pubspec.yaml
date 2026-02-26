@@ -1,7 +1,7 @@
 name: nurai
 description: A calm, mobile-first Islamic app for Quran reading and reflection.
 publish_to: 'none'
-version: 1.0.0+20
+version: 1.0.0+23
 
 environment:
   sdk: ^3.0.0
@@ -70,6 +70,7 @@ flutter:
     - assets/content/quotes_tr.json
     - assets/content/quotes_en.json
     - assets/content/quran_en.json
+    - assets/content/quran_tr_meal.json
     - assets/adhan/cities.json
     - assets/adhan/
     - assets/ramadan/
