@@ -328,6 +328,9 @@
 							com.apple.ActivityKit = {
 								enabled = 1;
 							};
+							com.apple.BackgroundModes = {
+								enabled = 1;
+							};
 						};
 					};
 				};

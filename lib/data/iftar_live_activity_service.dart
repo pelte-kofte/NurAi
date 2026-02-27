@@ -21,6 +21,10 @@ class IftarLiveActivityService {
   static const String _methodStart = 'startIftarLiveActivity';
   static const String _methodEnd = 'endIftarLiveActivity';
   static const String _methodEndAll = 'endAllIftarActivities';
+  static const String _methodScheduleBackgroundTasks =
+      'scheduleIftarLiveActivityBackgroundTasks';
+  static const String _methodCancelBackgroundTasks =
+      'cancelIftarLiveActivityBackgroundTasks';
   static const String _payloadPostCleanup = 'iftar_post_cleanup';
   static const Duration _postWindow = Duration(minutes: 10);
 
@@ -70,6 +74,7 @@ class IftarLiveActivityService {
       _log(
         'skip_iftar_notification_schedule enabled=$shouldScheduleIftarAlarm hasLocation=${location.hasCoordinates}',
       );
+      await _cancelBackgroundTasks();
       return;
     }
 
@@ -87,6 +92,14 @@ class IftarLiveActivityService {
       timezoneName: location.timezone,
       includeWarmup: includeWarmup,
     );
+    if (includeWarmup) {
+      await _scheduleBackgroundTasks(
+        iftarDate: targetMaghrib,
+        postEndsAt: targetMaghrib.add(_postWindow),
+      );
+    } else {
+      await _cancelBackgroundTasks();
+    }
     if (shouldStartNow(now, targetMaghrib)) {
       _log('schedule_trigger_start window_active');
       await startOrUpdate(targetMaghrib);
@@ -117,6 +130,7 @@ class IftarLiveActivityService {
         'skip_start featureEnabled=$_isFeatureEnabled hasLocation=${location.hasCoordinates}',
       );
       _cancelTimers();
+      await _cancelBackgroundTasks();
       await endIfNeeded();
       return;
     }
@@ -240,21 +254,14 @@ class IftarLiveActivityService {
     required DateTime targetDate,
     required DateTime postEndsAt,
   }) async {
+    final payload = _activityPayload(
+      iftarDate: targetDate,
+      postEndsAt: postEndsAt,
+    );
     _log(
-      'activity_start targetEpochMs=${targetDate.millisecondsSinceEpoch} graceEndEpochMs=${postEndsAt.millisecondsSinceEpoch}',
+      'activity_start iftarEpochMs=${targetDate.millisecondsSinceEpoch} endEpochMs=${postEndsAt.millisecondsSinceEpoch}',
     );
-    await _invokeSafely(
-      _methodStart,
-      <String, dynamic>{
-        'title': S.get('iftar_countdown_title'),
-        'subtitle': S.get('iftar_countdown_subtitle'),
-        'mode': 'countdown',
-        'postMessage': _postMessageForLocale(),
-        'postEndsAtEpochMs': postEndsAt.millisecondsSinceEpoch,
-        'phase': 'countdown',
-        'targetEpochMs': targetDate.millisecondsSinceEpoch,
-      },
-    );
+    await _invokeSafely(_methodStart, payload);
   }
 
   static Future<void> _invokeSafely(
@@ -302,10 +309,57 @@ class IftarLiveActivityService {
       timezoneName: LocalPreferencesService.prayerLocation.value.timezone,
     );
     _schedulePostEndTimer(postEndsAt: postEndsAt);
+    await _scheduleBackgroundTasks(
+      iftarDate: iftarDate,
+      postEndsAt: postEndsAt,
+    );
     await _startOrUpdateActivity(
       targetDate: iftarDate,
       postEndsAt: postEndsAt,
     );
+  }
+
+  static Map<String, dynamic> _activityPayload({
+    required DateTime iftarDate,
+    required DateTime postEndsAt,
+  }) {
+    return <String, dynamic>{
+      'title': S.get('iftar_countdown_title'),
+      'subtitle': S.get('iftar_countdown_subtitle'),
+      'mode': 'countdown',
+      'postMessage': _postMessageForLocale(),
+      'phase': 'countdown',
+      'iftarEpochMs': iftarDate.millisecondsSinceEpoch,
+      'endEpochMs': postEndsAt.millisecondsSinceEpoch,
+    };
+  }
+
+  static Future<void> _scheduleBackgroundTasks({
+    required DateTime iftarDate,
+    required DateTime postEndsAt,
+  }) async {
+    if (!_isIosRuntime || !isSupported.value || !_isFeatureEnabled) {
+      return;
+    }
+    final windowStart = iftarDate.subtract(_countdownWindow);
+    _log(
+      'bg_schedule_requested startEpochMs=${windowStart.millisecondsSinceEpoch} endEpochMs=${postEndsAt.millisecondsSinceEpoch}',
+    );
+    await _invokeSafely(
+      _methodScheduleBackgroundTasks,
+      <String, dynamic>{
+        'payload':
+            _activityPayload(iftarDate: iftarDate, postEndsAt: postEndsAt),
+        'startEpochMs': windowStart.millisecondsSinceEpoch,
+        'endEpochMs': postEndsAt.millisecondsSinceEpoch,
+      },
+    );
+  }
+
+  static Future<void> _cancelBackgroundTasks() async {
+    if (!_isIosRuntime) return;
+    await _invokeSafely(
+        _methodCancelBackgroundTasks, const <String, dynamic>{});
   }
 
   static String _postMessageForLocale() {

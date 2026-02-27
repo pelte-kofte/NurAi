@@ -56,6 +56,15 @@
 		<string>Location is used to calculate qibla direction and prayer times.</string>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
+		<key>BGTaskSchedulerPermittedIdentifiers</key>
+		<array>
+			<string>com.nilico.duaya.iftarLiveActivityStart</string>
+			<string>com.nilico.duaya.iftarLiveActivityEnd</string>
+		</array>
+		<key>UIBackgroundModes</key>
+		<array>
+			<string>fetch</string>
+		</array>
 		<key>UIApplicationSupportsIndirectInputEvents</key>
 		<true/>
 		<key>NSSupportsLiveActivities</key>

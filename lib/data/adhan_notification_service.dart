@@ -430,16 +430,20 @@ class AdhanNotificationService {
     final resolvedImportance =
         withSound ? Importance.high : Importance.defaultImportance;
     final iosInterruptionLevel =
-        withSound ? InterruptionLevel.active : InterruptionLevel.passive;
+        withSound ? InterruptionLevel.timeSensitive : InterruptionLevel.passive;
     final iosPresentSound = withSound;
     final iosSoundName = withSound ? 'default' : null;
     final iosDetails = withSound
         ? const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
             presentSound: true,
             sound: 'default',
-            interruptionLevel: InterruptionLevel.active,
+            interruptionLevel: InterruptionLevel.timeSensitive,
           )
         : const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
             presentSound: false,
             interruptionLevel: InterruptionLevel.passive,
           );
