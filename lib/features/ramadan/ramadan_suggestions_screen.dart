@@ -3,7 +3,6 @@ import 'package:share_plus/share_plus.dart';
 
 import '../../data/ramadan_suggestions_service.dart';
 import '../../l10n/app_strings.dart';
-import '../../theme/app_theme.dart';
 
 class RamadanSuggestionsScreen extends StatefulWidget {
   const RamadanSuggestionsScreen({super.key});
@@ -97,36 +96,41 @@ class _RamadanSuggestionsScreenState extends State<RamadanSuggestionsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final secondaryTextColor =
+        theme.textTheme.bodyMedium?.color ??
+        colorScheme.onSurface.withValues(alpha: 0.72);
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.scaffoldBg,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_rounded,
             size: 20,
-            color: AppColors.textSecondary,
+            color: secondaryTextColor,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           S.get('ramadan_suggestions_title'),
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Merriweather',
             fontSize: 20,
             fontWeight: FontWeight.w400,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
         actions: [
           IconButton(
             tooltip: S.get('ramadan_suggestions_refresh'),
             onPressed: _refreshToday,
-            icon: const Icon(
+            icon: Icon(
               Icons.autorenew_rounded,
-              color: AppColors.primaryAccent,
+              color: colorScheme.primary,
             ),
           ),
         ],
@@ -135,10 +139,10 @@ class _RamadanSuggestionsScreenState extends State<RamadanSuggestionsScreen> {
           ? Center(
               child: Text(
                 S.get('prayer_times_loading'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
-                  color: AppColors.textSecondary,
+                  color: secondaryTextColor,
                 ),
               ),
             )
@@ -147,11 +151,11 @@ class _RamadanSuggestionsScreenState extends State<RamadanSuggestionsScreen> {
               children: [
                 Text(
                   S.get('ramadan_suggestions_subtitle'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 13,
                     fontWeight: FontWeight.w400,
-                    color: AppColors.textSecondary,
+                    color: secondaryTextColor,
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -186,15 +190,19 @@ class _RamadanSuggestionsScreenState extends State<RamadanSuggestionsScreen> {
     required bool selected,
     required VoidCallback onTap,
   }) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppColors.cardBgMuted : AppColors.cardBg,
+          color: selected
+              ? colorScheme.surfaceContainerHighest
+              : colorScheme.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: selected ? AppColors.primaryAccent : AppColors.cardBorder,
+            color: selected ? colorScheme.primary : theme.dividerColor,
           ),
         ),
         child: Text(
@@ -203,7 +211,10 @@ class _RamadanSuggestionsScreenState extends State<RamadanSuggestionsScreen> {
             fontFamily: 'Inter',
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: selected ? AppColors.primaryAccent : AppColors.textSecondary,
+            color: selected
+                ? colorScheme.primary
+                : theme.textTheme.bodyMedium?.color ??
+                    colorScheme.onSurface.withValues(alpha: 0.72),
           ),
         ),
       ),
@@ -241,21 +252,24 @@ class _RamadanSuggestionsScreenState extends State<RamadanSuggestionsScreen> {
 
   Widget _buildFavorites() {
     if (_favorites.isEmpty) {
+      final theme = Theme.of(context);
+      final colorScheme = theme.colorScheme;
       return Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
         decoration: BoxDecoration(
-          color: AppColors.cardBg,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cardBorder),
+          border: Border.all(color: theme.dividerColor),
         ),
         child: Text(
           S.get('ramadan_suggestions_favorites_empty'),
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 13,
             fontWeight: FontWeight.w400,
-            color: AppColors.textSecondary,
+            color: theme.textTheme.bodyMedium?.color ??
+                colorScheme.onSurface.withValues(alpha: 0.72),
           ),
         ),
       );
@@ -293,18 +307,25 @@ class _SuggestionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final secondaryTextColor =
+        theme.textTheme.bodyMedium?.color ??
+        colorScheme.onSurface.withValues(alpha: 0.72);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(14, 12, 14, 10),
       decoration: BoxDecoration(
-        color: AppColors.cardBg,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder, width: 1),
-        boxShadow: const [
+        border: Border.all(color: theme.dividerColor, width: 1),
+        boxShadow: [
           BoxShadow(
-            color: Color(0x0A000000),
+            color: colorScheme.shadow.withValues(
+              alpha: theme.brightness == Brightness.dark ? 0.18 : 0.06,
+            ),
             blurRadius: 8,
-            offset: Offset(0, 2),
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -316,11 +337,11 @@ class _SuggestionCard extends StatelessWidget {
               Expanded(
                 child: Text(
                   S.get(item.headerKey),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.textSecondary,
+                    color: secondaryTextColor,
                     letterSpacing: 0.3,
                   ),
                 ),
@@ -331,7 +352,7 @@ class _SuggestionCard extends StatelessWidget {
                 icon: Icon(
                   favorite ? Icons.star_rounded : Icons.star_border_rounded,
                   size: 19,
-                  color: AppColors.primaryAccent,
+                  color: colorScheme.primary,
                 ),
               ),
             ],
@@ -339,11 +360,11 @@ class _SuggestionCard extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             item.text,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Merriweather',
               fontSize: 16,
               fontWeight: FontWeight.w400,
-              color: AppColors.textPrimary,
+              color: colorScheme.onSurface,
               height: 1.5,
             ),
           ),
@@ -351,11 +372,11 @@ class _SuggestionCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               item.secondary!,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
-                color: AppColors.textSecondary,
+                color: secondaryTextColor,
               ),
             ),
           ],
@@ -365,7 +386,7 @@ class _SuggestionCard extends StatelessWidget {
             child: TextButton.icon(
               onPressed: onShare,
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.textSecondary,
+                foregroundColor: secondaryTextColor,
                 visualDensity: VisualDensity.compact,
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
               ),

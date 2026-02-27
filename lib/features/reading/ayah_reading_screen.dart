@@ -14,7 +14,6 @@ import '../../models/ayah.dart';
 import '../../models/reading_context.dart';
 import '../premium/paywall_screen.dart';
 import '../surah/surah_list_screen.dart';
-import '../../theme/app_theme.dart';
 
 /// Displays a full surah for calm, focused reading.
 enum _SecondaryTextMode { transliteration, translation }
@@ -282,57 +281,66 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final secondaryTextColor =
+        theme.textTheme.bodyMedium?.color ??
+        colorScheme.onSurface.withValues(alpha: 0.72);
+    final mutedTextColor =
+        theme.textTheme.bodySmall?.color ??
+        colorScheme.onSurface.withValues(alpha: 0.56);
+
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.scaffoldBg,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_rounded,
             size: 20,
-            color: AppColors.textSecondary,
+            color: secondaryTextColor,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           _title,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Merriweather',
             fontSize: 18,
             fontWeight: FontWeight.w400,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
         actions: [
           if (!_isJuzMode) ...[
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.chevron_left_rounded,
                 size: 24,
-                color: AppColors.textSecondary,
+                color: secondaryTextColor,
               ),
               onPressed: _canGoPreviousSurah
                   ? () => _openAdjacentSurah(widget.surahNumber - 1)
                   : null,
             ),
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.chevron_right_rounded,
                 size: 24,
-                color: AppColors.textSecondary,
+                color: secondaryTextColor,
               ),
               onPressed: _canGoNextSurah
                   ? () => _openAdjacentSurah(widget.surahNumber + 1)
                   : null,
             ),
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.list_rounded,
                 size: 22,
-                color: AppColors.textSecondary,
+                color: secondaryTextColor,
               ),
               onPressed: () {
                 Navigator.of(context).push(
@@ -364,11 +372,11 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
                           .replaceFirst(
                               '{juz}', '${widget.readingContext.juzNumber}'),
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
-                        color: AppColors.textMuted,
+                        color: mutedTextColor,
                         height: 1.4,
                       ),
                     ),
@@ -400,6 +408,11 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   }
 
   Widget _buildSecondaryModeSelector() {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final secondaryTextColor =
+        theme.textTheme.bodyMedium?.color ??
+        colorScheme.onSurface.withValues(alpha: 0.72);
     final languageCode =
         Localizations.localeOf(context).languageCode.toLowerCase();
     final selectedMode =
@@ -440,19 +453,19 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
                       ? FontWeight.w600
                       : FontWeight.w400,
                   color: selectedMode == option
-                      ? AppColors.textPrimary
-                      : AppColors.textSecondary,
+                      ? colorScheme.onSurface
+                      : secondaryTextColor,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                   side: BorderSide(
                     color: selectedMode == option
-                        ? AppColors.primaryAccent.withValues(alpha: 0.45)
-                        : AppColors.textMuted.withValues(alpha: 0.18),
+                        ? colorScheme.primary.withValues(alpha: 0.45)
+                        : theme.dividerColor.withValues(alpha: 0.72),
                   ),
                 ),
-                selectedColor: AppColors.primaryAccent.withValues(alpha: 0.12),
-                backgroundColor: AppColors.cardBg,
+                selectedColor: colorScheme.primary.withValues(alpha: 0.12),
+                backgroundColor: colorScheme.surface,
                 materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 visualDensity: VisualDensity.compact,
               ),
@@ -550,11 +563,18 @@ class _AyahBlockState extends State<_AyahBlock> {
 
   @override
   Widget build(BuildContext context) {
-    const readAccent = AppColors.primaryAccent;
-    // Subtle color variations for Juz range
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final secondaryTextColor =
+        theme.textTheme.bodyMedium?.color ??
+        colorScheme.onSurface.withValues(alpha: 0.72);
+    final mutedTextColor =
+        theme.textTheme.bodySmall?.color ??
+        colorScheme.onSurface.withValues(alpha: 0.56);
+    final readAccent = colorScheme.primary;
     final arabicColor = widget.isWithinJuzRange
-        ? const Color(0xFF1F1D1C) // Slightly darker
-        : AppColors.textPrimary;
+        ? colorScheme.onSurface.withValues(alpha: 0.92)
+        : colorScheme.onSurface;
 
     return GestureDetector(
       onTap: widget.onTap,
@@ -583,14 +603,14 @@ class _AyahBlockState extends State<_AyahBlock> {
           children: [
             // Subtle left dot for Juz range indicator (ambient, not instructional)
             if (widget.isWithinJuzRange && !widget.isLastRead)
-              const Padding(
-                padding: EdgeInsets.only(top: 14, right: 6),
+              Padding(
+                padding: const EdgeInsets.only(top: 14, right: 6),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: Color(0xFFD4CCC6),
+                    color: theme.dividerColor,
                     shape: BoxShape.circle,
                   ),
-                  child: SizedBox(width: 4, height: 4),
+                  child: const SizedBox(width: 4, height: 4),
                 ),
               ),
             Expanded(
@@ -599,8 +619,8 @@ class _AyahBlockState extends State<_AyahBlock> {
                 children: [
                   // Dot marker above Arabic text for last-read ayah
                   if (widget.isLastRead)
-                    const Padding(
-                      padding: EdgeInsets.only(bottom: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
                       child: Align(
                         alignment: Alignment.centerRight,
                         child: DecoratedBox(
@@ -608,7 +628,7 @@ class _AyahBlockState extends State<_AyahBlock> {
                             color: readAccent,
                             shape: BoxShape.circle,
                           ),
-                          child: SizedBox(width: 6, height: 6),
+                          child: const SizedBox(width: 6, height: 6),
                         ),
                       ),
                     ),
@@ -643,7 +663,7 @@ class _AyahBlockState extends State<_AyahBlock> {
                                 ? Icons.bookmark_rounded
                                 : Icons.bookmark_border_rounded,
                             size: 20,
-                            color: AppColors.textSecondary,
+                            color: secondaryTextColor,
                           ),
                         ),
                       ),
@@ -664,9 +684,9 @@ class _AyahBlockState extends State<_AyahBlock> {
                                 size: 20,
                                 color: isPremium
                                     ? (_hasNote
-                                        ? AppColors.primaryAccent
-                                        : AppColors.textSecondary)
-                                    : AppColors.textMuted,
+                                        ? colorScheme.primary
+                                        : secondaryTextColor)
+                                    : mutedTextColor,
                               ),
                             ),
                           );
@@ -716,11 +736,12 @@ class _AyahBlockState extends State<_AyahBlock> {
           overflow: _isSecondaryExpanded
               ? TextOverflow.visible
               : TextOverflow.ellipsis,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Merriweather',
             fontSize: 15,
             fontWeight: FontWeight.w400,
-            color: AppColors.textSecondary,
+            color: Theme.of(context).textTheme.bodyMedium?.color ??
+                Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72),
             height: 1.6,
           ),
         ),
@@ -733,11 +754,11 @@ class _AyahBlockState extends State<_AyahBlock> {
               behavior: HitTestBehavior.opaque,
               child: Text(
                 _isSecondaryExpanded ? S.get('show_less') : S.get('show_more'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.primaryAccent,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ),
@@ -754,13 +775,21 @@ Future<void> showAyahNoteEditorSheet({
 }) async {
   final existing = AyahNotesService.getNote(ayah.surah, ayah.ayahNumber);
   final controller = TextEditingController(text: existing?.text ?? '');
+  final theme = Theme.of(context);
+  final colorScheme = theme.colorScheme;
+  final secondaryTextColor =
+      theme.textTheme.bodyMedium?.color ??
+      colorScheme.onSurface.withValues(alpha: 0.72);
+  final mutedTextColor =
+      theme.textTheme.bodySmall?.color ??
+      colorScheme.onSurface.withValues(alpha: 0.56);
 
   await showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     useSafeArea: true,
     showDragHandle: true,
-    backgroundColor: AppColors.scaffoldBg,
+    backgroundColor: theme.scaffoldBackgroundColor,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -778,20 +807,20 @@ Future<void> showAyahNoteEditorSheet({
           children: [
             Text(
               S.get('note_title'),
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Merriweather',
                 fontSize: 18,
                 fontWeight: FontWeight.w400,
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 6),
             Text(
               '$surahName · ${ayah.ayahNumber}. ${S.get('ayah_label')}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
-                color: AppColors.textSecondary,
+                color: secondaryTextColor,
               ),
             ),
             const SizedBox(height: 12),
@@ -799,20 +828,20 @@ Future<void> showAyahNoteEditorSheet({
               controller: controller,
               minLines: 3,
               maxLines: 8,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 14,
-                color: AppColors.textPrimary,
+                color: colorScheme.onSurface,
               ),
               decoration: InputDecoration(
                 hintText: S.get('note_hint'),
-                hintStyle: const TextStyle(
+                hintStyle: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 14,
-                  color: AppColors.textMuted,
+                  color: mutedTextColor,
                 ),
                 filled: true,
-                fillColor: AppColors.cardBg,
+                fillColor: colorScheme.surface,
                 contentPadding: const EdgeInsets.all(12),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(10),
@@ -836,10 +865,10 @@ Future<void> showAyahNoteEditorSheet({
                 },
                 child: Text(
                   S.get('save'),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontWeight: FontWeight.w500,
-                    color: AppColors.primaryAccent,
+                    color: colorScheme.primary,
                   ),
                 ),
               ),

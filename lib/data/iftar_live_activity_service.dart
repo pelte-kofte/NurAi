@@ -19,7 +19,6 @@ class IftarLiveActivityService {
   static const Duration _countdownWindow = Duration(hours: 1);
   static const String _methodIsSupported = 'isIftarLiveActivitySupported';
   static const String _methodStart = 'startIftarLiveActivity';
-  static const String _methodUpdate = 'updateIftarLiveActivity';
   static const String _methodEnd = 'endIftarLiveActivity';
   static const String _methodEndAll = 'endAllIftarActivities';
   static const String _payloadPostCleanup = 'iftar_post_cleanup';
@@ -30,10 +29,7 @@ class IftarLiveActivityService {
   static Timer? _windowStartTimer;
   static Timer? _maghribTimer;
   static Timer? _postEndTimer;
-  static Timer? _foregroundTicker;
   static bool _initialized = false;
-  static bool _isForeground = true;
-  static bool _isTickUpdateInFlight = false;
   static final _lifecycleObserver = _IftarLifecycleObserver();
 
   static Future<void> init() async {
@@ -95,7 +91,7 @@ class IftarLiveActivityService {
       _log('schedule_trigger_start window_active');
       await startOrUpdate(targetMaghrib);
     }
-    if (_isForeground && now.isBefore(todayMaghrib)) {
+    if (now.isBefore(todayMaghrib)) {
       unawaited(maybeStartOrUpdate());
     }
   }
@@ -131,10 +127,14 @@ class IftarLiveActivityService {
     if (!now.isBefore(maghrib)) {
       final postEndsAt = maghrib.add(_postWindow);
       if (now.isBefore(postEndsAt)) {
-        await _switchToPostMode(
-          maghrib: maghrib,
+        _log(
+          'activity_reached_target grace_active=true targetEpochMs=${maghrib.millisecondsSinceEpoch} graceEndEpochMs=${postEndsAt.millisecondsSinceEpoch}',
+        );
+        await _startOrUpdateActivity(
+          targetDate: maghrib,
           postEndsAt: postEndsAt,
         );
+        _schedulePostEndTimer(postEndsAt: postEndsAt);
         return;
       }
       _log('past_maghrib_and_post_window_finished ending activity');
@@ -157,7 +157,6 @@ class IftarLiveActivityService {
   }
 
   static Future<void> endIfNeeded() async {
-    _stopForegroundTicker();
     await _invokeSafely(_methodEnd, const <String, dynamic>{});
   }
 
@@ -224,60 +223,10 @@ class IftarLiveActivityService {
     });
   }
 
-  static void _startForegroundTicker({required DateTime maghrib}) {
-    _foregroundTicker?.cancel();
-    if (!_isForeground) return;
-    _foregroundTicker = Timer.periodic(const Duration(seconds: 1), (_) {
-      unawaited(_tickForegroundCountdown(maghrib: maghrib));
-    });
-  }
-
-  static void _stopForegroundTicker() {
-    _foregroundTicker?.cancel();
-    _foregroundTicker = null;
-    _isTickUpdateInFlight = false;
-  }
-
-  static Future<void> _tickForegroundCountdown(
-      {required DateTime maghrib}) async {
-    if (_isTickUpdateInFlight) return;
-    _isTickUpdateInFlight = true;
-    try {
-      final now = DateTime.now();
-      if (!_isFeatureEnabled || !_isForeground) {
-        _stopForegroundTicker();
-        return;
-      }
-      if (!now.isBefore(maghrib)) {
-        _log('foreground_tick_reached_maghrib');
-        await maybeStartOrUpdate();
-        return;
-      }
-      await _invokeSafely(
-        _methodUpdate,
-        <String, dynamic>{
-          'title': S.get('iftar_countdown_title'),
-          'subtitle': S.get('iftar_countdown_subtitle'),
-          'mode': 'countdown',
-          'postMessage': '',
-          'postEndsAtEpochMs': 0,
-          'phase': 'countdown',
-          'targetEpochMs': maghrib.millisecondsSinceEpoch,
-        },
-      );
-    } finally {
-      _isTickUpdateInFlight = false;
-    }
-  }
-
   static void onAppLifecycleChanged(AppLifecycleState state) {
-    final isNowForeground = state == AppLifecycleState.resumed;
-    _isForeground = isNowForeground;
     _log('lifecycle_changed state=$state');
-    if (isNowForeground) {
+    if (state == AppLifecycleState.resumed) {
       unawaited(maybeStartOrUpdate());
-    } else {
-      _stopForegroundTicker();
     }
   }
 
@@ -287,46 +236,23 @@ class IftarLiveActivityService {
     }
   }
 
-  static Future<void> _startOrUpdateCountdown({
-    required DateTime maghrib,
+  static Future<void> _startOrUpdateActivity({
+    required DateTime targetDate,
+    required DateTime postEndsAt,
   }) async {
+    _log(
+      'activity_start targetEpochMs=${targetDate.millisecondsSinceEpoch} graceEndEpochMs=${postEndsAt.millisecondsSinceEpoch}',
+    );
     await _invokeSafely(
       _methodStart,
       <String, dynamic>{
         'title': S.get('iftar_countdown_title'),
         'subtitle': S.get('iftar_countdown_subtitle'),
         'mode': 'countdown',
-        'postMessage': '',
-        'postEndsAtEpochMs': 0,
-        'phase': 'countdown',
-        'targetEpochMs': maghrib.millisecondsSinceEpoch,
-      },
-    );
-  }
-
-  static Future<void> _switchToPostMode({
-    required DateTime maghrib,
-    required DateTime postEndsAt,
-  }) async {
-    _stopForegroundTicker();
-    _schedulePostEndTimer(postEndsAt: postEndsAt);
-    await AdhanNotificationService.scheduleIftarPostCleanupNotification(
-      postEndsAt: postEndsAt,
-      timezoneName: LocalPreferencesService.prayerLocation.value.timezone,
-    );
-    _log(
-      'live_activity_mode_switch_to_post maghribEpochMs=${maghrib.millisecondsSinceEpoch} postEndsAtEpochMs=${postEndsAt.millisecondsSinceEpoch}',
-    );
-    await _invokeSafely(
-      _methodUpdate,
-      <String, dynamic>{
-        'title': S.get('iftar_post_title'),
-        'subtitle': S.get('iftar_post_subtitle'),
-        'mode': 'post',
         'postMessage': _postMessageForLocale(),
         'postEndsAtEpochMs': postEndsAt.millisecondsSinceEpoch,
-        'phase': 'post',
-        'targetEpochMs': postEndsAt.millisecondsSinceEpoch,
+        'phase': 'countdown',
+        'targetEpochMs': targetDate.millisecondsSinceEpoch,
       },
     );
   }
@@ -370,8 +296,16 @@ class IftarLiveActivityService {
   }
 
   static Future<void> startOrUpdate(DateTime iftarDate) async {
-    await _startOrUpdateCountdown(maghrib: iftarDate);
-    _startForegroundTicker(maghrib: iftarDate);
+    final postEndsAt = iftarDate.add(_postWindow);
+    await AdhanNotificationService.scheduleIftarPostCleanupNotification(
+      postEndsAt: postEndsAt,
+      timezoneName: LocalPreferencesService.prayerLocation.value.timezone,
+    );
+    _schedulePostEndTimer(postEndsAt: postEndsAt);
+    await _startOrUpdateActivity(
+      targetDate: iftarDate,
+      postEndsAt: postEndsAt,
+    );
   }
 
   static String _postMessageForLocale() {
@@ -404,7 +338,6 @@ class IftarLiveActivityService {
     _maghribTimer = null;
     _postEndTimer?.cancel();
     _postEndTimer = null;
-    _stopForegroundTicker();
   }
 
   static Future<void> _endAfterPostIfNeeded({

@@ -5,11 +5,8 @@ import '../../data/ramadan_daily_note_service.dart';
 import '../../data/reading_progress_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../models/reading_context.dart';
-import '../../theme/app_theme.dart';
 import '../reading/ayah_reading_screen.dart';
 import '../ramadan/ramadan_suggestions_screen.dart';
-
-const Color _mutedInfoIconColor = AppColors.iconMuted;
 
 class RamadanHubScreen extends StatefulWidget {
   const RamadanHubScreen({super.key});
@@ -80,9 +77,14 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
   }
 
   Future<void> _showJuzPicker() async {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final secondaryTextColor =
+        theme.textTheme.bodyMedium?.color ??
+        colorScheme.onSurface.withValues(alpha: 0.72);
     final chosenJuz = await showModalBottomSheet<int>(
       context: context,
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: theme.scaffoldBackgroundColor,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
       ),
@@ -95,11 +97,11 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
             children: [
               Text(
                 S.get('ramadan_juz_select'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Merriweather',
                   fontSize: 18,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textPrimary,
+                  color: colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 14),
@@ -118,13 +120,13 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
                         color: isSelected
-                            ? AppColors.cardBgMuted
-                            : AppColors.cardBg,
+                            ? colorScheme.surfaceContainerHighest
+                            : colorScheme.surface,
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
                           color: isSelected
-                              ? AppColors.primaryAccent
-                              : AppColors.cardBorder,
+                              ? colorScheme.primary
+                              : theme.dividerColor,
                           width: 1,
                         ),
                       ),
@@ -136,8 +138,8 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
                           fontWeight:
                               isSelected ? FontWeight.w500 : FontWeight.w400,
                           color: isSelected
-                              ? AppColors.primaryAccent
-                              : AppColors.textSecondary,
+                              ? colorScheme.primary
+                              : secondaryTextColor,
                         ),
                       ),
                     ),
@@ -192,6 +194,11 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final secondaryTextColor =
+        theme.textTheme.bodyMedium?.color ??
+        colorScheme.onSurface.withValues(alpha: 0.72);
     const hatimCtx = ReadingContext.hatim();
     final hatimProgress = ReadingProgressService.getContextProgress(hatimCtx);
     final hatimSubtitle = hatimProgress != null
@@ -201,26 +208,26 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
         hatimProgress != null ? S.get('continue') : S.get('ramadan_start');
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.scaffoldBg,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_rounded,
             size: 20,
-            color: AppColors.textSecondary,
+            color: secondaryTextColor,
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           S.get('ramadan_hub_title'),
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'Merriweather',
             fontSize: 22,
             fontWeight: FontWeight.w400,
-            color: AppColors.textPrimary,
+            color: colorScheme.onSurface,
           ),
         ),
       ),
@@ -229,11 +236,11 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
         children: [
           Text(
             S.get('ramadan_intro'),
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
               fontWeight: FontWeight.w400,
-              color: AppColors.textSecondary,
+              color: secondaryTextColor,
               height: 1.5,
             ),
           ),
@@ -281,31 +288,34 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
-        color: AppColors.cardBg,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder, width: 1),
+        border: Border.all(color: Theme.of(context).dividerColor, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             '${S.get('ramadan_selected_juz')}: $_selectedJuz',
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Merriweather',
               fontSize: 16,
               fontWeight: FontWeight.w400,
-              color: AppColors.textPrimary,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           if (_isJuzCompleted) ...[
             const SizedBox(height: 4),
             Text(
               S.get('ramadan_completed'),
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
                 fontWeight: FontWeight.w400,
-                color: AppColors.textSecondary,
+                color: Theme.of(context).textTheme.bodyMedium?.color ??
+                    Theme.of(context).colorScheme.onSurface.withValues(
+                      alpha: 0.72,
+                    ),
               ),
             ),
           ],
@@ -334,11 +344,14 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
               onTap: _markJuzCompleted,
               child: Text(
                 S.get('ramadan_mark_completed'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textSecondary,
+                  color: Theme.of(context).textTheme.bodyMedium?.color ??
+                      Theme.of(context).colorScheme.onSurface.withValues(
+                        alpha: 0.72,
+                      ),
                   decoration: TextDecoration.underline,
                 ),
               ),
@@ -356,13 +369,15 @@ class _SectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: 'Inter',
         fontSize: 12,
         fontWeight: FontWeight.w500,
-        color: AppColors.textSecondary,
+        color: theme.textTheme.bodyMedium?.color ??
+            theme.colorScheme.onSurface.withValues(alpha: 0.72),
         letterSpacing: 0.4,
       ),
     );
@@ -384,15 +399,17 @@ class _ReadingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         decoration: BoxDecoration(
-          color: AppColors.cardBg,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.iconMuted, width: 1),
+          border: Border.all(color: theme.dividerColor, width: 1),
         ),
         child: Row(
           children: [
@@ -402,21 +419,22 @@ class _ReadingCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Merriweather',
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.textPrimary,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 5),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.textSecondary,
+                      color: theme.textTheme.bodyMedium?.color ??
+                          colorScheme.onSurface.withValues(alpha: 0.72),
                       height: 1.4,
                     ),
                   ),
@@ -426,11 +444,11 @@ class _ReadingCard extends StatelessWidget {
             const SizedBox(width: 8),
             Text(
               cta,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.secondaryAccent,
+                color: colorScheme.secondary,
               ),
             ),
           ],
@@ -446,32 +464,37 @@ class _DailyNoteCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final secondaryTextColor =
+        theme.textTheme.bodyMedium?.color ??
+        colorScheme.onSurface.withValues(alpha: 0.72);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
-        color: AppColors.cardBg,
+        color: colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder, width: 1),
+        border: Border.all(color: theme.dividerColor, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Icon(
+              Icon(
                 Icons.edit_note_outlined,
                 size: 16,
-                color: _mutedInfoIconColor,
+                color: secondaryTextColor,
               ),
               const SizedBox(width: 8),
               Text(
                 S.get('ramadan_note_title'),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.textSecondary,
+                  color: secondaryTextColor,
                 ),
               ),
             ],
@@ -479,11 +502,11 @@ class _DailyNoteCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             text,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Merriweather',
               fontSize: 15,
               fontWeight: FontWeight.w400,
-              color: AppColors.textSecondary,
+              color: secondaryTextColor,
               height: 1.5,
             ),
           ),
@@ -506,16 +529,20 @@ class _JuzActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         alignment: Alignment.center,
         decoration: BoxDecoration(
-          color: primary ? AppColors.cardBgMuted : AppColors.cardBgMuted,
+          color: primary
+              ? colorScheme.surfaceContainerHighest
+              : colorScheme.surface,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
-            color: primary ? AppColors.primaryAccent : AppColors.cardBorder,
+            color: primary ? colorScheme.primary : theme.dividerColor,
             width: 1,
           ),
         ),
@@ -525,7 +552,10 @@ class _JuzActionButton extends StatelessWidget {
             fontFamily: 'Inter',
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: primary ? AppColors.primaryAccent : AppColors.textSecondary,
+            color: primary
+                ? colorScheme.primary
+                : theme.textTheme.bodyMedium?.color ??
+                    colorScheme.onSurface.withValues(alpha: 0.72),
           ),
         ),
       ),
@@ -548,6 +578,11 @@ class _SimpleNavCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
+    final secondaryTextColor =
+        theme.textTheme.bodyMedium?.color ??
+        colorScheme.onSurface.withValues(alpha: 0.72);
     final chevron = Directionality.of(context) == TextDirection.rtl
         ? Icons.chevron_left_rounded
         : Icons.chevron_right_rounded;
@@ -557,14 +592,14 @@ class _SimpleNavCard extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
         decoration: BoxDecoration(
-          color: AppColors.cardBg,
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppColors.cardBorder, width: 1),
+          border: Border.all(color: theme.dividerColor, width: 1),
         ),
         child: Row(
           children: [
             if (leadingIcon != null) ...[
-              Icon(leadingIcon, size: 17, color: _mutedInfoIconColor),
+              Icon(leadingIcon, size: 17, color: secondaryTextColor),
               const SizedBox(width: 10),
             ],
             Expanded(
@@ -573,22 +608,22 @@ class _SimpleNavCard extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Merriweather',
                       fontSize: 16,
                       fontWeight: FontWeight.w400,
-                      color: AppColors.textPrimary,
+                      color: colorScheme.onSurface,
                     ),
                   ),
                   if (subtitle != null) ...[
                     const SizedBox(height: 5),
                     Text(
                       subtitle!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 12,
                         fontWeight: FontWeight.w400,
-                        color: AppColors.textSecondary,
+                        color: secondaryTextColor,
                         height: 1.4,
                       ),
                     ),
@@ -599,7 +634,7 @@ class _SimpleNavCard extends StatelessWidget {
             Icon(
               chevron,
               size: 20,
-              color: AppColors.textSecondary,
+              color: secondaryTextColor,
             ),
           ],
         ),

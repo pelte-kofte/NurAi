@@ -128,6 +128,12 @@ struct IftarAttributes: ActivityAttributes {
 
 @available(iOSApplicationExtension 16.1, *)
 struct NurAiWidgetsLiveActivity: Widget {
+    private enum DisplayPhase {
+        case countdown
+        case completed
+        case ended
+    }
+
     private let lockScreenBackgroundTint = Color(red: 0.10, green: 0.14, blue: 0.21).opacity(0.85)
     private let lockScreenActionTint = Color.primary
     private let islandText = Color.white
@@ -135,6 +141,7 @@ struct NurAiWidgetsLiveActivity: Widget {
 
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: IftarAttributes.self) { context in
+            let phase = displayPhase(for: context.state)
             HStack(alignment: .center, spacing: 12) {
                 LiveActivityAvatarView(size: 30)
                 VStack(alignment: .leading, spacing: 4) {
@@ -142,7 +149,7 @@ struct NurAiWidgetsLiveActivity: Widget {
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(.primary)
                         .lineLimit(1)
-                    countdownLabel(endDate: context.state.endDate, large: true, darkMode: false)
+                    statusContent(for: context.state, phase: phase, large: true, darkMode: false)
                     Text(lockSubtitle(context.state))
                         .font(.system(size: 12, weight: .regular))
                         .foregroundStyle(.secondary)
@@ -158,12 +165,13 @@ struct NurAiWidgetsLiveActivity: Widget {
             .activitySystemActionForegroundColor(lockScreenActionTint)
             .widgetURL(URL(string: "duaya://ramadan"))
         } dynamicIsland: { context in
+            let phase = displayPhase(for: context.state)
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     LiveActivityAvatarView(size: 30)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
-                    countdownLabel(endDate: context.state.endDate, large: false, darkMode: true)
+                    statusContent(for: context.state, phase: phase, large: false, darkMode: true)
                 }
                 DynamicIslandExpandedRegion(.center) {
                     Text(lockTitle(context.state))
@@ -175,13 +183,15 @@ struct NurAiWidgetsLiveActivity: Widget {
                     HStack(spacing: 6) {
                         Text(lockSubtitle(context.state))
                             .foregroundStyle(.secondary)
-                        countdownLabel(endDate: context.state.endDate, large: false, darkMode: true)
+                        if phase == .countdown {
+                            statusContent(for: context.state, phase: phase, large: false, darkMode: true)
+                        }
                     }
                 }
             } compactLeading: {
                 LiveActivityAvatarView(size: 22)
             } compactTrailing: {
-                countdownLabel(endDate: context.state.endDate, large: false, darkMode: true)
+                statusContent(for: context.state, phase: phase, large: false, darkMode: true)
             } minimal: {
                 LiveActivityAvatarView(size: 20)
             }
@@ -191,25 +201,43 @@ struct NurAiWidgetsLiveActivity: Widget {
     }
 
     private func lockTitle(_ state: IftarAttributes.ContentState) -> String {
-        if state.mode == "post" {
+        switch displayPhase(for: state) {
+        case .completed:
             return state.title.isEmpty ? "Iftar" : state.title
+        case .countdown, .ended:
+            return state.title.isEmpty ? "Iftara kalan" : state.title
         }
-        return state.title.isEmpty ? "Iftara kalan" : state.title
     }
 
     private func lockSubtitle(_ state: IftarAttributes.ContentState) -> String {
-        if state.mode == "post" {
-            if !state.postMessage.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                return state.postMessage
-            }
-            return state.subtitle.isEmpty ? "May Allah accept it" : state.subtitle
+        switch displayPhase(for: state) {
+        case .completed:
+            return completionMessage(for: state)
+        case .countdown, .ended:
+            return state.subtitle.isEmpty ? "Ramazan bereketi" : state.subtitle
         }
-        return state.subtitle.isEmpty ? "Ramazan bereketi" : state.subtitle
     }
 
     @ViewBuilder
-    private func countdownLabel(endDate: Date, large: Bool, darkMode: Bool) -> some View {
-        Text(endDate, style: .timer)
+    private func statusContent(
+        for state: IftarAttributes.ContentState,
+        phase: DisplayPhase,
+        large: Bool,
+        darkMode: Bool
+    ) -> some View {
+        switch phase {
+        case .countdown:
+            countdownLabel(targetDate: state.endDate, large: large, darkMode: darkMode)
+        case .completed:
+            completionLabel(message: completionMessage(for: state), large: large, darkMode: darkMode)
+        case .ended:
+            EmptyView()
+        }
+    }
+
+    @ViewBuilder
+    private func countdownLabel(targetDate: Date, large: Bool, darkMode: Bool) -> some View {
+        Text(timerInterval: Date()...targetDate, countsDown: true)
             .font(
                 large
                     ? .system(size: 24, weight: .bold, design: .rounded)
@@ -217,5 +245,41 @@ struct NurAiWidgetsLiveActivity: Widget {
             )
             .monospacedDigit()
             .foregroundStyle(darkMode ? islandText : .primary)
+    }
+
+    @ViewBuilder
+    private func completionLabel(message: String, large: Bool, darkMode: Bool) -> some View {
+        Text(message)
+            .font(
+                large
+                    ? .system(size: 18, weight: .bold, design: .rounded)
+                    : .system(size: 12, weight: .semibold, design: .rounded)
+            )
+            .foregroundStyle(darkMode ? islandText : .primary)
+            .lineLimit(large ? 2 : 1)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func displayPhase(for state: IftarAttributes.ContentState, now: Date = Date()) -> DisplayPhase {
+        let targetDate = state.endDate
+        let graceEndDate = targetDate.addingTimeInterval(600)
+        if now >= graceEndDate {
+            return .ended
+        }
+        if now >= targetDate && now < graceEndDate {
+            return .completed
+        }
+        return .countdown
+    }
+
+    private func completionMessage(for state: IftarAttributes.ContentState) -> String {
+        let trimmed = state.postMessage.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            return trimmed
+        }
+        if Locale.current.languageCode?.lowercased() == "tr" {
+            return "Allah kabul etsin"
+        }
+        return "May Allah accept it"
     }
 }
