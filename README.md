@@ -271,6 +271,11 @@ Runner App Group entitlement:
 
 The extension source files are added in repo, but you still need to register the extension target in Xcode:
 
+iOS pods note:
+- Run `cd ios && pod install` as the default CocoaPods workflow.
+- The repo-level `Gemfile` is optional if you want to pin CocoaPods and `xcodeproj` manually.
+- If Xcode reports a Pod sandbox mismatch, rerun `pod install` from `ios/`.
+
 1. Open `ios/Runner.xcworkspace` in Xcode.
 2. Add new target: `Widget Extension`, name it `NurAiWidgets`.
 3. Attach existing files from `ios/NurAiWidgets/` to that target.
