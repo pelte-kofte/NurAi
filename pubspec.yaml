@@ -54,6 +54,7 @@ flutter:
   uses-material-design: true
 
   assets:
+    - assets/sounds/
     - assets/splash/
     - assets/images/ornaments/
     - assets/quran/final/quran_ar_tr.json

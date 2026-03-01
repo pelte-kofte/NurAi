@@ -75,10 +75,11 @@ class AdhanNotificationService {
   static const _prayerIndexes = <int>[0, 1, 2, 3, 4];
   static const _prayerChannelIdNormal = 'prayer_times';
   static const _prayerChannelNameNormal = 'Prayer Times';
-  static const _prayerChannelIdAlarm = 'adhan_channel_v2';
+  static const _prayerChannelIdAlarm = 'adhan_channel_v3';
   static const _prayerChannelNameAlarm = 'Prayer Times Alarm';
-  static const _iftarChannelIdAlarm = 'iftar_alarm_v2';
+  static const _iftarChannelIdAlarm = 'iftar_alarm_v3';
   static const _iftarChannelNameAlarm = 'Iftar Alarm';
+  static const _azanSound = RawResourceAndroidNotificationSound('azan');
   static const _iftarWarmupOffset = Duration(hours: 1);
   static const _iftarWarmupPayload = 'iftar_live_activity_warmup';
   static const _iftarAlarmPayload = 'iftar_alarm_fired';
@@ -432,13 +433,13 @@ class AdhanNotificationService {
     final iosInterruptionLevel =
         withSound ? InterruptionLevel.timeSensitive : InterruptionLevel.passive;
     final iosPresentSound = withSound;
-    final iosSoundName = withSound ? 'default' : null;
+    final iosSoundName = withSound ? 'azan.mp3' : null;
     final iosDetails = withSound
         ? const DarwinNotificationDetails(
             presentAlert: true,
             presentBadge: true,
             presentSound: true,
-            sound: 'default',
+            sound: 'azan.mp3',
             interruptionLevel: InterruptionLevel.timeSensitive,
           )
         : const DarwinNotificationDetails(
@@ -456,6 +457,7 @@ class AdhanNotificationService {
               importance: resolvedImportance,
               priority: Priority.high,
               playSound: true,
+              sound: _azanSound,
             )
           : AndroidNotificationDetails(
               resolvedAndroidChannelId,

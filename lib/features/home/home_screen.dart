@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -600,6 +601,36 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
+  Widget _buildQuranFramedCard({required Widget child}) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFFFDFAF3),
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x26C9A84C),
+            blurRadius: 14,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+            child: child,
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(painter: _QuranFramePainter()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildPrimaryCard({
     required String title,
     required String body,
@@ -607,21 +638,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final cleanSource = source?.trim() ?? '';
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colorScheme.primary, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow,
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
+    return _buildQuranFramedCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -668,21 +685,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     required String readableText,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colorScheme.primary, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow,
-            blurRadius: 14,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
+    return _buildQuranFramedCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -921,6 +924,98 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       ),
     );
   }
+}
+
+class _QuranFramePainter extends CustomPainter {
+  static const _gold = Color(0xFFC9A84C);
+  static const _r = 14.0; // matches card border radius
+  static const _innerGap = 6.0; // gap between outer and inner border line
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final strokeOuter = Paint()
+      ..color = _gold
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5;
+
+    final strokeInner = Paint()
+      ..color = _gold
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.0;
+
+    final fillGold = Paint()
+      ..color = _gold
+      ..style = PaintingStyle.fill;
+
+    // Outer border
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(0.75, 0.75, size.width - 1.5, size.height - 1.5),
+        const Radius.circular(_r),
+      ),
+      strokeOuter,
+    );
+
+    // Inner border (inset by _innerGap)
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          _innerGap,
+          _innerGap,
+          size.width - _innerGap * 2,
+          size.height - _innerGap * 2,
+        ),
+        const Radius.circular(_r - 3),
+      ),
+      strokeInner,
+    );
+
+    // 8-pointed rosettes at each corner
+    _drawRosette(canvas, fillGold, const Offset(_r, _r), 9.0);
+    _drawRosette(canvas, fillGold, Offset(size.width - _r, _r), 9.0);
+    _drawRosette(canvas, fillGold, Offset(_r, size.height - _r), 9.0);
+    _drawRosette(canvas, fillGold, Offset(size.width - _r, size.height - _r), 9.0);
+
+    // Oval panel accents at midpoints of each edge
+    _drawOvalAccent(canvas, fillGold, Offset(size.width / 2, 0), vertical: false);
+    _drawOvalAccent(canvas, fillGold, Offset(size.width / 2, size.height), vertical: false);
+    _drawOvalAccent(canvas, fillGold, Offset(0, size.height / 2), vertical: true);
+    _drawOvalAccent(canvas, fillGold, Offset(size.width, size.height / 2), vertical: true);
+  }
+
+  /// 8-pointed Islamic star (alternating outer/inner radius)
+  void _drawRosette(Canvas canvas, Paint paint, Offset center, double outerR) {
+    final innerR = outerR * 0.42;
+    final path = Path();
+    for (int i = 0; i < 16; i++) {
+      final r = i.isEven ? outerR : innerR;
+      final angle = (i * math.pi / 8) - math.pi / 2;
+      final x = center.dx + r * math.cos(angle);
+      final y = center.dy + r * math.sin(angle);
+      if (i == 0) {
+        path.moveTo(x, y);
+      } else {
+        path.lineTo(x, y);
+      }
+    }
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  /// Oval panel that straddles the border at the midpoint of each edge
+  void _drawOvalAccent(Canvas canvas, Paint paint, Offset center, {required bool vertical}) {
+    canvas.save();
+    canvas.translate(center.dx, center.dy);
+    if (vertical) canvas.rotate(math.pi / 2);
+    canvas.drawOval(
+      Rect.fromCenter(center: Offset.zero, width: 28.0, height: 10.0),
+      paint,
+    );
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
 enum _PrayerType { fajr, dhuhr, asr, maghrib, isha, none }

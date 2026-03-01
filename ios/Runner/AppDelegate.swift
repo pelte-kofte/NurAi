@@ -425,8 +425,14 @@ import WidgetKit
         return
       }
 
+      // Switch to completed phase once iftar time is reached
+      var activePayload = payload
+      if now >= state.iftarDate {
+        activePayload["phase"] = "completed"
+      }
+
       do {
-        try await self.upsertIftarLiveActivity(with: payload)
+        try await self.upsertIftarLiveActivity(with: activePayload)
         self.refreshWidgets()
         if now < state.iftarDate {
           let nextRefresh = min(state.iftarDate, now.addingTimeInterval(self.iftarRefreshInterval))

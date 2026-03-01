@@ -26,7 +26,7 @@ class IftarLiveActivityService {
   static const String _methodCancelBackgroundTasks =
       'cancelIftarLiveActivityBackgroundTasks';
   static const String _payloadPostCleanup = 'iftar_post_cleanup';
-  static const Duration _postWindow = Duration(minutes: 10);
+  static const Duration _postWindow = Duration(minutes: 5);
 
   static final isSupported = ValueNotifier<bool>(false);
 
@@ -254,12 +254,15 @@ class IftarLiveActivityService {
     required DateTime targetDate,
     required DateTime postEndsAt,
   }) async {
+    final now = DateTime.now();
+    final phase = now.isBefore(targetDate) ? 'countdown' : 'completed';
     final payload = _activityPayload(
       iftarDate: targetDate,
       postEndsAt: postEndsAt,
+      phase: phase,
     );
     _log(
-      'activity_start iftarEpochMs=${targetDate.millisecondsSinceEpoch} endEpochMs=${postEndsAt.millisecondsSinceEpoch}',
+      'activity_start iftarEpochMs=${targetDate.millisecondsSinceEpoch} endEpochMs=${postEndsAt.millisecondsSinceEpoch} phase=$phase',
     );
     await _invokeSafely(_methodStart, payload);
   }
@@ -322,13 +325,14 @@ class IftarLiveActivityService {
   static Map<String, dynamic> _activityPayload({
     required DateTime iftarDate,
     required DateTime postEndsAt,
+    String phase = 'countdown',
   }) {
     return <String, dynamic>{
       'title': S.get('iftar_countdown_title'),
       'subtitle': S.get('iftar_countdown_subtitle'),
       'mode': 'countdown',
       'postMessage': _postMessageForLocale(),
-      'phase': 'countdown',
+      'phase': phase,
       'iftarEpochMs': iftarDate.millisecondsSinceEpoch,
       'endEpochMs': postEndsAt.millisecondsSinceEpoch,
     };
