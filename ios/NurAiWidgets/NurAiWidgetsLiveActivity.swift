@@ -10,8 +10,33 @@ private var widgetBundle: Bundle {
     Bundle(for: NurAiWidgetsBundleMarker.self)
 }
 
-private func liveAvatarImage() -> Image {
-    Image("LiveActivityAvatar", bundle: widgetBundle)
+private func liveAvatarUIImage() -> UIImage? {
+    if let image = UIImage(named: "LiveActivityAvatar", in: widgetBundle, compatibleWith: nil) {
+        return image
+    }
+
+    let fileNames = [
+        "LiveActivityAvatar",
+        "LiveActivityAvatar@2x",
+        "LiveActivityAvatar@3x",
+    ]
+
+    for fileName in fileNames {
+        if let url = widgetBundle.url(forResource: fileName, withExtension: "png"),
+           let image = UIImage(contentsOfFile: url.path) {
+            return image
+        }
+    }
+
+    return nil
+}
+
+private func liveAvatarImage() -> Image? {
+    guard let uiImage = liveAvatarUIImage() else {
+        return nil
+    }
+
+    return Image(uiImage: uiImage)
         .renderingMode(.original)
 }
 
@@ -20,28 +45,22 @@ private struct LiveActivityAvatarView: View {
 
     var body: some View {
         Group {
-            #if DEBUG
-                if UIImage(named: "LiveActivityAvatar", in: widgetBundle, compatibleWith: nil) == nil {
-                    Image(systemName: "person.crop.circle.fill")
-                        .renderingMode(.original)
-                        .resizable()
-                        .scaledToFit()
-                        .padding(size * 0.12)
-                        .foregroundStyle(.white)
-                        .background(Color.red.opacity(0.75))
-                        .onAppear {
-                            debugLog("[NurAiWidgetsLiveActivity] missing asset name=LiveActivityAvatar bundle=\(widgetBundle.bundlePath)")
-                        }
-                } else {
-                    liveAvatarImage()
-                        .resizable()
-                        .scaledToFill()
-                }
-            #else
-                liveAvatarImage()
+            if let avatarImage = liveAvatarImage() {
+                avatarImage
                     .resizable()
                     .scaledToFill()
-            #endif
+            } else {
+                Image(systemName: "person.crop.circle.fill")
+                    .renderingMode(.original)
+                    .resizable()
+                    .scaledToFit()
+                    .padding(size * 0.12)
+                    .foregroundStyle(.white)
+                    .background(Color.red.opacity(0.75))
+                    .onAppear {
+                        debugLog("[NurAiWidgetsLiveActivity] missing asset name=LiveActivityAvatar bundle=\(widgetBundle.bundlePath)")
+                    }
+            }
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
