@@ -89,8 +89,8 @@ struct IftarAttributes: ActivityAttributes {
         enum CodingKeys: String, CodingKey {
             case title
             case subtitle
-            case iftarDate
             case iftarEpochMs
+            case iftarDate
             case endDate
             case endEpochMs
             case mode
@@ -123,10 +123,10 @@ struct IftarAttributes: ActivityAttributes {
             title = try container.decodeIfPresent(String.self, forKey: .title) ?? "İftara"
             subtitle = try container.decodeIfPresent(String.self, forKey: .subtitle) ?? "Kalan süre"
             let decodedIftarDate: Date?
-            if let value = try container.decodeIfPresent(Date.self, forKey: .iftarDate) {
-                decodedIftarDate = value
-            } else if let epochMs = try container.decodeIfPresent(Int64.self, forKey: .iftarEpochMs) {
+            if let epochMs = try container.decodeIfPresent(Int64.self, forKey: .iftarEpochMs) {
                 decodedIftarDate = Date(timeIntervalSince1970: TimeInterval(epochMs) / 1000.0)
+            } else if let value = try container.decodeIfPresent(Date.self, forKey: .iftarDate) {
+                decodedIftarDate = value
             } else {
                 decodedIftarDate = nil
             }
@@ -167,7 +167,7 @@ struct IftarAttributes: ActivityAttributes {
             var container = encoder.container(keyedBy: CodingKeys.self)
             try container.encode(title, forKey: .title)
             try container.encode(subtitle, forKey: .subtitle)
-            try container.encode(iftarDate, forKey: .iftarDate)
+            try container.encode(Int64(iftarDate.timeIntervalSince1970 * 1000), forKey: .iftarEpochMs)
             try container.encode(endDate, forKey: .endDate)
             try container.encode(mode, forKey: .mode)
             try container.encode(postMessage, forKey: .postMessage)
@@ -252,9 +252,7 @@ struct NurAiWidgetsLiveActivity: Widget {
                                 .lineLimit(1)
                             Spacer(minLength: 4)
                             if phase == .countdown {
-                                Text(context.state.iftarDate, style: .time)
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundStyle(.secondary)
+                                countdownClockLabel(targetDate: context.state.iftarDate)
                             }
                         }
                         if phase == .countdown {
@@ -272,7 +270,7 @@ struct NurAiWidgetsLiveActivity: Widget {
             } compactTrailing: {
                 compactTrailing(for: context.state, phase: phase)
             } minimal: {
-                LiveActivityAvatarView(size: 20)
+                minimalTrailing(for: context.state, phase: phase)
             }
             .widgetURL(URL(string: "duaya://ramadan"))
             .keylineTint(islandKeylineTint)
@@ -310,10 +308,17 @@ struct NurAiWidgetsLiveActivity: Widget {
 
     @ViewBuilder
     private func countdownLabel(targetDate: Date, large: Bool, darkMode: Bool) -> some View {
-        Text(targetDate, style: .timer)
+        Text(timerInterval: Date()...targetDate, countsDown: true)
             .font(timerFont(large: large))
             .monospacedDigit()
             .foregroundStyle(darkMode ? islandText : .primary)
+    }
+
+    @ViewBuilder
+    private func countdownClockLabel(targetDate: Date) -> some View {
+        Text(targetDate, style: .time)
+            .font(.system(size: 12, weight: .medium))
+            .foregroundStyle(.secondary)
     }
 
     @ViewBuilder
@@ -346,7 +351,35 @@ struct NurAiWidgetsLiveActivity: Widget {
                 .monospacedDigit()
                 .foregroundStyle(.primary)
         case .ended:
-            EmptyView()
+            Text("0:00")
+                .font(timerFont(large: false))
+                .monospacedDigit()
+                .foregroundStyle(.primary)
+        }
+    }
+
+    @ViewBuilder
+    private func minimalTrailing(for state: IftarAttributes.ContentState, phase: DisplayPhase) -> some View {
+        HStack(spacing: 4) {
+            LiveActivityAvatarView(size: 16)
+            switch phase {
+            case .countdown:
+                Text(compactCountdownText(to: state.iftarDate))
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(islandText)
+                    .lineLimit(1)
+            case .completed:
+                Image(systemName: "checkmark")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundStyle(islandText)
+            case .ended:
+                Text("0m")
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .monospacedDigit()
+                    .foregroundStyle(islandText)
+                    .lineLimit(1)
+            }
         }
     }
 
@@ -360,7 +393,10 @@ struct NurAiWidgetsLiveActivity: Widget {
                 .font(.system(size: 15, weight: .bold))
                 .foregroundStyle(islandText)
         case .ended:
-            EmptyView()
+            Text("0m")
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(islandText)
         }
     }
 
@@ -378,7 +414,11 @@ struct NurAiWidgetsLiveActivity: Widget {
                 .font(.system(size: 11, weight: .bold))
                 .foregroundStyle(islandText)
         case .ended:
-            EmptyView()
+            Text("0m")
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(islandText)
+                .lineLimit(1)
         }
     }
 

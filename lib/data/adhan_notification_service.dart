@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/widgets.dart';
@@ -25,9 +26,11 @@ void adhanNotificationTapBackground(NotificationResponse response) {
 
 String _redactPayload(String? payload) {
   if (payload == null || payload.trim().isEmpty) return 'none';
-  switch (payload) {
+  final type = AdhanNotificationService.notificationPayloadType(payload);
+  switch (type) {
     case 'iftar_live_activity_warmup':
-      return 'iftar_live_activity_warmup';
+    case AdhanNotificationService.iftarWarmupStartLiveActivityType:
+      return AdhanNotificationService.iftarWarmupStartLiveActivityType;
     case 'iftar_alarm_fired':
       return 'iftar_alarm_fired';
     case 'iftar_post_cleanup':
@@ -81,9 +84,12 @@ class AdhanNotificationService {
   static const _iftarChannelNameAlarm = 'Iftar Alarm';
   static const _azanSound = RawResourceAndroidNotificationSound('azan');
   static const _iftarWarmupOffset = Duration(hours: 1);
-  static const _iftarWarmupPayload = 'iftar_live_activity_warmup';
+  static const _legacyIftarWarmupPayload = 'iftar_live_activity_warmup';
+  static const String iftarWarmupStartLiveActivityType =
+      'iftar_warmup_start_live_activity';
   static const _iftarAlarmPayload = 'iftar_alarm_fired';
   static const _iftarPostCleanupPayload = 'iftar_post_cleanup';
+  static final lastNotificationTapPayload = ValueNotifier<String?>(null);
   static Future<void> Function(String? payload)? _notificationTapHandler;
   static bool? _lastIosAlertPermissionEnabled;
   static bool? _lastIosBadgePermissionEnabled;
@@ -97,6 +103,60 @@ class AdhanNotificationService {
 
   static bool get isIosSoundPermissionGranted =>
       _lastIosSoundPermissionEnabled ?? false;
+
+  static String? notificationPayloadType(String? payload) {
+    if (payload == null || payload.trim().isEmpty) return null;
+    final trimmed = payload.trim();
+    if (!trimmed.startsWith('{')) return trimmed;
+    try {
+      final decoded = jsonDecode(trimmed);
+      if (decoded is Map<String, dynamic>) {
+        final type = decoded['type'];
+        if (type is String && type.trim().isNotEmpty) {
+          return type.trim();
+        }
+      }
+    } catch (_) {
+      return trimmed;
+    }
+    return trimmed;
+  }
+
+  static int? notificationPayloadIftarEpochMs(String? payload) {
+    if (payload == null || payload.trim().isEmpty) return null;
+    final trimmed = payload.trim();
+    if (!trimmed.startsWith('{')) return null;
+    try {
+      final decoded = jsonDecode(trimmed);
+      if (decoded is Map<String, dynamic>) {
+        final value = decoded['iftarEpochMs'];
+        if (value is int) return value;
+        if (value is num) return value.toInt();
+        if (value is String) return int.tryParse(value);
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
+  }
+
+  static String? notificationPayloadTimeZone(String? payload) {
+    if (payload == null || payload.trim().isEmpty) return null;
+    final trimmed = payload.trim();
+    if (!trimmed.startsWith('{')) return null;
+    try {
+      final decoded = jsonDecode(trimmed);
+      if (decoded is Map<String, dynamic>) {
+        final value = decoded['timeZone'];
+        if (value is String && value.trim().isNotEmpty) {
+          return value.trim();
+        }
+      }
+    } catch (_) {
+      return null;
+    }
+    return null;
+  }
 
   static Future<void> init() async {
     if (kIsWeb) return;
@@ -340,15 +400,19 @@ class AdhanNotificationService {
     if (includeWarmup && warmupAt.isAfter(now)) {
       await _schedule(
         id: warmupId,
-        title: _iftarWarmupTitle(),
-        body: _iftarWarmupBody(),
+        title: _warmupNotificationTitle(),
+        body: _warmupNotificationBody(),
         dateTime: warmupAt,
         timezoneName: timezoneName,
-        payload: _iftarWarmupPayload,
+        payload: jsonEncode(<String, dynamic>{
+          'type': iftarWarmupStartLiveActivityType,
+          'iftarEpochMs': maghrib.millisecondsSinceEpoch,
+          'timeZone': timezoneName ?? 'local',
+        }),
         withSound: false,
       );
       _log(
-        'iftar_warmup_scheduled channel=$_prayerChannelIdNormal importance=default soundEnabled=false',
+        'iftar_warmup_scheduled channel=$_prayerChannelIdNormal importance=default soundEnabled=false warmupEpochMs=${warmupAt.millisecondsSinceEpoch} iftarEpochMs=${maghrib.millisecondsSinceEpoch} timeZone=${timezoneName ?? 'local'}',
       );
     }
 
@@ -433,13 +497,13 @@ class AdhanNotificationService {
     final iosInterruptionLevel =
         withSound ? InterruptionLevel.timeSensitive : InterruptionLevel.passive;
     final iosPresentSound = withSound;
-    final iosSoundName = withSound ? 'azan.mp3' : null;
+    final iosSoundName = withSound ? 'default' : null;
     final iosDetails = withSound
         ? const DarwinNotificationDetails(
             presentAlert: true,
             presentBadge: true,
             presentSound: true,
-            sound: 'azan.mp3',
+            sound: 'default',
             interruptionLevel: InterruptionLevel.timeSensitive,
           )
         : const DarwinNotificationDetails(
@@ -576,15 +640,22 @@ class AdhanNotificationService {
   }
 
   static void handleNotificationResponsePayload(String? payload) {
-    if (payload == _iftarWarmupPayload) {
-      _log('trigger event=iftar_live_activity_warmup');
+    lastNotificationTapPayload.value = payload;
+    final type = notificationPayloadType(payload);
+    if (type == iftarWarmupStartLiveActivityType ||
+        type == _legacyIftarWarmupPayload) {
+      final iftarEpochMs = notificationPayloadIftarEpochMs(payload);
+      final timeZone = notificationPayloadTimeZone(payload);
+      _log(
+        'trigger event=$iftarWarmupStartLiveActivityType iftarEpochMs=${iftarEpochMs ?? 'missing'} timeZone=${timeZone ?? 'missing'}',
+      );
       final handler = _notificationTapHandler;
       if (handler != null) {
         unawaited(handler(payload));
       }
       return;
     }
-    if (payload == _iftarAlarmPayload) {
+    if (type == _iftarAlarmPayload) {
       _log('trigger event=iftar_alarm_fired');
       final handler = _notificationTapHandler;
       if (handler != null) {
@@ -592,7 +663,7 @@ class AdhanNotificationService {
       }
       return;
     }
-    if (payload == _iftarPostCleanupPayload) {
+    if (type == _iftarPostCleanupPayload) {
       _log('trigger event=iftar_post_cleanup');
       final handler = _notificationTapHandler;
       if (handler != null) {
@@ -610,6 +681,21 @@ class AdhanNotificationService {
   static bool get _isTurkishLanguage =>
       LocalPreferencesService.language.value.toLowerCase() == 'tr';
 
+  static String _warmupNotificationTitle() {
+    if (_isTurkishLanguage) {
+      return 'İftara 1 saat kaldı';
+    }
+    return '1 hour to Iftar';
+  }
+
+  static String _warmupNotificationBody() {
+    if (_isTurkishLanguage) {
+      return 'Geri sayımı başlatmak için dokun';
+    }
+    return 'Tap to start the countdown';
+  }
+
+  // ignore: unused_element
   static String _iftarWarmupTitle() {
     if (_isTurkishLanguage) {
       return 'İftar sayacı hazır — Dynamic Island’da görmek için aç.';
@@ -617,6 +703,7 @@ class AdhanNotificationService {
     return 'Iftar countdown is ready — open the app for Dynamic Island.';
   }
 
+  // ignore: unused_element
   static String _iftarWarmupBody() {
     if (_isTurkishLanguage) {
       return 'Canlı Etkinlik geri sayımı uygulamada başlatılır.';

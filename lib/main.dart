@@ -89,16 +89,26 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
   bool _isAppReady = false;
   bool _isStarting = false;
   bool _showHome = false;
+  bool _showHomeWhenReady = false;
   Object? _loadError;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    AdhanNotificationService.lastNotificationTapPayload.addListener(
+      _handleNotificationTapLaunch,
+    );
+    _handleNotificationTapLaunch();
     _appLoadFuture = _loadAppData();
     _appLoadFuture.then((_) {
       if (!mounted) return;
-      setState(() => _isAppReady = true);
+      setState(() {
+        _isAppReady = true;
+        if (_showHomeWhenReady) {
+          _showHome = true;
+        }
+      });
     }).catchError((Object error) {
       if (!mounted) return;
       setState(() => _loadError = error);
@@ -107,8 +117,29 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    AdhanNotificationService.lastNotificationTapPayload.removeListener(
+      _handleNotificationTapLaunch,
+    );
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  void _handleNotificationTapLaunch() {
+    final payload = AdhanNotificationService.lastNotificationTapPayload.value;
+    final type = AdhanNotificationService.notificationPayloadType(payload);
+    if (type != AdhanNotificationService.iftarWarmupStartLiveActivityType &&
+        type != 'iftar_live_activity_warmup' &&
+        type != 'iftar_alarm_fired') {
+      return;
+    }
+    if (!mounted) return;
+    setState(() {
+      if (_isAppReady) {
+        _showHome = true;
+      } else {
+        _showHomeWhenReady = true;
+      }
+    });
   }
 
   @override

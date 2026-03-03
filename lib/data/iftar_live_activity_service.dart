@@ -41,9 +41,29 @@ class IftarLiveActivityService {
     _initialized = true;
     isSupported.value = await _querySupport();
     AdhanNotificationService.setNotificationTapHandler((payload) async {
-      if (payload == 'iftar_live_activity_warmup' ||
-          payload == 'iftar_alarm_fired' ||
-          payload == _payloadPostCleanup) {
+      final type = AdhanNotificationService.notificationPayloadType(payload);
+      if (type == AdhanNotificationService.iftarWarmupStartLiveActivityType ||
+          type == 'iftar_live_activity_warmup') {
+        final iftarEpochMs =
+            AdhanNotificationService.notificationPayloadIftarEpochMs(payload);
+        final timeZone =
+            AdhanNotificationService.notificationPayloadTimeZone(payload);
+        if (iftarEpochMs == null) {
+          _log('tap_start_missing_iftar_epoch_ms type=$type timeZone=$timeZone');
+          await maybeStartOrUpdate();
+          return;
+        }
+        final iftarDate = DateTime.fromMillisecondsSinceEpoch(iftarEpochMs);
+        _log(
+          'tap_start_live_activity iftarEpochMs=$iftarEpochMs timeZone=${timeZone ?? 'local'} iftarIsFuture=${iftarDate.isAfter(DateTime.now())}',
+        );
+        await startOrUpdate(iftarDate);
+        _log(
+          'tap_start_live_activity_completed iftarEpochMs=$iftarEpochMs timeZone=${timeZone ?? 'local'}',
+        );
+        return;
+      }
+      if (type == 'iftar_alarm_fired' || type == _payloadPostCleanup) {
         await maybeStartOrUpdate();
       }
     });
@@ -306,6 +326,10 @@ class IftarLiveActivityService {
   }
 
   static Future<void> startOrUpdate(DateTime iftarDate) async {
+    final now = DateTime.now();
+    _log(
+      'start_or_update_called iftarEpochMs=${iftarDate.millisecondsSinceEpoch} nowEpochMs=${now.millisecondsSinceEpoch} iftarIsFuture=${iftarDate.isAfter(now)}',
+    );
     final postEndsAt = iftarDate.add(_postWindow);
     await AdhanNotificationService.scheduleIftarPostCleanupNotification(
       postEndsAt: postEndsAt,
@@ -319,6 +343,9 @@ class IftarLiveActivityService {
     await _startOrUpdateActivity(
       targetDate: iftarDate,
       postEndsAt: postEndsAt,
+    );
+    _log(
+      'start_or_update_finished iftarEpochMs=${iftarDate.millisecondsSinceEpoch} endEpochMs=${postEndsAt.millisecondsSinceEpoch}',
     );
   }
 

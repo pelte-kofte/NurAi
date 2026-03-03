@@ -221,7 +221,6 @@ import WidgetKit
     let iftarEpochMs =
       (args["iftarEpochMs"] as? NSNumber)?.int64Value
       ?? (args["targetEpochMs"] as? NSNumber)?.int64Value
-      ?? (args["endEpochMs"] as? NSNumber)?.int64Value
       ?? Int64(Date().addingTimeInterval(1).timeIntervalSince1970 * 1000)
     let endEpochMs =
       (args["endEpochMs"] as? NSNumber)?.int64Value
@@ -231,7 +230,7 @@ import WidgetKit
     let endDate = Date(timeIntervalSince1970: TimeInterval(endEpochMs) / 1000.0)
     let remainingSeconds = max(0, Int(iftarDate.timeIntervalSinceNow))
     debugLog(
-      "[IftarLiveActivity] parse state mode=\(mode) phase=\(phase) remainingSeconds=\(remainingSeconds) iftarEpochMs=\(iftarEpochMs) endEpochMs=\(endEpochMs)"
+      "[IftarLiveActivity] parse state mode=\(mode) phase=\(phase) remainingSeconds=\(remainingSeconds) iftarEpochMs=\(iftarEpochMs) endEpochMs=\(endEpochMs) iftarIsFuture=\(iftarDate > Date())"
     )
 
     return IftarAttributes.ContentState(
@@ -487,12 +486,17 @@ import WidgetKit
 
   @available(iOS 16.1, *)
   private func upsertIftarLiveActivity(with args: [String: Any]) async throws {
+    let areActivitiesEnabled = ActivityAuthorizationInfo().areActivitiesEnabled
     let state = parseIftarState(args)
     storeIftarPayload(args)
+    debugLog(
+      "[IftarLiveActivity] upsert areActivitiesEnabled=\(areActivitiesEnabled) iftarIsFuture=\(state.iftarDate > Date()) activityCount=\(Activity<IftarAttributes>.activities.count)"
+    )
     logIftarState("upsert", state: state)
     if let existing = firstIftarActivity() {
       logIftarState("upsert->updateExisting", state: state)
       await existing.update(using: state)
+      refreshWidgets()
       return
     }
 
@@ -503,6 +507,7 @@ import WidgetKit
       pushType: nil
     )
     logIftarState("upsert->requested", state: state)
+    refreshWidgets()
   }
 
   private func startIftarLiveActivity(with args: [String: Any], result: @escaping FlutterResult) {
@@ -511,12 +516,18 @@ import WidgetKit
       return
     }
     scheduleIftarEndTaskIfNeeded(from: args)
+    let state = parseIftarState(args)
+    debugLog(
+      "[IftarLiveActivity] start requested areActivitiesEnabled=\(ActivityAuthorizationInfo().areActivitiesEnabled) iftarIsFuture=\(state.iftarDate > Date())"
+    )
     Task {
       do {
         try await self.upsertIftarLiveActivity(with: args)
         result(nil)
       } catch {
-        self.debugLog("[IftarLiveActivity] activity_start_failed error=\(error.localizedDescription)")
+        self.debugLog(
+          "[IftarLiveActivity] activity_start_failed areActivitiesEnabled=\(ActivityAuthorizationInfo().areActivitiesEnabled) error=\(error.localizedDescription)"
+        )
         result(
           FlutterError(
             code: "activity_start_failed",
@@ -595,8 +606,8 @@ struct IftarAttributes: ActivityAttributes {
     enum CodingKeys: String, CodingKey {
       case title
       case subtitle
-      case iftarDate
       case iftarEpochMs
+      case iftarDate
       case endDate
       case endEpochMs
       case mode
@@ -628,10 +639,10 @@ struct IftarAttributes: ActivityAttributes {
       let container = try decoder.container(keyedBy: CodingKeys.self)
       title = try container.decodeIfPresent(String.self, forKey: .title) ?? "İftara"
       subtitle = try container.decodeIfPresent(String.self, forKey: .subtitle) ?? "Kalan süre"
-      if let value = try container.decodeIfPresent(Date.self, forKey: .iftarDate) {
-        iftarDate = value
-      } else if let epochMs = try container.decodeIfPresent(Int64.self, forKey: .iftarEpochMs) {
+      if let epochMs = try container.decodeIfPresent(Int64.self, forKey: .iftarEpochMs) {
         iftarDate = Date(timeIntervalSince1970: TimeInterval(epochMs) / 1000.0)
+      } else if let value = try container.decodeIfPresent(Date.self, forKey: .iftarDate) {
+        iftarDate = value
       } else if let legacyValue = try container.decodeIfPresent(Date.self, forKey: .endDate) {
         iftarDate = legacyValue
       } else {
@@ -657,7 +668,7 @@ struct IftarAttributes: ActivityAttributes {
       var container = encoder.container(keyedBy: CodingKeys.self)
       try container.encode(title, forKey: .title)
       try container.encode(subtitle, forKey: .subtitle)
-      try container.encode(iftarDate, forKey: .iftarDate)
+      try container.encode(Int64(iftarDate.timeIntervalSince1970 * 1000), forKey: .iftarEpochMs)
       try container.encode(endDate, forKey: .endDate)
       try container.encode(mode, forKey: .mode)
       try container.encode(postMessage, forKey: .postMessage)
