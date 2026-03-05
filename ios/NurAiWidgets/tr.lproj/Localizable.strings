@@ -8,6 +8,7 @@
 "widget_description" = "Gunluk ayet, hadis veya Esma icerigi gosterir.";
 "widget_loading" = "Yukleniyor...";
 "next_prayer_widget_title" = "Siradaki Vakit";
+"next_prayer_title_short" = "Sıradaki Vakit";
 "next_prayer_widget_description" = "Sonraki vakit ve kalan sureyi gosterir.";
 "next_prayer_widget_enable_short" = "Ayarlardan ac";
 "next_prayer_widget_enable_full" = "Duaya Ayarlar'dan Siradaki Vakit Widget'ini etkinlestirin";

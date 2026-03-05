@@ -138,12 +138,12 @@ struct NextPrayerWidgetView: View {
     selectedPrayer?.date
   }
 
-  private var primaryAccent: Color {
-    Color(red: 0.18, green: 0.53, blue: 0.58)
+  private var shortTitleText: String {
+    NSLocalizedString("next_prayer_title_short", comment: "")
   }
 
-  private var secondaryAccent: Color {
-    Color(red: 0.20, green: 0.28, blue: 0.48)
+  private var primaryAccent: Color {
+    Color(red: 0.18, green: 0.53, blue: 0.58)
   }
 
   private var clayAccent: Color {
@@ -159,18 +159,6 @@ struct NextPrayerWidgetView: View {
 
   private var subtleStroke: Color {
     primaryAccent.opacity(colorScheme == .dark ? 0.45 : 0.26)
-  }
-
-  private var premiumStroke: LinearGradient {
-    LinearGradient(
-      colors: [
-        primaryAccent.opacity(colorScheme == .dark ? 0.7 : 0.42),
-        secondaryAccent.opacity(colorScheme == .dark ? 0.6 : 0.34),
-        clayAccent.opacity(colorScheme == .dark ? 0.6 : 0.34),
-      ],
-      startPoint: .leading,
-      endPoint: .trailing
-    )
   }
 
   var body: some View {
@@ -202,13 +190,9 @@ struct NextPrayerWidgetView: View {
       }
     case .accessoryCircular:
       ZStack {
-        Circle()
-          .fill(paperBackground)
-        Circle()
-          .stroke(subtleStroke, lineWidth: 1)
         Image(systemName: "moon.stars.fill")
           .font(.caption)
-          .foregroundStyle(clayAccent)
+          .foregroundStyle(.secondary)
       }
     case .accessoryRectangular:
       HStack(spacing: 8) {
@@ -221,7 +205,6 @@ struct NextPrayerWidgetView: View {
       }
       .padding(.vertical, 6)
       .padding(.horizontal, 8)
-      .background(cardBackground(cornerRadius: 10))
     default:
       VStack(spacing: 8) {
         Image(systemName: "moon.stars.fill")
@@ -251,10 +234,6 @@ struct NextPrayerWidgetView: View {
       }
     case .accessoryCircular:
       ZStack {
-        Circle()
-          .fill(paperBackground)
-        Circle()
-          .stroke(subtleStroke, lineWidth: 1)
         VStack(spacing: 2) {
           Image(systemName: "location.slash")
             .font(.caption2)
@@ -266,11 +245,9 @@ struct NextPrayerWidgetView: View {
     case .accessoryRectangular:
       VStack(alignment: .leading, spacing: 4) {
         HStack(spacing: 6) {
-          Image(systemName: "clock")
-            .font(.caption2)
-            .foregroundStyle(primaryAccent)
-          Text(localized("next_prayer_widget_title", fallback: "Next Prayer"))
+          Text(shortTitleText)
             .font(.caption2.weight(.semibold))
+            .foregroundStyle(.secondary)
           Spacer(minLength: 0)
         }
         Text(localized("next_prayer_widget_no_data", fallback: "Set location in app"))
@@ -279,7 +256,6 @@ struct NextPrayerWidgetView: View {
       }
       .padding(.vertical, 6)
       .padding(.horizontal, 8)
-      .background(cardBackground(cornerRadius: 10))
     default:
       VStack(alignment: .leading, spacing: 8) {
         HStack(spacing: 6) {
@@ -311,10 +287,6 @@ struct NextPrayerWidgetView: View {
       }
     case .accessoryCircular:
       ZStack {
-        Circle()
-          .fill(paperBackground)
-        Circle()
-          .stroke(subtleStroke, lineWidth: 1)
         Image(systemName: "arrow.clockwise")
           .font(.caption)
           .foregroundStyle(.secondary)
@@ -322,11 +294,9 @@ struct NextPrayerWidgetView: View {
     case .accessoryRectangular:
       VStack(alignment: .leading, spacing: 4) {
         HStack(spacing: 6) {
-          Image(systemName: "clock")
-            .font(.caption2)
-            .foregroundStyle(primaryAccent)
-          Text(localized("next_prayer_widget_title", fallback: "Next Prayer"))
+          Text(shortTitleText)
             .font(.caption2.weight(.semibold))
+            .foregroundStyle(.secondary)
           Spacer(minLength: 0)
         }
         Text(localized("next_prayer_widget_refreshing", fallback: "Updating"))
@@ -335,7 +305,6 @@ struct NextPrayerWidgetView: View {
       }
       .padding(.vertical, 6)
       .padding(.horizontal, 8)
-      .background(cardBackground(cornerRadius: 10))
     default:
       VStack(alignment: .leading, spacing: 8) {
         HStack(spacing: 6) {
@@ -374,23 +343,6 @@ struct NextPrayerWidgetView: View {
       }
     case .accessoryCircular:
       ZStack {
-        Circle()
-          .fill(paperBackground)
-        Circle()
-          .stroke(subtleStroke, lineWidth: 1.5)
-        Circle()
-          .trim(from: 0, to: progressFraction())
-          .stroke(
-            AngularGradient(
-              gradient: Gradient(colors: [secondaryAccent.opacity(0.8), primaryAccent, clayAccent]),
-              center: .center
-            ),
-            style: StrokeStyle(lineWidth: 2.6, lineCap: .round)
-          )
-          .rotationEffect(.degrees(-90))
-        Circle()
-          .fill(primaryAccent.opacity(0.07))
-          .padding(13)
         Image(systemName: prayerSymbolName())
           .font(.system(size: 10, weight: .semibold))
           .foregroundStyle(.secondary.opacity(0.30))
@@ -400,46 +352,44 @@ struct NextPrayerWidgetView: View {
           .lineLimit(1)
       }
     case .accessoryRectangular:
-      VStack(alignment: .leading, spacing: 6) {
-        HStack(spacing: 6) {
-          Image(systemName: prayerSymbolName())
-            .font(.caption2)
-            .foregroundStyle(clayAccent)
-          Text(localized("next_prayer_widget_title", fallback: "Next Prayer"))
+      VStack(alignment: .leading, spacing: 4) {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+          Text(shortTitleText)
             .font(.caption2.weight(.semibold))
             .foregroundStyle(.secondary)
-          Spacer(minLength: 6)
+            .lineLimit(1)
+            .minimumScaleFactor(0.9)
+          Spacer(minLength: 4)
           Text(timeText())
             .font(.caption.monospacedDigit())
             .foregroundStyle(.primary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.9)
         }
-        Text(prayerName)
-          .font(.subheadline.weight(.bold))
-          .lineLimit(1)
-        if #available(iOSApplicationExtension 16.0, *), let targetDate {
-          Text(timerInterval: Date()...targetDate, countsDown: true)
-            .font(.caption.monospacedDigit())
-            .foregroundStyle(.secondary)
-        } else {
-          Text(remainingPrefixText())
-            .font(.caption.monospacedDigit())
-            .foregroundStyle(.secondary)
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+          Text(prayerName)
+            .font(.subheadline.weight(.semibold))
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            .truncationMode(.tail)
+          Spacer(minLength: 4)
+          if #available(iOSApplicationExtension 16.0, *), let targetDate {
+            Text(timerInterval: Date()...targetDate, countsDown: true)
+              .font(.caption.monospacedDigit())
+              .foregroundStyle(.secondary)
+              .lineLimit(1)
+              .minimumScaleFactor(0.85)
+          } else {
+            Text(remainingPrefixText())
+              .font(.caption.monospacedDigit())
+              .foregroundStyle(.secondary)
+              .lineLimit(1)
+              .minimumScaleFactor(0.85)
+          }
         }
-        Capsule()
-          .fill(premiumStroke)
-          .frame(height: 2)
-          .opacity(0.85)
       }
-      .padding(.vertical, 7)
-      .padding(.horizontal, 9)
-      .background(
-        RoundedRectangle(cornerRadius: 11, style: .continuous)
-          .fill(paperBackground)
-          .overlay(
-            RoundedRectangle(cornerRadius: 11, style: .continuous)
-              .stroke(premiumStroke, lineWidth: 0.9)
-          )
-      )
+      .padding(.vertical, 6)
+      .padding(.horizontal, 8)
     case .systemSmall:
       VStack(alignment: .leading, spacing: 8) {
         HStack {
@@ -623,14 +573,6 @@ struct NextPrayerWidgetView: View {
     }
     let minutes = max(1, diff / 60)
     return "\(minutes)m"
-  }
-
-  private func progressFraction() -> CGFloat {
-    guard let targetDate else { return 0.12 }
-    let totalWindowSeconds: CGFloat = 6 * 60 * 60
-    let remaining = max(0, CGFloat(targetDate.timeIntervalSince(Date())))
-    let normalized = 1 - min(1, remaining / totalWindowSeconds)
-    return max(0.1, normalized)
   }
 
   private func timeZoneShortLabel() -> String {
