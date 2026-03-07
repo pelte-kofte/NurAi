@@ -139,7 +139,13 @@ struct NextPrayerWidgetView: View {
   }
 
   private var shortTitleText: String {
-    NSLocalizedString("next_prayer_title_short", comment: "")
+    if Locale.current.languageCode?.lowercased() == "tr" {
+      return "Sıradaki"
+    }
+    return localized(
+      "next_prayer_title_short",
+      fallback: localized("next_prayer_widget_title", fallback: "Next Prayer")
+    )
   }
 
   private var primaryAccent: Color {
@@ -154,11 +160,7 @@ struct NextPrayerWidgetView: View {
     if colorScheme == .dark {
       return Color.white.opacity(0.05)
     }
-    return Color(red: 0.98, green: 0.96, blue: 0.92).opacity(0.70)
-  }
-
-  private var subtleStroke: Color {
-    primaryAccent.opacity(colorScheme == .dark ? 0.45 : 0.26)
+    return Color.white.opacity(0.60)
   }
 
   var body: some View {
@@ -195,16 +197,14 @@ struct NextPrayerWidgetView: View {
           .foregroundStyle(.secondary)
       }
     case .accessoryRectangular:
-      HStack(spacing: 8) {
-        Image(systemName: "moon.stars.fill")
-          .font(.caption)
-          .foregroundStyle(clayAccent)
+      VStack(alignment: .leading, spacing: 6) {
+        accessoryHeader(icon: "moon.stars.fill")
         Text(localized("next_prayer_widget_enable_short", fallback: "Enable in Settings"))
-          .font(.caption)
+          .font(.system(size: 13, weight: .medium))
           .lineLimit(2)
+          .minimumScaleFactor(0.8)
+          .truncationMode(.tail)
       }
-      .padding(.vertical, 6)
-      .padding(.horizontal, 8)
     default:
       VStack(spacing: 8) {
         Image(systemName: "moon.stars.fill")
@@ -217,7 +217,7 @@ struct NextPrayerWidgetView: View {
       }
       .padding(12)
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .center)
-      .homeWidgetSurface(cornerRadius: 12, strokeColor: subtleStroke)
+      .homeWidgetSurface(cornerRadius: 16)
     }
   }
 
@@ -244,33 +244,25 @@ struct NextPrayerWidgetView: View {
       }
     case .accessoryRectangular:
       VStack(alignment: .leading, spacing: 4) {
-        HStack(spacing: 6) {
-          Text(shortTitleText)
-            .font(.caption2.weight(.semibold))
-            .foregroundStyle(.secondary)
-          Spacer(minLength: 0)
-        }
+        accessoryHeader(icon: "location.slash")
         Text(localized("next_prayer_widget_no_data", fallback: "Set location in app"))
-          .font(.caption)
+          .font(.system(size: 13, weight: .medium))
           .lineLimit(2)
+          .minimumScaleFactor(0.8)
+          .truncationMode(.tail)
       }
-      .padding(.vertical, 6)
-      .padding(.horizontal, 8)
     default:
       VStack(alignment: .leading, spacing: 8) {
-        HStack(spacing: 6) {
-          Image(systemName: "clock")
-            .foregroundStyle(primaryAccent)
-          Text(localized("next_prayer_widget_title", fallback: "Next Prayer"))
-            .font(.system(size: 12, weight: .semibold))
-        }
+        homeHeader(icon: "clock")
         Text(localized("next_prayer_widget_no_data", fallback: "Set location in app"))
           .font(.system(size: 15, weight: .medium))
           .lineLimit(2)
+          .minimumScaleFactor(0.8)
+          .truncationMode(.tail)
       }
-      .padding(10)
+      .padding(14)
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-      .background(cardBackground(cornerRadius: 12))
+      .homeWidgetSurface(cornerRadius: 18)
     }
   }
 
@@ -293,33 +285,25 @@ struct NextPrayerWidgetView: View {
       }
     case .accessoryRectangular:
       VStack(alignment: .leading, spacing: 4) {
-        HStack(spacing: 6) {
-          Text(shortTitleText)
-            .font(.caption2.weight(.semibold))
-            .foregroundStyle(.secondary)
-          Spacer(minLength: 0)
-        }
+        accessoryHeader(icon: "arrow.clockwise")
         Text(localized("next_prayer_widget_refreshing", fallback: "Updating"))
-          .font(.caption)
+          .font(.system(size: 13, weight: .medium))
           .lineLimit(2)
+          .minimumScaleFactor(0.8)
+          .truncationMode(.tail)
       }
-      .padding(.vertical, 6)
-      .padding(.horizontal, 8)
     default:
       VStack(alignment: .leading, spacing: 8) {
-        HStack(spacing: 6) {
-          Image(systemName: "clock")
-            .foregroundStyle(primaryAccent)
-          Text(localized("next_prayer_widget_title", fallback: "Next Prayer"))
-            .font(.system(size: 12, weight: .semibold))
-        }
+        homeHeader(icon: "clock")
         Text(localized("next_prayer_widget_refreshing", fallback: "Updating"))
           .font(.system(size: 15, weight: .medium))
           .lineLimit(2)
+          .minimumScaleFactor(0.8)
+          .truncationMode(.tail)
       }
-      .padding(10)
+      .padding(14)
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-      .background(cardBackground(cornerRadius: 12))
+      .homeWidgetSurface(cornerRadius: 18)
     }
   }
 
@@ -334,173 +318,191 @@ struct NextPrayerWidgetView: View {
         Text(prayerName)
           .font(.caption)
           .lineLimit(1)
+          .minimumScaleFactor(0.8)
+          .truncationMode(.tail)
         Text("•")
           .font(.caption2)
           .foregroundStyle(.secondary)
         Text(inlineRightText())
           .font(.caption.monospacedDigit())
           .lineLimit(1)
+          .minimumScaleFactor(0.8)
+          .truncationMode(.tail)
       }
     case .accessoryCircular:
-      ZStack {
+      VStack(spacing: 2) {
         Image(systemName: prayerSymbolName())
           .font(.system(size: 10, weight: .semibold))
-          .foregroundStyle(.secondary.opacity(0.30))
-          .offset(y: -12)
+          .foregroundStyle(clayAccent)
         Text(remainingShortTextRounded())
-          .font(.caption2.monospacedDigit().weight(.semibold))
+          .font(.system(size: 11, weight: .bold, design: .rounded).monospacedDigit())
           .lineLimit(1)
+          .minimumScaleFactor(0.8)
       }
     case .accessoryRectangular:
-      VStack(alignment: .leading, spacing: 4) {
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
-          Text(shortTitleText)
-            .font(.caption2.weight(.semibold))
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.9)
-          Spacer(minLength: 4)
+      VStack(alignment: .leading, spacing: 6) {
+        HStack(alignment: .center, spacing: 8) {
+          accessoryHeader(icon: prayerSymbolName())
+          Spacer(minLength: 6)
           Text(timeText())
-            .font(.caption.monospacedDigit())
+            .font(.system(size: 13, weight: .medium, design: .rounded).monospacedDigit())
             .foregroundStyle(.primary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.9)
-        }
-        HStack(alignment: .firstTextBaseline, spacing: 6) {
-          Text(prayerName)
-            .font(.subheadline.weight(.semibold))
             .lineLimit(1)
             .minimumScaleFactor(0.8)
             .truncationMode(.tail)
-          Spacer(minLength: 4)
-          if #available(iOSApplicationExtension 16.0, *), let targetDate {
-            Text(timerInterval: Date()...targetDate, countsDown: true)
-              .font(.caption.monospacedDigit())
-              .foregroundStyle(.secondary)
-              .lineLimit(1)
-              .minimumScaleFactor(0.85)
-          } else {
-            Text(remainingPrefixText())
-              .font(.caption.monospacedDigit())
-              .foregroundStyle(.secondary)
-              .lineLimit(1)
-              .minimumScaleFactor(0.85)
-          }
         }
+        Text(prayerName)
+          .font(.system(size: 17, weight: .semibold, design: .rounded))
+          .lineLimit(1)
+          .minimumScaleFactor(0.8)
+          .truncationMode(.tail)
+        rectangularRemainingText
       }
-      .padding(.vertical, 6)
-      .padding(.horizontal, 8)
     case .systemSmall:
-      VStack(alignment: .leading, spacing: 8) {
-        HStack {
-          HStack(spacing: 4) {
-            Image(systemName: "moon.stars.fill")
-              .font(.caption)
-              .foregroundStyle(clayAccent)
-            Text(localized("next_prayer_widget_title", fallback: "Next Prayer"))
-              .font(.caption.weight(.semibold))
-              .foregroundStyle(.secondary)
-              .lineLimit(1)
-              .minimumScaleFactor(0.8)
-              .fixedSize(horizontal: false, vertical: true)
-          }
-          Spacer(minLength: 0)
+      VStack(alignment: .leading, spacing: 10) {
+        HStack(alignment: .center, spacing: 8) {
+          homeHeader(icon: prayerSymbolName())
+          Spacer(minLength: 4)
           Text(timeText())
-            .font(.caption.monospacedDigit())
+            .font(.system(size: 14, weight: .medium, design: .rounded).monospacedDigit())
             .foregroundStyle(.primary)
             .lineLimit(1)
             .minimumScaleFactor(0.8)
-            .fixedSize(horizontal: false, vertical: true)
+            .truncationMode(.tail)
         }
-        Rectangle()
-          .fill(subtleStroke.opacity(0.7))
-          .frame(height: 1)
+        Spacer(minLength: 0)
         Text(prayerName)
-          .font(.system(size: 22, weight: .bold, design: .rounded))
+          .font(.system(size: 24, weight: .semibold, design: .rounded))
           .lineLimit(1)
-          .minimumScaleFactor(0.7)
-        if #available(iOSApplicationExtension 16.0, *), let targetDate {
-          Text(timerInterval: Date()...targetDate, countsDown: true)
-            .font(.system(size: 16, weight: .medium, design: .monospaced))
+          .minimumScaleFactor(0.72)
+          .truncationMode(.tail)
+        shortCountdownText
+          .font(.system(size: 15, weight: .medium, design: .rounded).monospacedDigit())
+          .foregroundStyle(.secondary)
+          .lineLimit(1)
+          .minimumScaleFactor(0.8)
+          .truncationMode(.tail)
+        if !locationLabel.isEmpty {
+          Text(locationLabel)
+            .font(.system(size: 12, weight: .regular))
             .foregroundStyle(.secondary)
             .lineLimit(1)
-            .minimumScaleFactor(0.7)
-        } else {
-          Text(remainingPrefixText(nowLabel: false))
-            .font(.system(size: 16, weight: .medium, design: .monospaced))
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
+            .minimumScaleFactor(0.72)
+            .truncationMode(.tail)
         }
       }
-      .padding(12)
+      .padding(14)
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-      .background(cardBackground(cornerRadius: 12))
+      .homeWidgetSurface(cornerRadius: 18)
     case .systemMedium:
-      HStack(alignment: .top, spacing: 14) {
-        VStack(alignment: .leading, spacing: 6) {
-          HStack(spacing: 6) {
-            Image(systemName: prayerSymbolName())
-              .font(.caption)
-              .foregroundStyle(clayAccent)
-            Text(localized("next_prayer_widget_title", fallback: "Next Prayer"))
-              .font(.caption.weight(.semibold))
-              .foregroundStyle(.secondary)
-            Spacer(minLength: 0)
-            Text(timeText())
-              .font(.caption.monospacedDigit())
-          }
-          Text(prayerName)
-            .font(.title3.weight(.semibold))
+      VStack(alignment: .leading, spacing: 12) {
+        HStack(alignment: .center, spacing: 10) {
+          homeHeader(icon: prayerSymbolName())
+          Spacer(minLength: 8)
+          Text(timeText())
+            .font(.system(size: 16, weight: .medium, design: .rounded).monospacedDigit())
+            .foregroundStyle(.primary)
             .lineLimit(1)
-          if #available(iOSApplicationExtension 16.0, *), let targetDate {
-            Text(timerInterval: Date()...targetDate, countsDown: true)
-              .font(.subheadline.monospacedDigit())
-              .foregroundStyle(.secondary)
-              .lineLimit(1)
-          } else {
-            Text(remainingPrefixText(nowLabel: false))
-              .font(.subheadline.monospacedDigit())
-              .foregroundStyle(.secondary)
-              .lineLimit(1)
-          }
+            .minimumScaleFactor(0.8)
+            .truncationMode(.tail)
         }
-        VStack(alignment: .trailing, spacing: 5) {
-          Text(localized("next_prayer_widget_title", fallback: "Next Prayer"))
-            .font(.caption2.weight(.semibold))
-            .foregroundStyle(.secondary)
-          let trimmedLocation = locationLabel.trimmingCharacters(in: .whitespacesAndNewlines)
-          if !trimmedLocation.isEmpty {
-            Text(trimmedLocation)
-              .font(.caption2)
+        HStack(alignment: .bottom, spacing: 12) {
+          VStack(alignment: .leading, spacing: 6) {
+            Text(prayerName)
+              .font(.system(size: 28, weight: .semibold, design: .rounded))
+              .lineLimit(1)
+              .minimumScaleFactor(0.75)
+              .truncationMode(.tail)
+            shortCountdownText
+              .font(.system(size: 17, weight: .medium, design: .rounded).monospacedDigit())
               .foregroundStyle(.secondary)
               .lineLimit(1)
+              .minimumScaleFactor(0.8)
+              .truncationMode(.tail)
           }
-          HStack(spacing: 4) {
-            Image(systemName: "clock")
-              .font(.caption2)
-              .foregroundStyle(clayAccent.opacity(0.85))
-            Text(timeZoneShortLabel())
-              .font(.caption2)
-              .foregroundStyle(.secondary.opacity(0.95))
+          Spacer(minLength: 8)
+          VStack(alignment: .trailing, spacing: 6) {
+            if !locationLabel.isEmpty {
+              Text(locationLabel)
+                .font(.system(size: 12, weight: .regular))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .truncationMode(.tail)
+            }
+            HStack(spacing: 4) {
+              Image(systemName: "globe.europe.africa.fill")
+                .font(.system(size: 10, weight: .medium))
+                .foregroundStyle(clayAccent.opacity(0.9))
+              Text(timeZoneShortLabel())
+                .font(.system(size: 12, weight: .medium))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .truncationMode(.tail)
+            }
           }
         }
       }
-      .padding(12)
+      .padding(16)
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-      .homeWidgetSurface(cornerRadius: 14, strokeColor: subtleStroke)
+      .homeWidgetSurface(cornerRadius: 20)
     default:
       EmptyView()
     }
   }
 
-  private func cardBackground(cornerRadius: CGFloat) -> some View {
-    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-      .fill(paperBackground)
-      .overlay(
-        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-          .stroke(subtleStroke, lineWidth: 1)
-      )
+  private var shortCountdownText: some View {
+    Group {
+      if #available(iOSApplicationExtension 16.0, *), let targetDate {
+        Text(timerInterval: Date()...targetDate, countsDown: true)
+      } else {
+        Text(remainingPrefixText(nowLabel: false))
+      }
+    }
+  }
+
+  private var rectangularRemainingText: some View {
+    Group {
+      if #available(iOSApplicationExtension 16.0, *), let targetDate {
+        Text(timerInterval: Date()...targetDate, countsDown: true)
+      } else {
+        Text(remainingPrefixText())
+      }
+    }
+    .font(.system(size: 12, weight: .medium, design: .rounded).monospacedDigit())
+    .foregroundStyle(.secondary)
+    .lineLimit(1)
+    .minimumScaleFactor(0.8)
+    .truncationMode(.tail)
+  }
+
+  private func accessoryHeader(icon: String) -> some View {
+    HStack(spacing: 6) {
+      Image(systemName: icon)
+        .font(.system(size: 11, weight: .semibold))
+        .foregroundStyle(clayAccent)
+      Text(shortTitleText)
+        .font(.system(size: 11, weight: .semibold))
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .truncationMode(.tail)
+    }
+  }
+
+  private func homeHeader(icon: String) -> some View {
+    HStack(spacing: 6) {
+      Image(systemName: icon)
+        .font(.system(size: 12, weight: .semibold))
+        .foregroundStyle(clayAccent)
+      Text(shortTitleText)
+        .font(.system(size: 12, weight: .semibold))
+        .foregroundStyle(.secondary)
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .truncationMode(.tail)
+    }
   }
 
   private func timeText() -> String {
@@ -633,23 +635,15 @@ private extension View {
   }
 
   @ViewBuilder
-  func homeWidgetSurface(cornerRadius: CGFloat, strokeColor: Color) -> some View {
+  func homeWidgetSurface(cornerRadius: CGFloat) -> some View {
     if #available(iOSApplicationExtension 17.0, *) {
       self
         .containerBackground(.fill.tertiary, for: .widget)
-        .overlay(
-          RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-            .stroke(strokeColor, lineWidth: 1)
-        )
     } else {
       self
         .background(
           RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             .fill(Color.white.opacity(0.08))
-            .overlay(
-              RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                .stroke(strokeColor, lineWidth: 1)
-            )
         )
     }
   }

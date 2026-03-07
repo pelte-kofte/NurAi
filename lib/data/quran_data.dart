@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
+
+import 'local_preferences_service.dart';
 import '../models/ayah.dart';
 import '../models/surah.dart';
 
@@ -36,10 +38,15 @@ class QuranData {
     _isLoaded = true;
   }
 
-  /// Returns the Turkish name of a surah by its number (1-114).
-  String getSurahName(int surahNumber) {
+  /// Returns the localized name of a surah by its number (1-114).
+  String getSurahName(int surahNumber, {String? languageCode}) {
     if (surahNumber < 1 || surahNumber > 114) return '';
-    return _surahs?[surahNumber - 1].nameTurkish ?? '';
+    final surah = _surahs?[surahNumber - 1];
+    if (surah == null) return '';
+    final normalizedLanguageCode =
+        (languageCode ?? LocalPreferencesService.language.value).toLowerCase();
+    if (normalizedLanguageCode == 'tr') return surah.nameTurkish;
+    return surah.nameEnglish;
   }
 
   int getSurahCount() => 114;

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import 'asmaul_husna_service.dart';
 import 'daily_ayah_service.dart';
 import 'daily_content_service.dart';
 import '../l10n/app_strings.dart';
@@ -83,7 +84,8 @@ class WidgetPayloadService {
     }
 
     final upcoming = _buildUpcomingPrayers(now, location);
-    final next = upcoming.isNotEmpty ? upcoming.first : _findNextPrayer(now, location);
+    final next =
+        upcoming.isNotEmpty ? upcoming.first : _findNextPrayer(now, location);
     return <String, dynamic>{
       'generatedAtEpochMs': now.millisecondsSinceEpoch,
       'isWidgetEnabled': true,
@@ -111,7 +113,10 @@ class WidgetPayloadService {
     );
     final hadith = DailyContentService.todayHadith;
     final languageCode = LocalPreferencesService.language.value;
-    final asma = _asmaForDate(now, languageCode);
+    final asma = await AsmaulHusnaService.getDailyNameForDate(
+      now,
+      Locale(languageCode),
+    );
     final dateString = _dateString(now);
     final readableText = await DailyAyahService.getAyahReadableText(
       surah: dailyAyah.surahNumber,
@@ -125,9 +130,8 @@ class WidgetPayloadService {
       'date': dateString,
       'verse': <String, dynamic>{
         'title': S.get('daily_ayah'),
-        'text': readableText.isNotEmpty
-            ? readableText
-            : dailyAyah.turkishReadable,
+        'text':
+            readableText.isNotEmpty ? readableText : dailyAyah.turkishReadable,
         'ref': dailyAyah.reference,
       },
       'hadith': <String, dynamic>{
@@ -136,8 +140,8 @@ class WidgetPayloadService {
         'ref': hadith?.source ?? '',
       },
       'asma': <String, dynamic>{
-        'name': '${asma.arabic} - ${asma.transliteration}',
-        'meaning': asma.meaningFor(languageCode),
+        'name': '${asma.nameArabic} - ${asma.localizedName(languageCode)}',
+        'meaning': asma.localizedMeaning(languageCode),
       },
       'updatedAt': now.millisecondsSinceEpoch,
     };
@@ -149,63 +153,6 @@ class WidgetPayloadService {
     final d = date.day.toString().padLeft(2, '0');
     return '$y-$m-$d';
   }
-
-  static _AsmaItem _asmaForDate(DateTime date, String languageCode) {
-    final index =
-        DailyContentService.reminderIndexForDate(date, _asmaItems.length);
-    return _asmaItems[index];
-  }
-
-  static const List<_AsmaItem> _asmaItems = <_AsmaItem>[
-    _AsmaItem(
-      arabic: 'الرَّحْمَٰنُ',
-      transliteration: 'Ar-Rahman',
-      trMeaning: 'Sonsuz merhamet sahibi.',
-      enMeaning: 'The Entirely Merciful.',
-    ),
-    _AsmaItem(
-      arabic: 'الرَّحِيمُ',
-      transliteration: 'Ar-Rahim',
-      trMeaning: 'Ahirette rahmetiyle muamele eden.',
-      enMeaning: 'The Especially Merciful.',
-    ),
-    _AsmaItem(
-      arabic: 'الْمَلِكُ',
-      transliteration: 'Al-Malik',
-      trMeaning: 'Tum alemlerin mutlak sahibi.',
-      enMeaning: 'The Absolute Sovereign.',
-    ),
-    _AsmaItem(
-      arabic: 'الْقُدُّوسُ',
-      transliteration: 'Al-Quddus',
-      trMeaning: 'Her eksiklikten uzak olan.',
-      enMeaning: 'The Most Pure.',
-    ),
-    _AsmaItem(
-      arabic: 'السَّلَامُ',
-      transliteration: 'As-Salam',
-      trMeaning: 'Esenligin ve selametin kaynagi.',
-      enMeaning: 'The Source of Peace.',
-    ),
-    _AsmaItem(
-      arabic: 'الْغَفُورُ',
-      transliteration: 'Al-Ghafur',
-      trMeaning: 'Cokca bagislayan.',
-      enMeaning: 'The All-Forgiving.',
-    ),
-    _AsmaItem(
-      arabic: 'الْوَكِيلُ',
-      transliteration: 'Al-Wakil',
-      trMeaning: 'Kendisine dayanilan en guvenilir vekil.',
-      enMeaning: 'The Trustee.',
-    ),
-    _AsmaItem(
-      arabic: 'الْهَادِي',
-      transliteration: 'Al-Hadi',
-      trMeaning: 'Dogru yola ileten.',
-      enMeaning: 'The Guide.',
-    ),
-  ];
 
   static _PrayerEntry _findNextPrayer(DateTime now, PrayerLocation location) {
     final today = AdhanTimesService.computeTimes(
@@ -252,7 +199,8 @@ class WidgetPayloadService {
     if (tomorrowEntries.isNotEmpty) {
       final tomorrowFajr = tomorrowEntries.first;
       final hasTomorrowFajr = upcoming.any(
-        (entry) => entry.key == tomorrowFajr.key && entry.time == tomorrowFajr.time,
+        (entry) =>
+            entry.key == tomorrowFajr.key && entry.time == tomorrowFajr.time,
       );
       if (!hasTomorrowFajr) {
         upcoming.add(tomorrowFajr);
@@ -311,23 +259,4 @@ class _PrayerEntry {
   final String key;
   final String label;
   final DateTime time;
-}
-
-class _AsmaItem {
-  const _AsmaItem({
-    required this.arabic,
-    required this.transliteration,
-    required this.trMeaning,
-    required this.enMeaning,
-  });
-
-  final String arabic;
-  final String transliteration;
-  final String trMeaning;
-  final String enMeaning;
-
-  String meaningFor(String languageCode) {
-    if (languageCode.toLowerCase() == 'tr') return trMeaning;
-    return enMeaning;
-  }
 }

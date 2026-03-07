@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../data/adhan_times_service.dart';
+import '../../data/asmaul_husna_favorites_service.dart';
+import '../../data/asmaul_husna_service.dart';
 import '../../data/daily_ayah_service.dart';
 import '../../data/daily_content_service.dart';
 import '../../data/local_preferences_service.dart';
@@ -22,6 +24,7 @@ import '../../widgets/share_card_widget.dart';
 import '../../widgets/next_prayer_pill.dart';
 import '../../widgets/quick_actions_popover.dart';
 import '../adhan/adhan_times_screen.dart';
+import '../asma/asmaul_husna_screen.dart';
 import '../qibla/qibla_screen.dart';
 import '../ramadan/ramadan_hub_screen.dart';
 import '../reading/ayah_reading_screen.dart';
@@ -420,6 +423,18 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               _buildExploreQuranEntry(context),
               const SizedBox(height: 12),
               _buildExploreEntry(
+                title: S.get('asma_screen_title'),
+                subtitle: S.get('asma_explore_subtitle'),
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const AsmaulHusnaScreen(),
+                    ),
+                  );
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildExploreEntry(
                 title: S.get('ramadan_hub_title'),
                 onTap: () {
                   Navigator.of(context).push(
@@ -552,6 +567,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   Widget _buildPrimaryDailyCard() {
     final date = DateTime.now();
     final contentType = DailyContentService.homeContentTypeForDate(date);
+    final locale = Locale(LocalPreferencesService.language.value);
 
     switch (contentType) {
       case HomeDailyContentType.verse:
@@ -563,7 +579,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           future: DailyAyahService.getAyahReadableText(
             surah: ayah.surahNumber,
             ayah: ayah.ayahNumber,
-            locale: Locale(LocalPreferencesService.language.value),
+            locale: locale,
           ),
           builder: (context, snapshot) {
             return _buildPrimaryAyahCard(
@@ -602,7 +618,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         return FutureBuilder<DailyQuoteItem>(
           future: DailyContentService.getQuoteForDate(
             date,
-            Locale(LocalPreferencesService.language.value),
+            locale,
           ),
           builder: (context, snapshot) {
             final quote = snapshot.data;
@@ -618,20 +634,47 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             );
           },
         );
+      case HomeDailyContentType.asma:
+        return FutureBuilder<AsmaulHusnaName>(
+          future: AsmaulHusnaService.getDailyNameForDate(date, locale),
+          builder: (context, snapshot) {
+            final asma = snapshot.data;
+            if (asma == null) {
+              return _buildPrimaryCard(
+                title: S.get('daily_asma_title'),
+                body: '',
+              );
+            }
+            return _buildPrimaryAsmaCard(
+              asma: asma,
+              languageCode: locale.languageCode,
+              onShare: () => _shareAsmaCard(
+                asma: asma,
+                languageCode: locale.languageCode,
+              ),
+            );
+          },
+        );
     }
   }
 
   Widget _buildQuranFramedCard({required Widget child}) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final style = _PrimaryDailyCardStyle.fromTheme(
+      colorScheme: colorScheme,
+      isDark: isDark,
+    );
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: const Color(0xFFFDFAF3),
+        color: style.background,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x26C9A84C),
-            blurRadius: 14,
-            offset: Offset(0, 6),
+            color: style.shadowColor,
+            blurRadius: style.shadowBlur,
+            offset: style.shadowOffset,
           ),
         ],
       ),
@@ -643,7 +686,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           ),
           Positioned.fill(
             child: IgnorePointer(
-              child: CustomPaint(painter: _QuranFramePainter()),
+              child: CustomPaint(
+                painter: _QuranFramePainter(
+                  strokeColor: style.frameStroke,
+                  ornamentColor: style.ornament,
+                  edgeAccentColor: style.edgeAccent,
+                  showEdgeAccents: style.showEdgeAccents,
+                ),
+              ),
             ),
           ),
         ],
@@ -769,6 +819,119 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
+  Widget _buildPrimaryAsmaCard({
+    required AsmaulHusnaName asma,
+    required String languageCode,
+    VoidCallback? onShare,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final meaning = asma.localizedMeaning(languageCode);
+    final reflection = asma.localizedReflection(languageCode);
+    final card = _buildQuranFramedCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  S.get('daily_asma_title'),
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.secondary,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+              if (onShare != null)
+                _buildOverflowButton(
+                  onTap: () => _showAsmaCardMenu(
+                    asma: asma,
+                    languageCode: languageCode,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Text(
+            asma.nameArabic,
+            textDirection: TextDirection.rtl,
+            style: TextStyle(
+              fontFamily: 'Amiri',
+              fontSize: 34,
+              fontWeight: FontWeight.w700,
+              color: colorScheme.onSurface,
+              height: 1.3,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            asma.localizedName(languageCode),
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurface.withValues(alpha: 0.84),
+              letterSpacing: 0.2,
+            ),
+          ),
+          const SizedBox(height: 14),
+          Text(
+            meaning,
+            style: TextStyle(
+              fontFamily: 'Merriweather',
+              fontSize: 19,
+              fontWeight: FontWeight.w400,
+              color: colorScheme.onSurface,
+              height: 1.55,
+            ),
+          ),
+          if (reflection.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            Text(
+              reflection,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12.5,
+                fontWeight: FontWeight.w400,
+                color: colorScheme.onSurface.withValues(alpha: 0.72),
+                height: 1.5,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+    if (onShare == null) return card;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => _openAsmaDetail(asma),
+      onLongPress: onShare,
+      child: card,
+    );
+  }
+
+  Widget _buildOverflowButton({required VoidCallback onTap}) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return IconButton(
+      onPressed: onTap,
+      tooltip: S.get('today_card_more_actions'),
+      visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+      icon: Icon(
+        Icons.more_horiz_rounded,
+        size: 18,
+        color: colorScheme.onSurface.withValues(alpha: 0.72),
+      ),
+    );
+  }
+
   Widget _buildShareButton(VoidCallback onShare) {
     final colorScheme = Theme.of(context).colorScheme;
     return IconButton(
@@ -831,6 +994,163 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     }
   }
 
+  Future<void> _shareAsmaCard({
+    required AsmaulHusnaName asma,
+    required String languageCode,
+    String? title,
+  }) async {
+    try {
+      await ShareCardService.shareDailyCard(
+        context: context,
+        payload: ShareCardPayload(
+          title: title ?? S.get('daily_asma_title'),
+          arabicText: asma.nameArabic,
+          content:
+              '${asma.localizedName(languageCode)}\n${asma.localizedMeaning(languageCode)}',
+          type: ShareCardType.asma,
+          localeCode: languageCode,
+        ),
+      );
+    } catch (_) {
+      _showShareError();
+    }
+  }
+
+  Future<void> _openAsmaDetail(AsmaulHusnaName asma) async {
+    final isFavorite = await AsmaulHusnaFavoritesService.isFavorite(asma.id);
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AsmaulHusnaDetailScreen(
+          item: asma,
+          initialIsFavorite: isFavorite,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showAsmaCardMenu({
+    required AsmaulHusnaName asma,
+    required String languageCode,
+  }) async {
+    final colorScheme = Theme.of(context).colorScheme;
+    final action = await showModalBottomSheet<_HomeAsmaCardMenuAction>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        final sheetColorScheme = Theme.of(sheetContext).colorScheme;
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildActionTile(
+                  context: sheetContext,
+                  icon: Icons.ios_share_rounded,
+                  label: S.get('ramadan_suggestions_share'),
+                  onTap: () => Navigator.of(sheetContext).pop(
+                    _HomeAsmaCardMenuAction.share,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                _buildActionTile(
+                  context: sheetContext,
+                  icon: Icons.star_border_rounded,
+                  label: S.get('today_card_add_to_favorites'),
+                  onTap: () => Navigator.of(sheetContext).pop(
+                    _HomeAsmaCardMenuAction.favorite,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Divider(
+                  height: 1,
+                  color: sheetColorScheme.outlineVariant.withValues(alpha: 0.4),
+                ),
+                const SizedBox(height: 4),
+                _buildActionTile(
+                  context: sheetContext,
+                  icon: Icons.close_rounded,
+                  label: S.get('cancel'),
+                  onTap: () => Navigator.of(sheetContext).pop(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!mounted || action == null) return;
+    switch (action) {
+      case _HomeAsmaCardMenuAction.share:
+        await _shareAsmaCard(
+          asma: asma,
+          languageCode: languageCode,
+        );
+        break;
+      case _HomeAsmaCardMenuAction.favorite:
+        final saved = await AsmaulHusnaFavoritesService.addIfAbsent(asma.id);
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              S.get(
+                  saved ? 'asma_favorite_added' : 'today_card_favorite_exists'),
+            ),
+          ),
+        );
+        break;
+    }
+  }
+
+  Widget _buildActionTile({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.32),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: colorScheme.onSurface.withValues(alpha: 0.82),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showShareError() {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
@@ -879,7 +1199,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         .get('meal_sheet_title_fallback')
         .replaceAll('{surah}', ayah.surahNumber.toString())
         .replaceAll('{ayah}', ayah.ayahNumber.toString());
-    final surahName = QuranData.instance.getSurahName(ayah.surahNumber).trim();
+    final surahName = QuranData.instance
+        .getSurahName(
+          ayah.surahNumber,
+          languageCode: Localizations.localeOf(context).languageCode,
+        )
+        .trim();
     final title = surahName.isEmpty
         ? fallback
         : '$surahName · ${ayah.ayahNumber}. ${S.get('ayah_label')}';
@@ -964,10 +1289,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       title: S.get('start_reading'),
       subtitle: progress == null
           ? null
-          : '${QuranData.instance.getSurahName(progress.surah)} · ${progress.ayah}. ${S.get('ayah_label')}',
+          : '${QuranData.instance.getSurahName(progress.surah, languageCode: Localizations.localeOf(context).languageCode)} · ${progress.ayah}. ${S.get('ayah_label')}',
       onTap: () {
         if (progress != null) {
-          final surahName = QuranData.instance.getSurahName(progress.surah);
+          final surahName = QuranData.instance.getSurahName(
+            progress.surah,
+            languageCode: Localizations.localeOf(context).languageCode,
+          );
           Navigator.of(context).push(
             MaterialPageRoute(
               builder: (_) => AyahReadingScreen(
@@ -1045,25 +1373,90 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 }
 
+class _PrimaryDailyCardStyle {
+  const _PrimaryDailyCardStyle({
+    required this.background,
+    required this.frameStroke,
+    required this.ornament,
+    required this.edgeAccent,
+    required this.shadowColor,
+    required this.shadowBlur,
+    required this.shadowOffset,
+    required this.showEdgeAccents,
+  });
+
+  final Color background;
+  final Color frameStroke;
+  final Color ornament;
+  final Color edgeAccent;
+  final Color shadowColor;
+  final double shadowBlur;
+  final Offset shadowOffset;
+  final bool showEdgeAccents;
+
+  factory _PrimaryDailyCardStyle.fromTheme({
+    required ColorScheme colorScheme,
+    required bool isDark,
+  }) {
+    if (isDark) {
+      return _PrimaryDailyCardStyle(
+        background: const Color(0xFF1B1C1F),
+        frameStroke: const Color(0xFF6A6257).withValues(alpha: 0.28),
+        ornament: const Color(0xFF8F7A63).withValues(alpha: 0.18),
+        edgeAccent: const Color(0xFF8F7A63).withValues(alpha: 0.12),
+        shadowColor: Colors.black.withValues(alpha: 0.16),
+        shadowBlur: 12,
+        shadowOffset: const Offset(0, 4),
+        showEdgeAccents: false,
+      );
+    }
+    return const _PrimaryDailyCardStyle(
+      background: Color(0xFFFDFAF3),
+      frameStroke: Color(0xFFC9A84C),
+      ornament: Color(0xFFC9A84C),
+      edgeAccent: Color(0xFFC9A84C),
+      shadowColor: Color(0x26C9A84C),
+      shadowBlur: 14,
+      shadowOffset: Offset(0, 6),
+      showEdgeAccents: true,
+    );
+  }
+}
+
 class _QuranFramePainter extends CustomPainter {
-  static const _gold = Color(0xFFC9A84C);
+  const _QuranFramePainter({
+    required this.strokeColor,
+    required this.ornamentColor,
+    required this.edgeAccentColor,
+    required this.showEdgeAccents,
+  });
+
   static const _r = 14.0; // matches card border radius
   static const _innerGap = 6.0; // gap between outer and inner border line
+
+  final Color strokeColor;
+  final Color ornamentColor;
+  final Color edgeAccentColor;
+  final bool showEdgeAccents;
 
   @override
   void paint(Canvas canvas, Size size) {
     final strokeOuter = Paint()
-      ..color = _gold
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-
-    final strokeInner = Paint()
-      ..color = _gold
+      ..color = strokeColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 1.0;
 
+    final strokeInner = Paint()
+      ..color = strokeColor.withValues(alpha: showEdgeAccents ? 0.82 : 0.62)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8;
+
     final fillGold = Paint()
-      ..color = _gold
+      ..color = ornamentColor
+      ..style = PaintingStyle.fill;
+
+    final edgeAccentPaint = Paint()
+      ..color = edgeAccentColor
       ..style = PaintingStyle.fill;
 
     // Outer border
@@ -1097,14 +1490,18 @@ class _QuranFramePainter extends CustomPainter {
         canvas, fillGold, Offset(size.width - _r, size.height - _r), 9.0);
 
     // Oval panel accents at midpoints of each edge
-    _drawOvalAccent(canvas, fillGold, Offset(size.width / 2, 0),
-        vertical: false);
-    _drawOvalAccent(canvas, fillGold, Offset(size.width / 2, size.height),
-        vertical: false);
-    _drawOvalAccent(canvas, fillGold, Offset(0, size.height / 2),
-        vertical: true);
-    _drawOvalAccent(canvas, fillGold, Offset(size.width, size.height / 2),
-        vertical: true);
+    if (showEdgeAccents) {
+      _drawOvalAccent(canvas, edgeAccentPaint, Offset(size.width / 2, 0),
+          vertical: false);
+      _drawOvalAccent(
+          canvas, edgeAccentPaint, Offset(size.width / 2, size.height),
+          vertical: false);
+      _drawOvalAccent(canvas, edgeAccentPaint, Offset(0, size.height / 2),
+          vertical: true);
+      _drawOvalAccent(
+          canvas, edgeAccentPaint, Offset(size.width, size.height / 2),
+          vertical: true);
+    }
   }
 
   /// 8-pointed Islamic star (alternating outer/inner radius)
@@ -1140,7 +1537,17 @@ class _QuranFramePainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _QuranFramePainter oldDelegate) {
+    return oldDelegate.strokeColor != strokeColor ||
+        oldDelegate.ornamentColor != ornamentColor ||
+        oldDelegate.edgeAccentColor != edgeAccentColor ||
+        oldDelegate.showEdgeAccents != showEdgeAccents;
+  }
+}
+
+enum _HomeAsmaCardMenuAction {
+  share,
+  favorite,
 }
 
 enum _PrayerType { fajr, dhuhr, asr, maghrib, isha, none }

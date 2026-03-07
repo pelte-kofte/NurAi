@@ -47,6 +47,8 @@ class LocalPreferencesService {
       'pref_ramadan_suggestions_iyilik_index';
   static const _keyRamadanSuggestionsFavorites =
       'pref_ramadan_suggestions_favorites';
+  static const _keyTodayCardFavorites = 'pref_today_card_favorites';
+  static const _keyAsmaFavorites = 'pref_asma_favorites';
   static const _keyHomeDailyRotationPrefix = 'pref_home_daily_rotation_';
   static const _releaseLanguages = <String>{'tr', 'en'};
 
@@ -331,6 +333,22 @@ class LocalPreferencesService {
 
   static Future<void> setRamadanSuggestionFavoritesRaw(String value) async {
     await _prefs?.setString(_keyRamadanSuggestionsFavorites, value);
+  }
+
+  static String? getTodayCardFavoritesRaw() {
+    return _prefs?.getString(_keyTodayCardFavorites);
+  }
+
+  static Future<void> setTodayCardFavoritesRaw(String value) async {
+    await _prefs?.setString(_keyTodayCardFavorites, value);
+  }
+
+  static String? getAsmaFavoritesRaw() {
+    return _prefs?.getString(_keyAsmaFavorites);
+  }
+
+  static Future<void> setAsmaFavoritesRaw(String value) async {
+    await _prefs?.setString(_keyAsmaFavorites, value);
   }
 
   static String? getHomeDailyRotationStateRaw(String rotationKey) {

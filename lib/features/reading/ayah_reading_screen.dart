@@ -222,6 +222,13 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   bool get _canGoNextSurah =>
       !_isJuzMode && widget.surahNumber < QuranData.instance.getSurahCount();
 
+  String _localizedSurahName(int surahNumber) {
+    return QuranData.instance.getSurahName(
+      surahNumber,
+      languageCode: Localizations.localeOf(context).languageCode,
+    );
+  }
+
   void _openAdjacentSurah(int surahNumber) {
     final initialAyah = ReadingProgressService.getLastAyahForContext(
           widget.readingContext,
@@ -232,7 +239,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
       MaterialPageRoute(
         builder: (_) => AyahReadingScreen(
           surahNumber: surahNumber,
-          surahName: QuranData.instance.getSurahName(surahNumber),
+          surahName: _localizedSurahName(surahNumber),
           initialAyah: initialAyah,
           openNoteEditorOnStart: false,
           readingContext: widget.readingContext,
@@ -265,7 +272,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
     }
     await showAyahNoteEditorSheet(
       context: context,
-      surahName: QuranData.instance.getSurahName(ayah.surah),
+      surahName: _localizedSurahName(ayah.surah),
       ayah: ayah,
     );
     if (mounted) {
@@ -283,11 +290,9 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final secondaryTextColor =
-        theme.textTheme.bodyMedium?.color ??
+    final secondaryTextColor = theme.textTheme.bodyMedium?.color ??
         colorScheme.onSurface.withValues(alpha: 0.72);
-    final mutedTextColor =
-        theme.textTheme.bodySmall?.color ??
+    final mutedTextColor = theme.textTheme.bodySmall?.color ??
         colorScheme.onSurface.withValues(alpha: 0.56);
 
     return Scaffold(
@@ -391,7 +396,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
                     _secondaryTextMode ?? _SecondaryTextMode.transliteration;
                 return _AyahBlock(
                   ayah: ayah,
-                  surahName: QuranData.instance.getSurahName(ayah.surah),
+                  surahName: _localizedSurahName(ayah.surah),
                   secondaryTextMode: secondaryMode,
                   languageCode: languageCode,
                   isLastRead: _isLastRead(ayah),
@@ -410,8 +415,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   Widget _buildSecondaryModeSelector() {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final secondaryTextColor =
-        theme.textTheme.bodyMedium?.color ??
+    final secondaryTextColor = theme.textTheme.bodyMedium?.color ??
         colorScheme.onSurface.withValues(alpha: 0.72);
     final languageCode =
         Localizations.localeOf(context).languageCode.toLowerCase();
@@ -565,11 +569,9 @@ class _AyahBlockState extends State<_AyahBlock> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final secondaryTextColor =
-        theme.textTheme.bodyMedium?.color ??
+    final secondaryTextColor = theme.textTheme.bodyMedium?.color ??
         colorScheme.onSurface.withValues(alpha: 0.72);
-    final mutedTextColor =
-        theme.textTheme.bodySmall?.color ??
+    final mutedTextColor = theme.textTheme.bodySmall?.color ??
         colorScheme.onSurface.withValues(alpha: 0.56);
     final readAccent = colorScheme.primary;
     final arabicColor = widget.isWithinJuzRange
@@ -777,11 +779,9 @@ Future<void> showAyahNoteEditorSheet({
   final controller = TextEditingController(text: existing?.text ?? '');
   final theme = Theme.of(context);
   final colorScheme = theme.colorScheme;
-  final secondaryTextColor =
-      theme.textTheme.bodyMedium?.color ??
+  final secondaryTextColor = theme.textTheme.bodyMedium?.color ??
       colorScheme.onSurface.withValues(alpha: 0.72);
-  final mutedTextColor =
-      theme.textTheme.bodySmall?.color ??
+  final mutedTextColor = theme.textTheme.bodySmall?.color ??
       colorScheme.onSurface.withValues(alpha: 0.56);
 
   await showModalBottomSheet<void>(

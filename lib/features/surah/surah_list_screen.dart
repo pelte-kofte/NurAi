@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../data/quran_data.dart';
+import '../../l10n/app_strings.dart';
 import '../../models/reading_context.dart';
 import '../../models/surah.dart';
 import '../bookmarks/bookmark_screen.dart';
@@ -33,9 +34,9 @@ class SurahListScreen extends StatelessWidget {
           ),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
-          'Sureler',
-          style: TextStyle(
+        title: Text(
+          S.t(context, 'surahs'),
+          style: const TextStyle(
             fontFamily: 'Merriweather',
             fontSize: 20,
             fontWeight: FontWeight.w400,
@@ -84,13 +85,17 @@ class _SurahListItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final languageCode = Localizations.localeOf(context).languageCode;
     return GestureDetector(
       onTap: () {
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
             builder: (_) => AyahReadingScreen(
               surahNumber: surah.id,
-              surahName: surah.nameTurkish,
+              surahName: QuranData.instance.getSurahName(
+                surah.id,
+                languageCode: languageCode,
+              ),
               readingContext: readingContext,
             ),
           ),
@@ -135,7 +140,10 @@ class _SurahListItem extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    surah.nameTurkish,
+                    QuranData.instance.getSurahName(
+                      surah.id,
+                      languageCode: languageCode,
+                    ),
                     style: const TextStyle(
                       fontFamily: 'Merriweather',
                       fontSize: 16,
@@ -146,7 +154,7 @@ class _SurahListItem extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${surah.ayahCount} ayet',
+                    '${surah.ayahCount} ${S.t(context, 'ayah_count_suffix')}',
                     style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 12,

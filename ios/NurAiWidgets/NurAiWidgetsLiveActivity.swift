@@ -364,7 +364,7 @@ struct NurAiWidgetsLiveActivity: Widget {
             LiveActivityAvatarView(size: 16)
             switch phase {
             case .countdown:
-                Text(compactCountdownText(to: state.iftarDate))
+                Text(timerInterval: Date()...state.iftarDate, countsDown: true)
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
                     .monospacedDigit()
                     .foregroundStyle(islandText)
@@ -404,7 +404,7 @@ struct NurAiWidgetsLiveActivity: Widget {
     private func compactTrailing(for state: IftarAttributes.ContentState, phase: DisplayPhase) -> some View {
         switch phase {
         case .countdown:
-            Text(compactCountdownText(to: state.iftarDate))
+            Text(timerInterval: Date()...state.iftarDate, countsDown: true)
                 .font(.system(size: 12, weight: .semibold, design: .rounded))
                 .monospacedDigit()
                 .foregroundStyle(islandText)

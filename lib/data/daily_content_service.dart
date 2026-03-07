@@ -49,6 +49,7 @@ enum HomeDailyContentType {
   hadith,
   gentleReminder,
   quote,
+  asma,
 }
 
 class DailyContentService {
@@ -78,7 +79,7 @@ class DailyContentService {
       case DateTime.thursday:
         return HomeDailyContentType.quote;
       case DateTime.friday:
-        return HomeDailyContentType.hadith;
+        return HomeDailyContentType.asma;
       case DateTime.saturday:
         return HomeDailyContentType.verse;
       case DateTime.sunday:

@@ -7,6 +7,7 @@ enum ShareCardType {
   hadith,
   quote,
   reminder,
+  asma,
 }
 
 class ShareCardPayload {
@@ -45,6 +46,7 @@ class ShareCardWidget extends StatelessWidget {
     final contentFontSize = _contentFontSize(
       payload.content,
       hasArabic: hasArabic,
+      type: payload.type,
     );
 
     return Material(
@@ -226,9 +228,18 @@ class ShareCardWidget extends StatelessWidget {
     );
   }
 
-  static double _contentFontSize(String text, {required bool hasArabic}) {
+  static double _contentFontSize(
+    String text, {
+    required bool hasArabic,
+    required ShareCardType type,
+  }) {
     final length = text.trim().length;
     if (hasArabic) {
+      if (type == ShareCardType.asma) {
+        if (length > 180) return 30;
+        if (length > 120) return 33;
+        return 36;
+      }
       if (length > 260) return 30;
       if (length > 180) return 32;
       return 34;
@@ -249,6 +260,8 @@ class ShareCardWidget extends StatelessWidget {
         return Icons.format_quote_rounded;
       case ShareCardType.reminder:
         return Icons.lightbulb_outline_rounded;
+      case ShareCardType.asma:
+        return Icons.auto_awesome_rounded;
     }
   }
 }

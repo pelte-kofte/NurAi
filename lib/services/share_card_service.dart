@@ -17,18 +17,37 @@ class ShareCardService {
     required BuildContext context,
     required ShareCardPayload payload,
   }) async {
-    final pngBytes = await _captureCard(
-      context: context,
-      payload: payload,
-    );
-    final file = await _writeTempFile(
-      pngBytes,
-      title: payload.title,
-    );
-    await Share.shareXFiles(
-      [XFile(file.path, mimeType: 'image/png')],
-      subject: payload.title,
-    );
+    final sharePositionOrigin = _shareOriginForContext(context);
+    try {
+      final pngBytes = await _captureCard(
+        context: context,
+        payload: payload,
+      );
+      if (pngBytes.isEmpty) {
+        throw StateError('Share card capture returned empty bytes.');
+      }
+
+      final file = await _writeTempFile(
+        pngBytes,
+        title: payload.title,
+      );
+      if (!await file.exists()) {
+        throw StateError('Share card file was not created: ${file.path}');
+      }
+
+      await Share.shareXFiles(
+        [XFile(file.path, mimeType: 'image/png')],
+        subject: payload.title,
+        sharePositionOrigin: sharePositionOrigin,
+      );
+    } catch (error, stackTrace) {
+      debugPrint('ShareCardService.shareDailyCard failed: $error');
+      debugPrintStack(
+        label: 'ShareCardService.shareDailyCard stack trace',
+        stackTrace: stackTrace,
+      );
+      rethrow;
+    }
   }
 
   static Future<Uint8List> _captureCard({
@@ -37,28 +56,35 @@ class ShareCardService {
   }) {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
-    return _controller.captureFromWidget(
-      MediaQuery(
-        data: mediaQuery.copyWith(
-          size: const Size(1080, 1350),
-          devicePixelRatio: 1,
-          textScaler: const TextScaler.linear(1),
-        ),
-        child: Directionality(
-          textDirection: TextDirection.ltr,
-          child: Theme(
-            data: theme,
-            child: Center(
-              child: ShareCardWidget(
-                payload: payload,
-                isDark: theme.brightness == Brightness.dark,
+    final card = MediaQuery(
+      data: mediaQuery.copyWith(
+        size: const Size(1080, 1350),
+        devicePixelRatio: 1,
+        textScaler: const TextScaler.linear(1),
+      ),
+      child: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Theme(
+          data: theme,
+          child: DefaultTextStyle(
+            style: theme.textTheme.bodyMedium ?? const TextStyle(),
+            child: Material(
+              type: MaterialType.transparency,
+              child: Center(
+                child: ShareCardWidget(
+                  payload: payload,
+                  isDark: theme.brightness == Brightness.dark,
+                ),
               ),
             ),
           ),
         ),
       ),
+    );
+    return _controller.captureFromWidget(
+      InheritedTheme.captureAll(context, card),
       pixelRatio: 1,
-      delay: const Duration(milliseconds: 24),
+      delay: const Duration(milliseconds: 80),
     );
   }
 
@@ -72,6 +98,15 @@ class ShareCardService {
     final file = File('${directory.path}/duaya_${safeTitle}_$timestamp.png');
     await file.writeAsBytes(bytes, flush: true);
     return file;
+  }
+
+  static Rect _shareOriginForContext(BuildContext context) {
+    final renderObject = context.findRenderObject();
+    if (renderObject is RenderBox && renderObject.hasSize) {
+      final offset = renderObject.localToGlobal(Offset.zero);
+      return offset & renderObject.size;
+    }
+    return const Rect.fromLTWH(0, 0, 1, 1);
   }
 
   static String _sanitizeFileName(String title) {

@@ -3,11 +3,18 @@ import 'package:flutter/services.dart';
 
 import '../../data/daily_ayah_service.dart';
 import '../../data/daily_content_service.dart';
+import '../../data/bookmark_service.dart';
 import '../../data/quran_data.dart';
 import '../../data/quran_turkish_meal_service.dart';
+import '../../data/today_card_favorites_service.dart';
 import '../../services/share_card_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../widgets/share_card_widget.dart';
+
+enum _TodayCardMenuAction {
+  share,
+  favorite,
+}
 
 class TodayScreen extends StatelessWidget {
   const TodayScreen({super.key});
@@ -54,6 +61,11 @@ class TodayScreen extends StatelessWidget {
                     dailyAyah: dailyAyah,
                     readableText: snapshot.data ?? dailyAyah.turkishReadable,
                   ),
+                  onFavorite: () => _saveAyahFavorite(
+                    context,
+                    dailyAyah: dailyAyah,
+                    readableText: snapshot.data ?? dailyAyah.turkishReadable,
+                  ),
                 );
               },
             ),
@@ -73,6 +85,14 @@ class TodayScreen extends StatelessWidget {
                       S.get('daily_hadith_empty'),
                   source: DailyContentService.todayHadith?.source,
                 ),
+                onFavorite: () => _saveTextFavorite(
+                  context,
+                  title: S.get('daily_hadith_title'),
+                  body: DailyContentService.todayHadith?.text ??
+                      S.get('daily_hadith_empty'),
+                  source: DailyContentService.todayHadith?.source,
+                  type: TodayCardFavoriteType.hadith,
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -89,6 +109,13 @@ class TodayScreen extends StatelessWidget {
                   body: DailyContentService.todayWord?.text ??
                       S.get('daily_word_empty'),
                 ),
+                onFavorite: () => _saveTextFavorite(
+                  context,
+                  title: S.get('daily_word_title'),
+                  body: DailyContentService.todayWord?.text ??
+                      S.get('daily_word_empty'),
+                  type: TodayCardFavoriteType.reminder,
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -99,18 +126,30 @@ class TodayScreen extends StatelessWidget {
               ),
               builder: (context, snapshot) {
                 final quote = snapshot.data;
+                final hasQuote = quote?.text.trim().isNotEmpty ?? false;
                 return _buildContentCard(
                   context: context,
                   title: S.get('daily_quote_title'),
                   body: quote?.text ?? '',
                   source: quote?.source,
                   showQuoteOrnaments: true,
-                  onShare: () => _shareDailyTextCard(
-                    context,
-                    title: S.get('daily_quote_title'),
-                    body: quote?.text ?? '',
-                    source: quote?.source,
-                  ),
+                  onShare: hasQuote
+                      ? () => _shareDailyTextCard(
+                            context,
+                            title: S.get('daily_quote_title'),
+                            body: quote?.text ?? '',
+                            source: quote?.source,
+                          )
+                      : null,
+                  onFavorite: hasQuote
+                      ? () => _saveTextFavorite(
+                            context,
+                            title: S.get('daily_quote_title'),
+                            body: quote?.text ?? '',
+                            source: quote?.source,
+                            type: TodayCardFavoriteType.quote,
+                          )
+                      : null,
                 );
               },
             ),
@@ -125,6 +164,7 @@ class TodayScreen extends StatelessWidget {
     DailyAyah dailyAyah, {
     required String readableText,
     VoidCallback? onShare,
+    VoidCallback? onFavorite,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final card = Container(
@@ -153,7 +193,12 @@ class TodayScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              if (onShare != null) _buildShareButton(context, onShare),
+              if (onShare != null && onFavorite != null)
+                _buildOverflowButton(
+                  context,
+                  onShare: onShare,
+                  onFavorite: onFavorite,
+                ),
             ],
           ),
           const SizedBox(height: 14),
@@ -325,6 +370,7 @@ class TodayScreen extends StatelessWidget {
     String? source,
     bool showQuoteOrnaments = false,
     VoidCallback? onShare,
+    VoidCallback? onFavorite,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final cleanSource = source?.trim() ?? '';
@@ -397,7 +443,12 @@ class TodayScreen extends StatelessWidget {
                           ),
                         ),
                       ),
-                      if (onShare != null) _buildShareButton(context, onShare),
+                      if (onShare != null && onFavorite != null)
+                        _buildOverflowButton(
+                          context,
+                          onShare: onShare,
+                          onFavorite: onFavorite,
+                        ),
                     ],
                   ),
                   const SizedBox(height: 12),
@@ -438,18 +489,137 @@ class TodayScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildShareButton(BuildContext context, VoidCallback onShare) {
+  Widget _buildOverflowButton(
+    BuildContext context, {
+    required VoidCallback onShare,
+    required VoidCallback onFavorite,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
     return IconButton(
-      onPressed: onShare,
-      tooltip: S.get('ramadan_suggestions_share'),
+      onPressed: () => _showCardActionsSheet(
+        context,
+        onShare: onShare,
+        onFavorite: onFavorite,
+      ),
+      tooltip: S.get('today_card_more_actions'),
       visualDensity: VisualDensity.compact,
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
       icon: Icon(
-        Icons.ios_share_rounded,
-        size: 18,
+        Icons.more_horiz_rounded,
+        size: 20,
         color: colorScheme.onSurface.withValues(alpha: 0.72),
+      ),
+    );
+  }
+
+  Future<void> _showCardActionsSheet(
+    BuildContext context, {
+    required VoidCallback onShare,
+    required VoidCallback onFavorite,
+  }) async {
+    final colorScheme = Theme.of(context).colorScheme;
+    final action = await showModalBottomSheet<_TodayCardMenuAction>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) {
+        final sheetColorScheme = Theme.of(sheetContext).colorScheme;
+        return SafeArea(
+          top: false,
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildActionTile(
+                  context: sheetContext,
+                  icon: Icons.ios_share_rounded,
+                  label: S.get('ramadan_suggestions_share'),
+                  onTap: () => Navigator.of(sheetContext).pop(
+                    _TodayCardMenuAction.share,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                _buildActionTile(
+                  context: sheetContext,
+                  icon: Icons.star_border_rounded,
+                  label: S.get('today_card_add_to_favorites'),
+                  onTap: () => Navigator.of(sheetContext).pop(
+                    _TodayCardMenuAction.favorite,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Divider(
+                  height: 1,
+                  color: sheetColorScheme.outlineVariant.withValues(alpha: 0.4),
+                ),
+                const SizedBox(height: 4),
+                _buildActionTile(
+                  context: sheetContext,
+                  icon: Icons.close_rounded,
+                  label: S.get('cancel'),
+                  onTap: () => Navigator.of(sheetContext).pop(),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    if (!context.mounted || action == null) return;
+    switch (action) {
+      case _TodayCardMenuAction.share:
+        onShare();
+        break;
+      case _TodayCardMenuAction.favorite:
+        onFavorite();
+        break;
+    }
+  }
+
+  Widget _buildActionTile({
+    required BuildContext context,
+    required IconData icon,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Material(
+      color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.32),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(18),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: colorScheme.onSurface.withValues(alpha: 0.82),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -507,6 +677,76 @@ class TodayScreen extends StatelessWidget {
   void _showShareError(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(S.get('daily_card_share_failed'))),
+    );
+  }
+
+  Future<void> _saveAyahFavorite(
+    BuildContext context, {
+    required DailyAyah dailyAyah,
+    required String readableText,
+  }) async {
+    final localeCode = Localizations.localeOf(context).languageCode;
+    final alreadySaved = BookmarkService.isBookmarked(
+      dailyAyah.surahNumber,
+      dailyAyah.ayahNumber,
+    );
+    if (alreadySaved) {
+      _showFavoriteAlreadySaved(context);
+      return;
+    }
+
+    await BookmarkService.save(dailyAyah.surahNumber, dailyAyah.ayahNumber);
+    await TodayCardFavoritesService.addIfAbsent(
+      TodayCardFavorite(
+        type: TodayCardFavoriteType.ayah,
+        title: S.get('daily_ayah'),
+        content: readableText,
+        arabicText: dailyAyah.arabic,
+        reference: dailyAyah.reference,
+        localeCode: localeCode,
+        surahNumber: dailyAyah.surahNumber,
+        ayahNumber: dailyAyah.ayahNumber,
+        savedAtIso: DateTime.now().toIso8601String(),
+      ),
+    );
+    if (!context.mounted) return;
+    _showFavoriteSaved(context);
+  }
+
+  Future<void> _saveTextFavorite(
+    BuildContext context, {
+    required String title,
+    required String body,
+    required TodayCardFavoriteType type,
+    String? source,
+  }) async {
+    final saved = await TodayCardFavoritesService.addIfAbsent(
+      TodayCardFavorite(
+        type: type,
+        title: title,
+        content: body,
+        reference: source,
+        localeCode: Localizations.localeOf(context).languageCode,
+        savedAtIso: DateTime.now().toIso8601String(),
+      ),
+    );
+    if (!context.mounted) return;
+    if (saved) {
+      _showFavoriteSaved(context);
+    } else {
+      _showFavoriteAlreadySaved(context);
+    }
+  }
+
+  void _showFavoriteSaved(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(S.get('today_card_favorite_added'))),
+    );
+  }
+
+  void _showFavoriteAlreadySaved(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(S.get('today_card_favorite_exists'))),
     );
   }
 }
