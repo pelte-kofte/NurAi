@@ -5,7 +5,9 @@ import '../../data/daily_ayah_service.dart';
 import '../../data/daily_content_service.dart';
 import '../../data/quran_data.dart';
 import '../../data/quran_turkish_meal_service.dart';
+import '../../services/share_card_service.dart';
 import '../../l10n/app_strings.dart';
+import '../../widgets/share_card_widget.dart';
 
 class TodayScreen extends StatelessWidget {
   const TodayScreen({super.key});
@@ -47,6 +49,11 @@ class TodayScreen extends StatelessWidget {
                   context,
                   dailyAyah,
                   readableText: snapshot.data ?? dailyAyah.turkishReadable,
+                  onShare: () => _shareAyahCard(
+                    context,
+                    dailyAyah: dailyAyah,
+                    readableText: snapshot.data ?? dailyAyah.turkishReadable,
+                  ),
                 );
               },
             ),
@@ -59,6 +66,13 @@ class TodayScreen extends StatelessWidget {
                 body: DailyContentService.todayHadith?.text ??
                     S.get('daily_hadith_empty'),
                 source: DailyContentService.todayHadith?.source,
+                onShare: () => _shareDailyTextCard(
+                  context,
+                  title: S.get('daily_hadith_title'),
+                  body: DailyContentService.todayHadith?.text ??
+                      S.get('daily_hadith_empty'),
+                  source: DailyContentService.todayHadith?.source,
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -69,6 +83,12 @@ class TodayScreen extends StatelessWidget {
                 title: S.get('daily_word_title'),
                 body: DailyContentService.todayWord?.text ??
                     S.get('daily_word_empty'),
+                onShare: () => _shareDailyTextCard(
+                  context,
+                  title: S.get('daily_word_title'),
+                  body: DailyContentService.todayWord?.text ??
+                      S.get('daily_word_empty'),
+                ),
               ),
             ),
             const SizedBox(height: 14),
@@ -85,6 +105,12 @@ class TodayScreen extends StatelessWidget {
                   body: quote?.text ?? '',
                   source: quote?.source,
                   showQuoteOrnaments: true,
+                  onShare: () => _shareDailyTextCard(
+                    context,
+                    title: S.get('daily_quote_title'),
+                    body: quote?.text ?? '',
+                    source: quote?.source,
+                  ),
                 );
               },
             ),
@@ -98,9 +124,10 @@ class TodayScreen extends StatelessWidget {
     BuildContext context,
     DailyAyah dailyAyah, {
     required String readableText,
+    VoidCallback? onShare,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    return Container(
+    final card = Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -111,15 +138,23 @@ class TodayScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            S.get('daily_ayah'),
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: colorScheme.secondary,
-              letterSpacing: 0.6,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  S.get('daily_ayah'),
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: colorScheme.secondary,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+              if (onShare != null) _buildShareButton(context, onShare),
+            ],
           ),
           const SizedBox(height: 14),
           Text(
@@ -153,6 +188,12 @@ class TodayScreen extends StatelessWidget {
           ),
         ],
       ),
+    );
+    if (onShare == null) return card;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: onShare,
+      child: card,
     );
   }
 
@@ -283,10 +324,11 @@ class TodayScreen extends StatelessWidget {
     required String body,
     String? source,
     bool showQuoteOrnaments = false,
+    VoidCallback? onShare,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final cleanSource = source?.trim() ?? '';
-    return Container(
+    final card = Container(
       width: double.infinity,
       decoration: BoxDecoration(
         color: colorScheme.surface,
@@ -340,15 +382,23 @@ class TodayScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: colorScheme.secondary,
-                      letterSpacing: 0.6,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: colorScheme.secondary,
+                            letterSpacing: 0.6,
+                          ),
+                        ),
+                      ),
+                      if (onShare != null) _buildShareButton(context, onShare),
+                    ],
                   ),
                   const SizedBox(height: 12),
                   Text(
@@ -379,6 +429,84 @@ class TodayScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+    if (onShare == null) return card;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: onShare,
+      child: card,
+    );
+  }
+
+  Widget _buildShareButton(BuildContext context, VoidCallback onShare) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return IconButton(
+      onPressed: onShare,
+      tooltip: S.get('ramadan_suggestions_share'),
+      visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+      icon: Icon(
+        Icons.ios_share_rounded,
+        size: 18,
+        color: colorScheme.onSurface.withValues(alpha: 0.72),
+      ),
+    );
+  }
+
+  Future<void> _shareDailyTextCard(
+    BuildContext context, {
+    required String title,
+    required String body,
+    String? source,
+  }) async {
+    try {
+      await ShareCardService.shareDailyCard(
+        context: context,
+        payload: ShareCardPayload(
+          title: title,
+          content: body,
+          reference: source,
+          type: title == S.get('daily_hadith_title')
+              ? ShareCardType.hadith
+              : title == S.get('daily_quote_title')
+                  ? ShareCardType.quote
+                  : ShareCardType.reminder,
+          localeCode: Localizations.localeOf(context).languageCode,
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      _showShareError(context);
+    }
+  }
+
+  Future<void> _shareAyahCard(
+    BuildContext context, {
+    required DailyAyah dailyAyah,
+    required String readableText,
+  }) async {
+    try {
+      await ShareCardService.shareDailyCard(
+        context: context,
+        payload: ShareCardPayload(
+          title: S.get('daily_ayah'),
+          arabicText: dailyAyah.arabic,
+          content: readableText,
+          reference: dailyAyah.reference,
+          type: ShareCardType.ayah,
+          localeCode: Localizations.localeOf(context).languageCode,
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      _showShareError(context);
+    }
+  }
+
+  void _showShareError(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(S.get('daily_card_share_failed'))),
     );
   }
 }

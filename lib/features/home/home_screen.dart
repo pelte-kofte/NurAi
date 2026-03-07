@@ -11,12 +11,14 @@ import '../../data/local_preferences_service.dart';
 import '../../data/quran_data.dart';
 import '../../data/quran_turkish_meal_service.dart';
 import '../../data/reading_progress_service.dart';
+import '../../services/share_card_service.dart';
 import '../../data/user_profile_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../main.dart';
 import '../../models/prayer_location.dart';
 import '../../models/reading_context.dart';
 import '../../theme/app_theme.dart';
+import '../../widgets/share_card_widget.dart';
 import '../../widgets/next_prayer_pill.dart';
 import '../../widgets/quick_actions_popover.dart';
 import '../adhan/adhan_times_screen.dart';
@@ -567,6 +569,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             return _buildPrimaryAyahCard(
               ayah: ayah,
               readableText: snapshot.data ?? ayah.turkishReadable,
+              onShare: () => _shareAyahCard(
+                ayah: ayah,
+                readableText: snapshot.data ?? ayah.turkishReadable,
+              ),
             );
           },
         );
@@ -576,12 +582,21 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           title: S.get('daily_hadith_title'),
           body: hadith?.text ?? S.get('daily_hadith_empty'),
           source: hadith?.source,
+          onShare: () => _shareDailyTextCard(
+            title: S.get('daily_hadith_title'),
+            body: hadith?.text ?? S.get('daily_hadith_empty'),
+            source: hadith?.source,
+          ),
         );
       case HomeDailyContentType.gentleReminder:
         final reminder = DailyContentService.todayWord;
         return _buildPrimaryCard(
           title: S.get('daily_word_title'),
           body: reminder?.text ?? S.get('daily_word_empty'),
+          onShare: () => _shareDailyTextCard(
+            title: S.get('daily_word_title'),
+            body: reminder?.text ?? S.get('daily_word_empty'),
+          ),
         );
       case HomeDailyContentType.quote:
         return FutureBuilder<DailyQuoteItem>(
@@ -595,6 +610,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               title: S.get('daily_quote_title'),
               body: quote?.text ?? '',
               source: quote?.source,
+              onShare: () => _shareDailyTextCard(
+                title: S.get('daily_quote_title'),
+                body: quote?.text ?? '',
+                source: quote?.source,
+              ),
             );
           },
         );
@@ -635,22 +655,31 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     required String title,
     required String body,
     String? source,
+    VoidCallback? onShare,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final cleanSource = source?.trim() ?? '';
-    return _buildQuranFramedCard(
+    final card = _buildQuranFramedCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.secondary,
-              letterSpacing: 0.8,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.secondary,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+              if (onShare != null) _buildShareButton(onShare),
+            ],
           ),
           const SizedBox(height: 16),
           Text(
@@ -678,26 +707,41 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         ],
       ),
     );
+    if (onShare == null) return card;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: onShare,
+      child: card,
+    );
   }
 
   Widget _buildPrimaryAyahCard({
     required DailyAyah ayah,
     required String readableText,
+    VoidCallback? onShare,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    return _buildQuranFramedCard(
+    final card = _buildQuranFramedCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            S.get('daily_ayah'),
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.secondary,
-              letterSpacing: 0.8,
-            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  S.get('daily_ayah'),
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.secondary,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+              ),
+              if (onShare != null) _buildShareButton(onShare),
+            ],
           ),
           const SizedBox(height: 16),
           _buildPrimaryAyahReadableLine(
@@ -716,6 +760,81 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           ),
         ],
       ),
+    );
+    if (onShare == null) return card;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onLongPress: onShare,
+      child: card,
+    );
+  }
+
+  Widget _buildShareButton(VoidCallback onShare) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return IconButton(
+      onPressed: onShare,
+      tooltip: S.get('ramadan_suggestions_share'),
+      visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+      icon: Icon(
+        Icons.ios_share_rounded,
+        size: 18,
+        color: colorScheme.onSurface.withValues(alpha: 0.72),
+      ),
+    );
+  }
+
+  Future<void> _shareDailyTextCard({
+    required String title,
+    required String body,
+    String? source,
+  }) async {
+    try {
+      await ShareCardService.shareDailyCard(
+        context: context,
+        payload: ShareCardPayload(
+          title: title,
+          content: source?.trim().isNotEmpty == true ? body : body,
+          reference: source,
+          type: title == S.get('daily_hadith_title')
+              ? ShareCardType.hadith
+              : title == S.get('daily_quote_title')
+                  ? ShareCardType.quote
+                  : ShareCardType.reminder,
+          localeCode: LocalPreferencesService.language.value,
+        ),
+      );
+    } catch (_) {
+      _showShareError();
+    }
+  }
+
+  Future<void> _shareAyahCard({
+    required DailyAyah ayah,
+    required String readableText,
+  }) async {
+    try {
+      await ShareCardService.shareDailyCard(
+        context: context,
+        payload: ShareCardPayload(
+          title: S.get('daily_ayah'),
+          arabicText: ayah.arabic,
+          content: readableText,
+          reference: ayah.reference,
+          type: ShareCardType.ayah,
+          localeCode: LocalPreferencesService.language.value,
+        ),
+      );
+    } catch (_) {
+      _showShareError();
+    }
+  }
+
+  void _showShareError() {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(S.get('daily_card_share_failed'))),
     );
   }
 
@@ -974,13 +1093,18 @@ class _QuranFramePainter extends CustomPainter {
     _drawRosette(canvas, fillGold, const Offset(_r, _r), 9.0);
     _drawRosette(canvas, fillGold, Offset(size.width - _r, _r), 9.0);
     _drawRosette(canvas, fillGold, Offset(_r, size.height - _r), 9.0);
-    _drawRosette(canvas, fillGold, Offset(size.width - _r, size.height - _r), 9.0);
+    _drawRosette(
+        canvas, fillGold, Offset(size.width - _r, size.height - _r), 9.0);
 
     // Oval panel accents at midpoints of each edge
-    _drawOvalAccent(canvas, fillGold, Offset(size.width / 2, 0), vertical: false);
-    _drawOvalAccent(canvas, fillGold, Offset(size.width / 2, size.height), vertical: false);
-    _drawOvalAccent(canvas, fillGold, Offset(0, size.height / 2), vertical: true);
-    _drawOvalAccent(canvas, fillGold, Offset(size.width, size.height / 2), vertical: true);
+    _drawOvalAccent(canvas, fillGold, Offset(size.width / 2, 0),
+        vertical: false);
+    _drawOvalAccent(canvas, fillGold, Offset(size.width / 2, size.height),
+        vertical: false);
+    _drawOvalAccent(canvas, fillGold, Offset(0, size.height / 2),
+        vertical: true);
+    _drawOvalAccent(canvas, fillGold, Offset(size.width, size.height / 2),
+        vertical: true);
   }
 
   /// 8-pointed Islamic star (alternating outer/inner radius)
@@ -1003,7 +1127,8 @@ class _QuranFramePainter extends CustomPainter {
   }
 
   /// Oval panel that straddles the border at the midpoint of each edge
-  void _drawOvalAccent(Canvas canvas, Paint paint, Offset center, {required bool vertical}) {
+  void _drawOvalAccent(Canvas canvas, Paint paint, Offset center,
+      {required bool vertical}) {
     canvas.save();
     canvas.translate(center.dx, center.dy);
     if (vertical) canvas.rotate(math.pi / 2);

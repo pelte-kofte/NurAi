@@ -47,6 +47,7 @@ class LocalPreferencesService {
       'pref_ramadan_suggestions_iyilik_index';
   static const _keyRamadanSuggestionsFavorites =
       'pref_ramadan_suggestions_favorites';
+  static const _keyHomeDailyRotationPrefix = 'pref_home_daily_rotation_';
   static const _releaseLanguages = <String>{'tr', 'en'};
 
   static const _secureKeyPrayerLat = 'secure_prayer_lat';
@@ -330,6 +331,17 @@ class LocalPreferencesService {
 
   static Future<void> setRamadanSuggestionFavoritesRaw(String value) async {
     await _prefs?.setString(_keyRamadanSuggestionsFavorites, value);
+  }
+
+  static String? getHomeDailyRotationStateRaw(String rotationKey) {
+    return _prefs?.getString('$_keyHomeDailyRotationPrefix$rotationKey');
+  }
+
+  static Future<void> setHomeDailyRotationStateRaw(
+    String rotationKey,
+    String value,
+  ) async {
+    await _prefs?.setString('$_keyHomeDailyRotationPrefix$rotationKey', value);
   }
 
   static (double?, double?) _normalizeCoordinates(double? lat, double? lng) {

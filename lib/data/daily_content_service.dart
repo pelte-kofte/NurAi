@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
@@ -63,10 +65,7 @@ class DailyContentService {
         DateTime.now(),
       );
 
-  static DailyContentItem? get todayWord => _pickDeterministic(
-        _words,
-        DateTime.now(),
-      );
+  static DailyContentItem? get todayWord => _pickRotatingWord(DateTime.now());
 
   static HomeDailyContentType homeContentTypeForDate(DateTime date) {
     switch (date.weekday) {
@@ -94,8 +93,7 @@ class DailyContentService {
     Locale? locale,
   ]) async {
     final normalized = _normalizeQuoteLanguageCode(
-      locale?.languageCode ??
-          LocalPreferencesService.language.value,
+      locale?.languageCode ?? LocalPreferencesService.language.value,
     );
     final quotes = await _loadQuotesForLanguage(normalized);
     if (quotes.isEmpty) {
@@ -105,7 +103,11 @@ class DailyContentService {
         source: 'Bukhari',
       );
     }
-    final index = reminderIndexForDate(date, quotes.length);
+    final index = _nextRotatingIndex(
+      date: date,
+      rotationKey: _rotationKey('quote', normalized),
+      poolLength: quotes.length,
+    );
     return quotes[index];
   }
 
@@ -118,7 +120,11 @@ class DailyContentService {
       primaryPath: 'assets/content/daily_words_$normalized.json',
       fallbackPath: 'assets/content/daily_words_en.json',
     );
-    final picked = _pickDeterministic(words, date);
+    final picked = _pickRotatingFromList(
+      words,
+      date,
+      rotationKey: _rotationKey('reminder', normalized),
+    );
     return picked?.text ?? '';
   }
 
@@ -154,12 +160,14 @@ class DailyContentService {
     }
   }
 
-  static Future<List<DailyQuoteItem>> _loadQuotesForLanguage(String lang) async {
+  static Future<List<DailyQuoteItem>> _loadQuotesForLanguage(
+      String lang) async {
     final normalized = _normalizeQuoteLanguageCode(lang);
     final cached = _quotesCacheByLang[normalized];
     if (cached != null) return cached;
 
-    final primary = await _loadQuoteList('assets/content/quotes_$normalized.json');
+    final primary =
+        await _loadQuoteList('assets/content/quotes_$normalized.json');
     if (primary.isNotEmpty) {
       _quotesCacheByLang[normalized] = primary;
       return primary;
@@ -250,6 +258,31 @@ class DailyContentService {
     }
   }
 
+  static DailyContentItem? _pickRotatingWord(DateTime date) {
+    final normalized = _normalizeLanguageCode(
+      LocalPreferencesService.language.value,
+    );
+    return _pickRotatingFromList(
+      _words,
+      date,
+      rotationKey: _rotationKey('reminder', normalized),
+    );
+  }
+
+  static DailyContentItem? _pickRotatingFromList(
+    List<DailyContentItem> items,
+    DateTime date, {
+    required String rotationKey,
+  }) {
+    if (items.isEmpty) return null;
+    final index = _nextRotatingIndex(
+      date: date,
+      rotationKey: rotationKey,
+      poolLength: items.length,
+    );
+    return items[index];
+  }
+
   static DailyContentItem? _pickDeterministic(
     List<DailyContentItem> items,
     DateTime date,
@@ -257,6 +290,160 @@ class DailyContentService {
     if (items.isEmpty) return null;
     final index = reminderIndexForDate(date, items.length);
     return items[index];
+  }
+
+  static int _nextRotatingIndex({
+    required DateTime date,
+    required String rotationKey,
+    required int poolLength,
+  }) {
+    if (poolLength <= 1) return 0;
+
+    final dateKey = _dateKey(date);
+    final saved = _readRotationState(rotationKey);
+    if (saved.dateKey == dateKey &&
+        saved.currentIndex != null &&
+        saved.currentIndex! >= 0 &&
+        saved.currentIndex! < poolLength) {
+      return saved.currentIndex!;
+    }
+    final updatedState = _computeNextRotationState(
+      state: saved,
+      nextDateKey: dateKey,
+      rotationKey: rotationKey,
+      nextPoolLength: poolLength,
+    );
+    unawaited(_writeRotationState(rotationKey, updatedState));
+    return updatedState.currentIndex ?? 0;
+  }
+
+  static List<int> _buildShuffledQueue(
+    int poolLength, {
+    required String rotationKey,
+    required int cycle,
+    int? previousIndex,
+  }) {
+    final queue = List<int>.generate(poolLength, (index) => index);
+    final seed = stableHash('$rotationKey|$cycle|$poolLength');
+    queue.shuffle(Random(seed));
+    if (poolLength > 1 &&
+        previousIndex != null &&
+        queue.isNotEmpty &&
+        queue.first == previousIndex) {
+      final swapIndex = queue.indexWhere((index) => index != previousIndex);
+      if (swapIndex > 0) {
+        final first = queue.first;
+        queue[0] = queue[swapIndex];
+        queue[swapIndex] = first;
+      }
+    }
+    return queue;
+  }
+
+  static String _rotationKey(String type, String locale) => '${type}_$locale';
+
+  static _HomeDailyRotationState _readRotationState(String rotationKey) {
+    final raw = LocalPreferencesService.getHomeDailyRotationStateRaw(
+      rotationKey,
+    );
+    if (raw == null || raw.trim().isEmpty) {
+      return const _HomeDailyRotationState();
+    }
+    try {
+      final decoded = jsonDecode(raw);
+      if (decoded is! Map) return const _HomeDailyRotationState();
+      return _HomeDailyRotationState.fromJson(
+        decoded.map(
+          (key, value) => MapEntry(key.toString(), value),
+        ),
+      );
+    } catch (_) {
+      return const _HomeDailyRotationState();
+    }
+  }
+
+  static Future<void> _writeRotationState(
+    String rotationKey,
+    _HomeDailyRotationState state,
+  ) {
+    return LocalPreferencesService.setHomeDailyRotationStateRaw(
+      rotationKey,
+      jsonEncode(state.toJson()),
+    );
+  }
+
+  @visibleForTesting
+  static Map<String, dynamic> nextRotationStateForTesting({
+    required String? dateKey,
+    required int? currentIndex,
+    required List<int> remainingIndices,
+    required int? poolLength,
+    required int cycle,
+    required String nextDateKey,
+    required String rotationKey,
+    required int nextPoolLength,
+  }) {
+    final state = _HomeDailyRotationState(
+      dateKey: dateKey,
+      currentIndex: currentIndex,
+      remainingIndices: remainingIndices,
+      poolLength: poolLength,
+      cycle: cycle,
+    );
+    return _computeNextRotationState(
+      state: state,
+      nextDateKey: nextDateKey,
+      rotationKey: rotationKey,
+      nextPoolLength: nextPoolLength,
+    ).toJson();
+  }
+
+  static _HomeDailyRotationState _computeNextRotationState({
+    required _HomeDailyRotationState state,
+    required String nextDateKey,
+    required String rotationKey,
+    required int nextPoolLength,
+  }) {
+    if (nextPoolLength <= 1) {
+      return _HomeDailyRotationState(
+        dateKey: nextDateKey,
+        currentIndex: 0,
+        remainingIndices: const [],
+        poolLength: nextPoolLength,
+        cycle: state.cycle,
+      );
+    }
+    if (state.dateKey == nextDateKey &&
+        state.currentIndex != null &&
+        state.currentIndex! >= 0 &&
+        state.currentIndex! < nextPoolLength) {
+      return state;
+    }
+    final sanitizedQueue = state.remainingIndices
+        .where((index) => index >= 0 && index < nextPoolLength)
+        .toList(growable: true);
+    final nextCycle = state.poolLength == nextPoolLength ? state.cycle : 0;
+    final previousIndex = state.currentIndex != null &&
+            state.currentIndex! >= 0 &&
+            state.currentIndex! < nextPoolLength
+        ? state.currentIndex
+        : null;
+    final queue = sanitizedQueue.isNotEmpty
+        ? sanitizedQueue
+        : _buildShuffledQueue(
+            nextPoolLength,
+            previousIndex: previousIndex,
+            rotationKey: rotationKey,
+            cycle: nextCycle,
+          );
+    final nextIndex = queue.removeAt(0);
+    return _HomeDailyRotationState(
+      dateKey: nextDateKey,
+      currentIndex: nextIndex,
+      remainingIndices: queue,
+      poolLength: nextPoolLength,
+      cycle: queue.isEmpty ? nextCycle + 1 : nextCycle,
+    );
   }
 
   static int reminderIndexForDate(DateTime date, int listLength) {
@@ -280,5 +467,53 @@ class DailyContentService {
     final m = date.month.toString().padLeft(2, '0');
     final d = date.day.toString().padLeft(2, '0');
     return '$y-$m-$d';
+  }
+}
+
+class _HomeDailyRotationState {
+  const _HomeDailyRotationState({
+    this.dateKey,
+    this.currentIndex,
+    this.remainingIndices = const [],
+    this.poolLength,
+    this.cycle = 0,
+  });
+
+  final String? dateKey;
+  final int? currentIndex;
+  final List<int> remainingIndices;
+  final int? poolLength;
+  final int cycle;
+
+  factory _HomeDailyRotationState.fromJson(Map<String, dynamic> json) {
+    final remaining = json['remainingIndices'];
+    return _HomeDailyRotationState(
+      dateKey: json['dateKey']?.toString(),
+      currentIndex: json['currentIndex'] is int
+          ? json['currentIndex'] as int
+          : int.tryParse(json['currentIndex']?.toString() ?? ''),
+      remainingIndices: remaining is List
+          ? remaining
+              .map((value) => value is int ? value : int.tryParse('$value'))
+              .whereType<int>()
+              .toList(growable: false)
+          : const [],
+      poolLength: json['poolLength'] is int
+          ? json['poolLength'] as int
+          : int.tryParse(json['poolLength']?.toString() ?? ''),
+      cycle: json['cycle'] is int
+          ? json['cycle'] as int
+          : int.tryParse(json['cycle']?.toString() ?? '') ?? 0,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'dateKey': dateKey,
+      'currentIndex': currentIndex,
+      'remainingIndices': remainingIndices,
+      'poolLength': poolLength,
+      'cycle': cycle,
+    };
   }
 }
