@@ -64,38 +64,42 @@ class ShareCardWidget extends StatelessWidget {
               ),
             ),
             Positioned(
-              top: -130,
-              right: -110,
+              top: -140,
+              right: -100,
               child: _AccentHalo(
-                size: 360,
+                size: 380,
                 color:
                     palette.turquoise.withValues(alpha: isDark ? 0.10 : 0.12),
               ),
             ),
             Positioned(
-              bottom: -180,
-              left: -130,
+              bottom: -170,
+              left: -120,
               child: _AccentHalo(
-                size: 420,
+                size: 400,
                 color: palette.indigo.withValues(alpha: isDark ? 0.10 : 0.08),
               ),
             ),
             Positioned(
-              top: 118,
-              left: 82,
-              right: 82,
-              bottom: 88,
+              top: 84,
+              left: 56,
+              right: 56,
+              bottom: 72,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(66, 54, 66, 46),
+                padding: const EdgeInsets.fromLTRB(78, 64, 78, 52),
                 decoration: BoxDecoration(
                   color: palette.panel,
-                  borderRadius: BorderRadius.circular(42),
+                  borderRadius: BorderRadius.circular(44),
+                  border: Border.all(
+                    color: palette.border,
+                    width: 1.2,
+                  ),
                   boxShadow: [
                     BoxShadow(
                       color:
                           Colors.black.withValues(alpha: isDark ? 0.22 : 0.07),
-                      blurRadius: 32,
-                      offset: const Offset(0, 18),
+                      blurRadius: 40,
+                      offset: const Offset(0, 20),
                     ),
                   ],
                 ),
@@ -113,82 +117,88 @@ class ShareCardWidget extends StatelessWidget {
                         Flexible(
                           child: Text(
                             payload.title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                            maxLines: 2,
+                            overflow: TextOverflow.fade,
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: 'Inter',
-                              fontSize: 26,
+                              fontSize: 28,
                               fontWeight: FontWeight.w600,
-                              letterSpacing: 1.1,
+                              height: 1.25,
+                              letterSpacing: 0.8,
                               color: palette.label,
                             ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 26),
                     Container(
-                      width: 92,
-                      height: 3,
+                      width: 104,
+                      height: 2,
                       decoration: BoxDecoration(
                         color: palette.clay.withValues(alpha: 0.70),
                         borderRadius: BorderRadius.circular(999),
                       ),
                     ),
-                    const SizedBox(height: 38),
+                    const SizedBox(height: 34),
                     Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (hasArabic) ...[
-                            Text(
-                              payload.arabicText!,
-                              textAlign: TextAlign.center,
-                              textDirection: TextDirection.rtl,
-                              maxLines: 5,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: 'Amiri',
-                                fontSize: 58,
-                                height: 1.55,
-                                color: palette.primaryText,
+                      child: Center(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 760),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (hasArabic) ...[
+                                Text(
+                                  payload.arabicText!,
+                                  textAlign: TextAlign.center,
+                                  textDirection: TextDirection.rtl,
+                                  maxLines: 4,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'Amiri',
+                                    fontSize: 60,
+                                    height: 1.48,
+                                    color: palette.primaryText,
+                                  ),
+                                ),
+                                const SizedBox(height: 28),
+                              ],
+                              Text(
+                                payload.content,
+                                textAlign: TextAlign.center,
+                                maxLines: hasArabic ? 8 : 11,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'Merriweather',
+                                  fontSize: contentFontSize,
+                                  height: 1.5,
+                                  color: palette.primaryText,
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 34),
-                          ],
-                          Text(
-                            payload.content,
-                            textAlign: TextAlign.center,
-                            maxLines: hasArabic ? 9 : 12,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontFamily: 'Merriweather',
-                              fontSize: contentFontSize,
-                              height: 1.58,
-                              color: palette.primaryText,
-                            ),
+                              if (hasReference) ...[
+                                const SizedBox(height: 24),
+                                Text(
+                                  payload.reference!,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 3,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w500,
+                                    color: palette.secondaryText,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
-                          if (hasReference) ...[
-                            const SizedBox(height: 28),
-                            Text(
-                              payload.reference!,
-                              textAlign: TextAlign.center,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 23,
-                                fontWeight: FontWeight.w500,
-                                color: palette.secondaryText,
-                                letterSpacing: 0.2,
-                              ),
-                            ),
-                          ],
-                        ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 10),
                     Row(
                       children: [
                         Expanded(
@@ -212,10 +222,21 @@ class ShareCardWidget extends StatelessWidget {
                       'Duaya',
                       style: TextStyle(
                         fontFamily: 'Inter',
-                        fontSize: 23,
+                        fontSize: 22,
                         fontWeight: FontWeight.w700,
-                        letterSpacing: 0.9,
+                        letterSpacing: 1.1,
                         color: palette.branding,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      'duaya.app',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w500,
+                        letterSpacing: 0.5,
+                        color: palette.secondaryText.withValues(alpha: 0.84),
                       ),
                     ),
                   ],
@@ -236,18 +257,18 @@ class ShareCardWidget extends StatelessWidget {
     final length = text.trim().length;
     if (hasArabic) {
       if (type == ShareCardType.asma) {
-        if (length > 180) return 30;
-        if (length > 120) return 33;
-        return 36;
+        if (length > 180) return 28;
+        if (length > 120) return 31;
+        return 34;
       }
-      if (length > 260) return 30;
-      if (length > 180) return 32;
-      return 34;
+      if (length > 260) return 28;
+      if (length > 180) return 30;
+      return 32;
     }
-    if (length > 420) return 28;
-    if (length > 320) return 31;
-    if (length > 220) return 34;
-    return 38;
+    if (length > 420) return 26;
+    if (length > 320) return 29;
+    if (length > 220) return 32;
+    return 36;
   }
 
   static IconData _iconForType(ShareCardType type) {
@@ -321,8 +342,8 @@ class _ShareCardPalette {
     if (isDark) {
       return const _ShareCardPalette(
         background: Color(0xFF141A22),
-        panel: Color(0xFF1A222C),
-        border: Color(0xFF2E3946),
+        panel: Color(0xFF1A232D),
+        border: Color(0xFF34414E),
         primaryText: Color(0xFFF3EEE6),
         secondaryText: Color(0xFFC7C1B8),
         label: Color(0xFF9ECFCE),
@@ -335,8 +356,8 @@ class _ShareCardPalette {
     }
     return const _ShareCardPalette(
       background: Color(0xFFF7F4EE),
-      panel: Color(0xFFFCF8F1),
-      border: Color(0xFFE4DCD1),
+      panel: Color(0xFFFCF8F2),
+      border: Color(0xFFE0D7CB),
       primaryText: Color(0xFF2E2A28),
       secondaryText: Color(0xFF756E68),
       label: Color(0xFF486F82),

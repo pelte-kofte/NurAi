@@ -16,8 +16,28 @@ enum _TodayCardMenuAction {
   favorite,
 }
 
-class TodayScreen extends StatelessWidget {
+class TodayScreen extends StatefulWidget {
   const TodayScreen({super.key});
+
+  @override
+  State<TodayScreen> createState() => _TodayScreenState();
+}
+
+class _TodayScreenState extends State<TodayScreen> {
+  List<TodayCardFavorite> _favorites = const [];
+  bool _showFavorites = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFavorites();
+  }
+
+  Future<void> _loadFavorites() async {
+    final favorites = await TodayCardFavoritesService.getFavorites();
+    if (!mounted) return;
+    setState(() => _favorites = favorites);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,117 +65,146 @@ class TodayScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            FutureBuilder<String>(
-              future: DailyAyahService.getAyahReadableText(
-                surah: dailyAyah.surahNumber,
-                ayah: dailyAyah.ayahNumber,
-                locale: Localizations.localeOf(context),
-              ),
-              builder: (context, snapshot) {
-                return _buildVerseCard(
-                  context,
-                  dailyAyah,
-                  readableText: snapshot.data ?? dailyAyah.turkishReadable,
-                  onShare: () => _shareAyahCard(
-                    context,
-                    dailyAyah: dailyAyah,
-                    readableText: snapshot.data ?? dailyAyah.turkishReadable,
-                  ),
-                  onFavorite: () => _saveAyahFavorite(
-                    context,
-                    dailyAyah: dailyAyah,
-                    readableText: snapshot.data ?? dailyAyah.turkishReadable,
-                  ),
-                );
-              },
-            ),
-            const SizedBox(height: 14),
-            ValueListenableBuilder<int>(
-              valueListenable: DailyContentService.revision,
-              builder: (context, _, __) => _buildContentCard(
-                context: context,
-                title: S.get('daily_hadith_title'),
-                body: DailyContentService.todayHadith?.text ??
-                    S.get('daily_hadith_empty'),
-                source: DailyContentService.todayHadith?.source,
-                onShare: () => _shareDailyTextCard(
-                  context,
-                  title: S.get('daily_hadith_title'),
-                  body: DailyContentService.todayHadith?.text ??
-                      S.get('daily_hadith_empty'),
-                  source: DailyContentService.todayHadith?.source,
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                  label: Text(S.get('ramadan_suggestions_tab_today')),
+                  selected: !_showFavorites,
+                  onSelected: (_) => setState(() => _showFavorites = false),
                 ),
-                onFavorite: () => _saveTextFavorite(
-                  context,
-                  title: S.get('daily_hadith_title'),
-                  body: DailyContentService.todayHadith?.text ??
-                      S.get('daily_hadith_empty'),
-                  source: DailyContentService.todayHadith?.source,
-                  type: TodayCardFavoriteType.hadith,
+                ChoiceChip(
+                  label: Text(S.get('ramadan_suggestions_tab_favorites')),
+                  selected: _showFavorites,
+                  onSelected: (_) => setState(() => _showFavorites = true),
                 ),
-              ),
+              ],
             ),
-            const SizedBox(height: 14),
-            ValueListenableBuilder<int>(
-              valueListenable: DailyContentService.revision,
-              builder: (context, _, __) => _buildContentCard(
-                context: context,
-                title: S.get('daily_word_title'),
-                body: DailyContentService.todayWord?.text ??
-                    S.get('daily_word_empty'),
-                onShare: () => _shareDailyTextCard(
-                  context,
-                  title: S.get('daily_word_title'),
-                  body: DailyContentService.todayWord?.text ??
-                      S.get('daily_word_empty'),
-                ),
-                onFavorite: () => _saveTextFavorite(
-                  context,
-                  title: S.get('daily_word_title'),
-                  body: DailyContentService.todayWord?.text ??
-                      S.get('daily_word_empty'),
-                  type: TodayCardFavoriteType.reminder,
-                ),
-              ),
-            ),
-            const SizedBox(height: 14),
-            FutureBuilder<DailyQuoteItem>(
-              future: DailyContentService.getQuoteForDate(
-                DateTime.now(),
-                Localizations.localeOf(context),
-              ),
-              builder: (context, snapshot) {
-                final quote = snapshot.data;
-                final hasQuote = quote?.text.trim().isNotEmpty ?? false;
-                return _buildContentCard(
-                  context: context,
-                  title: S.get('daily_quote_title'),
-                  body: quote?.text ?? '',
-                  source: quote?.source,
-                  showQuoteOrnaments: true,
-                  onShare: hasQuote
-                      ? () => _shareDailyTextCard(
-                            context,
-                            title: S.get('daily_quote_title'),
-                            body: quote?.text ?? '',
-                            source: quote?.source,
-                          )
-                      : null,
-                  onFavorite: hasQuote
-                      ? () => _saveTextFavorite(
-                            context,
-                            title: S.get('daily_quote_title'),
-                            body: quote?.text ?? '',
-                            source: quote?.source,
-                            type: TodayCardFavoriteType.quote,
-                          )
-                      : null,
-                );
-              },
-            ),
+            const SizedBox(height: 16),
+            if (_showFavorites)
+              _buildFavoritesList(context)
+            else
+              _buildTodayCards(context, dailyAyah),
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTodayCards(BuildContext context, DailyAyah dailyAyah) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        FutureBuilder<String>(
+          future: DailyAyahService.getAyahReadableText(
+            surah: dailyAyah.surahNumber,
+            ayah: dailyAyah.ayahNumber,
+            locale: Localizations.localeOf(context),
+          ),
+          builder: (context, snapshot) {
+            return _buildVerseCard(
+              context,
+              dailyAyah,
+              readableText: snapshot.data ?? dailyAyah.turkishReadable,
+              onShare: () => _shareAyahCard(
+                context,
+                dailyAyah: dailyAyah,
+                readableText: snapshot.data ?? dailyAyah.turkishReadable,
+              ),
+              onFavorite: () => _saveAyahFavorite(
+                context,
+                dailyAyah: dailyAyah,
+                readableText: snapshot.data ?? dailyAyah.turkishReadable,
+              ),
+            );
+          },
+        ),
+        const SizedBox(height: 14),
+        ValueListenableBuilder<int>(
+          valueListenable: DailyContentService.revision,
+          builder: (context, _, __) => _buildContentCard(
+            context: context,
+            title: S.get('daily_hadith_title'),
+            body: DailyContentService.todayHadith?.text ??
+                S.get('daily_hadith_empty'),
+            source: DailyContentService.todayHadith?.source,
+            onShare: () => _shareDailyTextCard(
+              context,
+              title: S.get('daily_hadith_title'),
+              body: DailyContentService.todayHadith?.text ??
+                  S.get('daily_hadith_empty'),
+              source: DailyContentService.todayHadith?.source,
+            ),
+            onFavorite: () => _saveTextFavorite(
+              context,
+              title: S.get('daily_hadith_title'),
+              body: DailyContentService.todayHadith?.text ??
+                  S.get('daily_hadith_empty'),
+              source: DailyContentService.todayHadith?.source,
+              type: TodayCardFavoriteType.hadith,
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        ValueListenableBuilder<int>(
+          valueListenable: DailyContentService.revision,
+          builder: (context, _, __) => _buildContentCard(
+            context: context,
+            title: S.get('daily_word_title'),
+            body: DailyContentService.todayWord?.text ??
+                S.get('daily_word_empty'),
+            onShare: () => _shareDailyTextCard(
+              context,
+              title: S.get('daily_word_title'),
+              body: DailyContentService.todayWord?.text ??
+                  S.get('daily_word_empty'),
+            ),
+            onFavorite: () => _saveTextFavorite(
+              context,
+              title: S.get('daily_word_title'),
+              body: DailyContentService.todayWord?.text ??
+                  S.get('daily_word_empty'),
+              type: TodayCardFavoriteType.reminder,
+            ),
+          ),
+        ),
+        const SizedBox(height: 14),
+        FutureBuilder<DailyQuoteItem>(
+          future: DailyContentService.getQuoteForDate(
+            DateTime.now(),
+            Localizations.localeOf(context),
+          ),
+          builder: (context, snapshot) {
+            final quote = snapshot.data;
+            final hasQuote = quote?.text.trim().isNotEmpty ?? false;
+            return _buildContentCard(
+              context: context,
+              title: S.get('daily_quote_title'),
+              body: quote?.text ?? '',
+              source: quote?.source,
+              showQuoteOrnaments: true,
+              onShare: hasQuote
+                  ? () => _shareDailyTextCard(
+                        context,
+                        title: S.get('daily_quote_title'),
+                        body: quote?.text ?? '',
+                        source: quote?.source,
+                      )
+                  : null,
+              onFavorite: hasQuote
+                  ? () => _saveTextFavorite(
+                        context,
+                        title: S.get('daily_quote_title'),
+                        body: quote?.text ?? '',
+                        source: quote?.source,
+                        type: TodayCardFavoriteType.quote,
+                      )
+                  : null,
+            );
+          },
+        ),
+      ],
     );
   }
 
@@ -489,6 +538,129 @@ class TodayScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildFavoritesList(BuildContext context) {
+    if (_favorites.isEmpty) {
+      final colorScheme = Theme.of(context).colorScheme;
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: colorScheme.outline),
+        ),
+        child: Text(
+          S.get('today_favorites_empty'),
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            color: colorScheme.onSurface.withValues(alpha: 0.72),
+            height: 1.5,
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: _favorites
+          .map(
+            (favorite) => Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: _buildFavoriteCard(context, favorite),
+            ),
+          )
+          .toList(growable: false),
+    );
+  }
+
+  Widget _buildFavoriteCard(BuildContext context, TodayCardFavorite favorite) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final hasArabic = favorite.arabicText?.trim().isNotEmpty ?? false;
+    final cleanReference = favorite.reference?.trim() ?? '';
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outline),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  favorite.title,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: colorScheme.secondary,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+              IconButton(
+                onPressed: () => _shareFavorite(context, favorite),
+                tooltip: S.get('ramadan_suggestions_share'),
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                icon: Icon(
+                  Icons.ios_share_rounded,
+                  size: 18,
+                  color: colorScheme.onSurface.withValues(alpha: 0.72),
+                ),
+              ),
+            ],
+          ),
+          if (hasArabic) ...[
+            const SizedBox(height: 10),
+            Text(
+              favorite.arabicText!,
+              textAlign: TextAlign.right,
+              textDirection: TextDirection.rtl,
+              style: TextStyle(
+                fontFamily: 'Amiri',
+                fontSize: 22,
+                fontWeight: FontWeight.w400,
+                color: colorScheme.onSurface,
+                height: 1.7,
+              ),
+            ),
+          ],
+          const SizedBox(height: 12),
+          Text(
+            favorite.content,
+            style: TextStyle(
+              fontFamily: 'Merriweather',
+              fontSize: 15,
+              fontWeight: FontWeight.w400,
+              color: colorScheme.onSurface,
+              height: 1.6,
+            ),
+          ),
+          if (cleanReference.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              cleanReference,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                color: colorScheme.onSurface.withValues(alpha: 0.72),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   Widget _buildOverflowButton(
     BuildContext context, {
     required VoidCallback onShare,
@@ -709,6 +881,7 @@ class TodayScreen extends StatelessWidget {
         savedAtIso: DateTime.now().toIso8601String(),
       ),
     );
+    await _loadFavorites();
     if (!context.mounted) return;
     _showFavoriteSaved(context);
   }
@@ -730,6 +903,7 @@ class TodayScreen extends StatelessWidget {
         savedAtIso: DateTime.now().toIso8601String(),
       ),
     );
+    await _loadFavorites();
     if (!context.mounted) return;
     if (saved) {
       _showFavoriteSaved(context);
@@ -748,5 +922,33 @@ class TodayScreen extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(S.get('today_card_favorite_exists'))),
     );
+  }
+
+  Future<void> _shareFavorite(
+    BuildContext context,
+    TodayCardFavorite favorite,
+  ) async {
+    try {
+      await ShareCardService.shareDailyCard(
+        context: context,
+        payload: ShareCardPayload(
+          title: favorite.title,
+          content: favorite.content,
+          reference: favorite.reference,
+          arabicText: favorite.arabicText,
+          localeCode: favorite.localeCode ??
+              Localizations.localeOf(context).languageCode,
+          type: switch (favorite.type) {
+            TodayCardFavoriteType.ayah => ShareCardType.ayah,
+            TodayCardFavoriteType.hadith => ShareCardType.hadith,
+            TodayCardFavoriteType.reminder => ShareCardType.reminder,
+            TodayCardFavoriteType.quote => ShareCardType.quote,
+          },
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      _showShareError(context);
+    }
   }
 }

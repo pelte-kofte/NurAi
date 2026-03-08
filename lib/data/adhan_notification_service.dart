@@ -83,6 +83,9 @@ class AdhanNotificationService {
   static const _iftarChannelIdAlarm = 'iftar_alarm_v3';
   static const _iftarChannelNameAlarm = 'Iftar Alarm';
   static const _azanSound = RawResourceAndroidNotificationSound('azan');
+  // On iOS, custom notification sounds must use the bundled file name
+  // including its extension. Prefer a PCM/LPCM CAF comfortably under 30s.
+  static const _iosAzanSoundFile = 'azan.caf';
   static const _iftarWarmupOffset = Duration(hours: 1);
   static const _legacyIftarWarmupPayload = 'iftar_live_activity_warmup';
   static const String iftarWarmupStartLiveActivityType =
@@ -370,6 +373,10 @@ class AdhanNotificationService {
         dateTime: scheduleAt,
         timezoneName: selection.timezone,
         withSound: true,
+        iosSoundName: _iosAzanSoundFile,
+      );
+      _log(
+        'prayer_schedule_ios_custom_sound id=$id prayer=$prayerName scheduledAt=$hhmm soundFile=$_iosAzanSoundFile',
       );
     }
   }
@@ -474,6 +481,7 @@ class AdhanNotificationService {
     String? payload,
     String? androidChannelId,
     String? androidChannelName,
+    String? iosSoundName,
   }) async {
     final zone = _resolveLocation(timezoneName);
     final tzDateTime = tz.TZDateTime(
@@ -497,13 +505,13 @@ class AdhanNotificationService {
     final iosInterruptionLevel =
         withSound ? InterruptionLevel.timeSensitive : InterruptionLevel.passive;
     final iosPresentSound = withSound;
-    final iosSoundName = withSound ? 'default' : null;
+    final resolvedIosSoundName = withSound ? iosSoundName ?? 'default' : null;
     final iosDetails = withSound
-        ? const DarwinNotificationDetails(
+        ? DarwinNotificationDetails(
             presentAlert: true,
             presentBadge: true,
             presentSound: true,
-            sound: 'default',
+            sound: resolvedIosSoundName,
             interruptionLevel: InterruptionLevel.timeSensitive,
           )
         : const DarwinNotificationDetails(
@@ -533,7 +541,7 @@ class AdhanNotificationService {
       iOS: iosDetails,
     );
     _log(
-      'schedule_ios id=$id scheduledEpochMs=${dateTime.millisecondsSinceEpoch} withSound=$withSound presentSound=$iosPresentSound soundName=${iosSoundName ?? 'none'} interruptionLevel=${iosInterruptionLevel.name}',
+      'schedule_ios id=$id scheduledEpochMs=${dateTime.millisecondsSinceEpoch} withSound=$withSound presentSound=$iosPresentSound soundName=${resolvedIosSoundName ?? 'none'} interruptionLevel=${iosInterruptionLevel.name}',
     );
 
     await _plugin.zonedSchedule(

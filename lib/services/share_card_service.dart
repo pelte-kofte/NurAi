@@ -56,9 +56,13 @@ class ShareCardService {
   }) {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
+    const captureSize = Size(1080, 1350);
     final card = MediaQuery(
       data: mediaQuery.copyWith(
-        size: const Size(1080, 1350),
+        size: captureSize,
+        padding: EdgeInsets.zero,
+        viewPadding: EdgeInsets.zero,
+        viewInsets: EdgeInsets.zero,
         devicePixelRatio: 1,
         textScaler: const TextScaler.linear(1),
       ),
@@ -70,10 +74,14 @@ class ShareCardService {
             style: theme.textTheme.bodyMedium ?? const TextStyle(),
             child: Material(
               type: MaterialType.transparency,
-              child: Center(
-                child: ShareCardWidget(
-                  payload: payload,
-                  isDark: theme.brightness == Brightness.dark,
+              child: SizedBox(
+                width: captureSize.width,
+                height: captureSize.height,
+                child: ClipRect(
+                  child: ShareCardWidget(
+                    payload: payload,
+                    isDark: theme.brightness == Brightness.dark,
+                  ),
                 ),
               ),
             ),

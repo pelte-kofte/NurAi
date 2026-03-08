@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -669,7 +667,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       width: double.infinity,
       decoration: BoxDecoration(
         color: style.background,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: style.borderColor, width: 1),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: style.backgroundGradient,
+        ),
         boxShadow: [
           BoxShadow(
             color: style.shadowColor,
@@ -678,25 +682,22 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           ),
         ],
       ),
-      child: Stack(
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
-            child: child,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(22),
+          gradient: RadialGradient(
+            center: const Alignment(-0.85, -1.0),
+            radius: 1.2,
+            colors: [
+              style.innerGlow,
+              style.innerGlow.withValues(alpha: 0),
+            ],
           ),
-          Positioned.fill(
-            child: IgnorePointer(
-              child: CustomPaint(
-                painter: _QuranFramePainter(
-                  strokeColor: style.frameStroke,
-                  ornamentColor: style.ornament,
-                  edgeAccentColor: style.edgeAccent,
-                  showEdgeAccents: style.showEdgeAccents,
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+          child: child,
+        ),
       ),
     );
   }
@@ -1376,23 +1377,21 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 class _PrimaryDailyCardStyle {
   const _PrimaryDailyCardStyle({
     required this.background,
-    required this.frameStroke,
-    required this.ornament,
-    required this.edgeAccent,
+    required this.backgroundGradient,
+    required this.borderColor,
+    required this.innerGlow,
     required this.shadowColor,
     required this.shadowBlur,
     required this.shadowOffset,
-    required this.showEdgeAccents,
   });
 
   final Color background;
-  final Color frameStroke;
-  final Color ornament;
-  final Color edgeAccent;
+  final List<Color> backgroundGradient;
+  final Color borderColor;
+  final Color innerGlow;
   final Color shadowColor;
   final double shadowBlur;
   final Offset shadowOffset;
-  final bool showEdgeAccents;
 
   factory _PrimaryDailyCardStyle.fromTheme({
     required ColorScheme colorScheme,
@@ -1400,148 +1399,30 @@ class _PrimaryDailyCardStyle {
   }) {
     if (isDark) {
       return _PrimaryDailyCardStyle(
-        background: const Color(0xFF1B1C1F),
-        frameStroke: const Color(0xFF6A6257).withValues(alpha: 0.28),
-        ornament: const Color(0xFF8F7A63).withValues(alpha: 0.18),
-        edgeAccent: const Color(0xFF8F7A63).withValues(alpha: 0.12),
-        shadowColor: Colors.black.withValues(alpha: 0.16),
-        shadowBlur: 12,
+        background: const Color(0xFF1A1D20),
+        backgroundGradient: const [
+          Color(0xFF20252A),
+          Color(0xFF181C21),
+        ],
+        borderColor: const Color(0xFF73695E).withValues(alpha: 0.26),
+        innerGlow: const Color(0xFFD7C2A3).withValues(alpha: 0.08),
+        shadowColor: Colors.black.withValues(alpha: 0.18),
+        shadowBlur: 18,
         shadowOffset: const Offset(0, 4),
-        showEdgeAccents: false,
       );
     }
-    return const _PrimaryDailyCardStyle(
-      background: Color(0xFFFDFAF3),
-      frameStroke: Color(0xFFC9A84C),
-      ornament: Color(0xFFC9A84C),
-      edgeAccent: Color(0xFFC9A84C),
-      shadowColor: Color(0x26C9A84C),
-      shadowBlur: 14,
-      shadowOffset: Offset(0, 6),
-      showEdgeAccents: true,
+    return _PrimaryDailyCardStyle(
+      background: const Color(0xFFF8F3EA),
+      backgroundGradient: const [
+        Color(0xFFFDF9F2),
+        Color(0xFFF5EEE3),
+      ],
+      borderColor: const Color(0xFFD9CCBA).withValues(alpha: 0.72),
+      innerGlow: const Color(0xFFFFFCF6),
+      shadowColor: const Color(0x1E8F7857),
+      shadowBlur: 22,
+      shadowOffset: const Offset(0, 10),
     );
-  }
-}
-
-class _QuranFramePainter extends CustomPainter {
-  const _QuranFramePainter({
-    required this.strokeColor,
-    required this.ornamentColor,
-    required this.edgeAccentColor,
-    required this.showEdgeAccents,
-  });
-
-  static const _r = 14.0; // matches card border radius
-  static const _innerGap = 6.0; // gap between outer and inner border line
-
-  final Color strokeColor;
-  final Color ornamentColor;
-  final Color edgeAccentColor;
-  final bool showEdgeAccents;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final strokeOuter = Paint()
-      ..color = strokeColor
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.0;
-
-    final strokeInner = Paint()
-      ..color = strokeColor.withValues(alpha: showEdgeAccents ? 0.82 : 0.62)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 0.8;
-
-    final fillGold = Paint()
-      ..color = ornamentColor
-      ..style = PaintingStyle.fill;
-
-    final edgeAccentPaint = Paint()
-      ..color = edgeAccentColor
-      ..style = PaintingStyle.fill;
-
-    // Outer border
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(0.75, 0.75, size.width - 1.5, size.height - 1.5),
-        const Radius.circular(_r),
-      ),
-      strokeOuter,
-    );
-
-    // Inner border (inset by _innerGap)
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(
-        Rect.fromLTWH(
-          _innerGap,
-          _innerGap,
-          size.width - _innerGap * 2,
-          size.height - _innerGap * 2,
-        ),
-        const Radius.circular(_r - 3),
-      ),
-      strokeInner,
-    );
-
-    // 8-pointed rosettes at each corner
-    _drawRosette(canvas, fillGold, const Offset(_r, _r), 9.0);
-    _drawRosette(canvas, fillGold, Offset(size.width - _r, _r), 9.0);
-    _drawRosette(canvas, fillGold, Offset(_r, size.height - _r), 9.0);
-    _drawRosette(
-        canvas, fillGold, Offset(size.width - _r, size.height - _r), 9.0);
-
-    // Oval panel accents at midpoints of each edge
-    if (showEdgeAccents) {
-      _drawOvalAccent(canvas, edgeAccentPaint, Offset(size.width / 2, 0),
-          vertical: false);
-      _drawOvalAccent(
-          canvas, edgeAccentPaint, Offset(size.width / 2, size.height),
-          vertical: false);
-      _drawOvalAccent(canvas, edgeAccentPaint, Offset(0, size.height / 2),
-          vertical: true);
-      _drawOvalAccent(
-          canvas, edgeAccentPaint, Offset(size.width, size.height / 2),
-          vertical: true);
-    }
-  }
-
-  /// 8-pointed Islamic star (alternating outer/inner radius)
-  void _drawRosette(Canvas canvas, Paint paint, Offset center, double outerR) {
-    final innerR = outerR * 0.42;
-    final path = Path();
-    for (int i = 0; i < 16; i++) {
-      final r = i.isEven ? outerR : innerR;
-      final angle = (i * math.pi / 8) - math.pi / 2;
-      final x = center.dx + r * math.cos(angle);
-      final y = center.dy + r * math.sin(angle);
-      if (i == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    path.close();
-    canvas.drawPath(path, paint);
-  }
-
-  /// Oval panel that straddles the border at the midpoint of each edge
-  void _drawOvalAccent(Canvas canvas, Paint paint, Offset center,
-      {required bool vertical}) {
-    canvas.save();
-    canvas.translate(center.dx, center.dy);
-    if (vertical) canvas.rotate(math.pi / 2);
-    canvas.drawOval(
-      Rect.fromCenter(center: Offset.zero, width: 28.0, height: 10.0),
-      paint,
-    );
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant _QuranFramePainter oldDelegate) {
-    return oldDelegate.strokeColor != strokeColor ||
-        oldDelegate.ornamentColor != ornamentColor ||
-        oldDelegate.edgeAccentColor != edgeAccentColor ||
-        oldDelegate.showEdgeAccents != showEdgeAccents;
   }
 }
 
