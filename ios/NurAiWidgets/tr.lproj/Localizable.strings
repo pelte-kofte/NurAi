@@ -16,3 +16,4 @@
 "next_prayer_widget_location_current" = "Mevcut konum";
 "next_prayer_widget_refreshing" = "Güncelleniyor";
 "next_prayer_widget_now" = "Şimdi";
+"next_prayer_widget_remaining_suffix" = "kaldi";

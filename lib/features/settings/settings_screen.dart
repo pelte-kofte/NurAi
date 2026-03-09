@@ -5,13 +5,11 @@ import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../data/adhan_notification_service.dart';
 import '../../data/local_preferences_service.dart';
-import '../../data/premium_service.dart';
 import '../../data/user_profile_service.dart';
 import '../../data/widget_payload_service.dart';
 import '../../data/iftar_live_activity_service.dart';
 import '../../l10n/app_strings.dart';
 import '../notes/notes_screen.dart';
-import '../premium/paywall_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, this.scrollController});
@@ -63,16 +61,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
             },
           ),
-          ValueListenableBuilder<bool>(
-            valueListenable: PremiumService.isPremium,
-            builder: (context, isPremium, _) {
-              return _buildLockRow(
-                title: S.get('my_notes'),
-                icon: Icons.note_alt_outlined,
-                locked: !isPremium,
-                onTap: () => _openNotesOrPaywall(isPremium),
-              );
-            },
+          _buildRow(
+            title: S.get('my_notes'),
+            icon: Icons.note_alt_outlined,
+            onTap: _openNotes,
           ),
           const SizedBox(height: 14),
           const SizedBox(height: 6),
@@ -251,62 +243,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildLockRow({
-    required String title,
-    IconData? icon,
-    required bool locked,
-    required VoidCallback onTap,
-  }) {
-    final onSurface = Theme.of(context).colorScheme.onSurface;
-    final mutedIconColor = Theme.of(context).colorScheme.tertiary;
-    final chevron = Directionality.of(context) == TextDirection.rtl
-        ? Icons.chevron_left_rounded
-        : Icons.chevron_right_rounded;
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        child: Row(
-          children: [
-            if (icon != null) ...[
-              Icon(icon, size: 17, color: mutedIconColor),
-              const SizedBox(width: 10),
-            ],
-            Expanded(
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w400,
-                  color: onSurface,
-                ),
-              ),
-            ),
-            if (locked)
-              Padding(
-                padding: const EdgeInsets.only(right: 6),
-                child: Icon(
-                  Icons.lock_outline_rounded,
-                  size: 16,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onSurface
-                      .withValues(alpha: 0.62),
-                ),
-              ),
-            Icon(
-              chevron,
-              size: 18,
-              color: onSurface.withValues(alpha: 0.55),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildSwitchRow({
     required String title,
     required bool value,
@@ -362,10 +298,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return mode == ThemeMode.dark ? S.get('dark') : S.get('light');
   }
 
-  void _openNotesOrPaywall(bool isPremium) {
+  void _openNotes() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => isPremium ? const NotesScreen() : const PaywallScreen(),
+        builder: (_) => const NotesScreen(),
       ),
     );
   }

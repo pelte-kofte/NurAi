@@ -157,14 +157,21 @@ class _NextPrayerPillState extends State<NextPrayerPill> {
   }
 
   String _remainingText(Duration remaining) {
-    final hours = remaining.inHours;
-    final minutes = remaining.inMinutes % 60;
-    if (hours <= 0) {
-      return '${S.get('next_prayer_in_prefix')} $minutes${S.get('next_prayer_min_short')}';
+    final totalMinutes = remaining.inMinutes <= 0 ? 1 : remaining.inMinutes;
+    final hours = totalMinutes ~/ 60;
+    final minutes = totalMinutes % 60;
+    final prefix = S.get('next_prayer_in_prefix');
+    final hourUnit = S.get('next_prayer_hour_short');
+    final minuteUnit = S.get('next_prayer_min_short');
+    final suffix = S.get('next_prayer_remaining_suffix');
+
+    if (hours > 0 && minutes > 0) {
+      return '$prefix$hours$hourUnit $minutes$minuteUnit$suffix';
     }
-    return '${S.get('next_prayer_in_prefix')} '
-        '$hours${S.get('next_prayer_hour_short')} '
-        '$minutes${S.get('next_prayer_min_short')}';
+    if (hours > 0) {
+      return '$prefix$hours$hourUnit$suffix';
+    }
+    return '$prefix$minutes$minuteUnit$suffix';
   }
 
   String _labelForKey(String key) {

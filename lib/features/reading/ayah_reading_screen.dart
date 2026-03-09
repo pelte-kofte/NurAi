@@ -7,12 +7,10 @@ import '../../data/reading_progress_service.dart';
 import '../../data/bookmark_service.dart';
 import '../../data/ayah_notes_service.dart';
 import '../../data/collective_reading_service.dart';
-import '../../data/premium_service.dart';
 import '../../data/quran_translation_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../models/ayah.dart';
 import '../../models/reading_context.dart';
-import '../premium/paywall_screen.dart';
 import '../surah/surah_list_screen.dart';
 
 /// Displays a full surah for calm, focused reading.
@@ -261,15 +259,6 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   }
 
   Future<void> _openNoteEditorForAyah(Ayah ayah) async {
-    if (!PremiumService.isPremium.value) {
-      await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const PaywallScreen()),
-      );
-      if (mounted) {
-        setState(() {});
-      }
-      return;
-    }
     await showAyahNoteEditorSheet(
       context: context,
       surahName: _localizedSurahName(ayah.surah),
@@ -542,16 +531,6 @@ class _AyahBlockState extends State<_AyahBlock> {
   }
 
   Future<void> _openNote() async {
-    if (!PremiumService.isPremium.value) {
-      await Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const PaywallScreen()),
-      );
-      if (mounted) {
-        setState(() {});
-      }
-      return;
-    }
-
     await showAyahNoteEditorSheet(
       context: context,
       surahName: widget.surahName,
@@ -571,8 +550,6 @@ class _AyahBlockState extends State<_AyahBlock> {
     final colorScheme = theme.colorScheme;
     final secondaryTextColor = theme.textTheme.bodyMedium?.color ??
         colorScheme.onSurface.withValues(alpha: 0.72);
-    final mutedTextColor = theme.textTheme.bodySmall?.color ??
-        colorScheme.onSurface.withValues(alpha: 0.56);
     final readAccent = colorScheme.primary;
     final arabicColor = widget.isWithinJuzRange
         ? colorScheme.onSurface.withValues(alpha: 0.92)
@@ -670,29 +647,18 @@ class _AyahBlockState extends State<_AyahBlock> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      ValueListenableBuilder<bool>(
-                        valueListenable: PremiumService.isPremium,
-                        builder: (context, isPremium, _) {
-                          return GestureDetector(
-                            onTap: _openNote,
-                            child: Padding(
-                              padding: const EdgeInsets.only(top: 2),
-                              child: Icon(
-                                isPremium
-                                    ? (_hasNote
-                                        ? Icons.sticky_note_2_rounded
-                                        : Icons.sticky_note_2_outlined)
-                                    : Icons.lock_outline_rounded,
-                                size: 20,
-                                color: isPremium
-                                    ? (_hasNote
-                                        ? colorScheme.primary
-                                        : secondaryTextColor)
-                                    : mutedTextColor,
-                              ),
-                            ),
-                          );
-                        },
+                      GestureDetector(
+                        onTap: _openNote,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Icon(
+                            _hasNote
+                                ? Icons.sticky_note_2_rounded
+                                : Icons.sticky_note_2_outlined,
+                            size: 20,
+                            color: _hasNote ? colorScheme.primary : secondaryTextColor,
+                          ),
+                        ),
                       ),
                     ],
                   ),

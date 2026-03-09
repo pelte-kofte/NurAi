@@ -28,8 +28,6 @@ class PaywallScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _feature(S.get('premium_feature_ayah_notes')),
-            _feature(S.get('premium_feature_notes_list')),
             _feature(S.get('premium_feature_sync_soon')),
             const SizedBox(height: 20),
             Text(

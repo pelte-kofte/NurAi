@@ -539,14 +539,19 @@ struct NextPrayerWidgetView: View {
     guard let targetDate else { return fallback }
     let diff = max(0, Int(targetDate.timeIntervalSince(Date())))
     if diff < 60 {
-      return nowLabel ? localized("next_prayer_widget_now", fallback: "Now") : "0m"
+      return nowLabel
+        ? localized("next_prayer_widget_now", fallback: "Now")
+        : localizedMinuteText(0)
     }
     let hours = diff / 3600
     let minutes = (diff % 3600) / 60
     if hours > 0 {
-      return "\(hours)h \(minutes)m"
+      if minutes > 0 {
+        return "\(localizedHourText(hours)) \(localizedMinuteText(minutes))\(localizedRemainingSuffix())"
+      }
+      return "\(localizedHourText(hours))\(localizedRemainingSuffix())"
     }
-    return "\(minutes)m"
+    return "\(localizedMinuteText(minutes))\(localizedRemainingSuffix())"
   }
 
   private func prayerSymbolName() -> String {
@@ -568,13 +573,38 @@ struct NextPrayerWidgetView: View {
   private func remainingShortTextRounded() -> String {
     guard let targetDate else { return "--" }
     let diff = max(0, Int(targetDate.timeIntervalSince(Date())))
-    if diff < 60 { return "0m" }
+    if diff < 60 { return localizedMinuteText(0) }
     if diff >= 3600 {
       let roundedHours = Int((Double(diff) / 3600.0).rounded(.toNearestOrAwayFromZero))
-      return "\(max(1, roundedHours))h"
+      return localizedHourText(max(1, roundedHours))
     }
     let minutes = max(1, diff / 60)
-    return "\(minutes)m"
+    return localizedMinuteText(minutes)
+  }
+
+  private func localizedHourText(_ value: Int) -> String {
+    if isTurkishLanguage() {
+      return "\(value) sa"
+    }
+    return "\(value)h"
+  }
+
+  private func localizedMinuteText(_ value: Int) -> String {
+    if isTurkishLanguage() {
+      return "\(value) dk"
+    }
+    return "\(value)m"
+  }
+
+  private func localizedRemainingSuffix() -> String {
+    if isTurkishLanguage() {
+      return " \(localized("next_prayer_widget_remaining_suffix", fallback: "kaldı"))"
+    }
+    return ""
+  }
+
+  private func isTurkishLanguage() -> Bool {
+    (Locale.current.languageCode ?? "").lowercased() == "tr"
   }
 
   private func timeZoneShortLabel() -> String {

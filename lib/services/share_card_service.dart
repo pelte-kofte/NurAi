@@ -55,33 +55,31 @@ class ShareCardService {
     required ShareCardPayload payload,
   }) {
     final theme = Theme.of(context);
-    final mediaQuery = MediaQuery.of(context);
     const captureSize = Size(1080, 1350);
-    final card = MediaQuery(
-      data: mediaQuery.copyWith(
-        size: captureSize,
-        padding: EdgeInsets.zero,
-        viewPadding: EdgeInsets.zero,
-        viewInsets: EdgeInsets.zero,
-        devicePixelRatio: 1,
-        textScaler: const TextScaler.linear(1),
-      ),
-      child: Directionality(
-        textDirection: TextDirection.ltr,
+    final captureContext = Directionality(
+      textDirection: TextDirection.ltr,
+      child: MediaQuery(
+        data: const MediaQueryData(
+          size: captureSize,
+          padding: EdgeInsets.zero,
+          viewPadding: EdgeInsets.zero,
+          viewInsets: EdgeInsets.zero,
+          devicePixelRatio: 1,
+          textScaler: TextScaler.noScaling,
+        ),
         child: Theme(
           data: theme,
-          child: DefaultTextStyle(
-            style: theme.textTheme.bodyMedium ?? const TextStyle(),
-            child: Material(
-              type: MaterialType.transparency,
-              child: SizedBox(
-                width: captureSize.width,
-                height: captureSize.height,
-                child: ClipRect(
-                  child: ShareCardWidget(
-                    payload: payload,
-                    isDark: theme.brightness == Brightness.dark,
-                  ),
+          child: Material(
+            color: Colors.transparent,
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints.tightFor(
+                  width: 1080,
+                  height: 1350,
+                ),
+                child: ShareCardWidget(
+                  payload: payload,
+                  isDark: theme.brightness == Brightness.dark,
                 ),
               ),
             ),
@@ -90,7 +88,7 @@ class ShareCardService {
       ),
     );
     return _controller.captureFromWidget(
-      InheritedTheme.captureAll(context, card),
+      InheritedTheme.captureAll(context, captureContext),
       pixelRatio: 1,
       delay: const Duration(milliseconds: 80),
     );

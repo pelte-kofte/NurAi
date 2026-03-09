@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../data/ayah_notes_service.dart';
-import '../../data/premium_service.dart';
 import '../../data/quran_data.dart';
 import '../../l10n/app_strings.dart';
 import '../../models/note_entry.dart';
-import '../premium/paywall_screen.dart';
 import '../reading/ayah_reading_screen.dart';
 
 class NotesScreen extends StatelessWidget {
@@ -12,60 +10,7 @@ class NotesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<bool>(
-      valueListenable: PremiumService.isPremium,
-      builder: (context, isPremium, _) {
-        if (!isPremium) {
-          return _LockedNotesScreen();
-        }
-        return _NotesListScreen();
-      },
-    );
-  }
-}
-
-class _LockedNotesScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFFBF6F2),
-      appBar: AppBar(
-        backgroundColor: const Color(0xFFFBF6F2),
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        title: Text(S.get('my_notes')),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.lock_outline_rounded, color: Color(0xFFB5AEA8)),
-              const SizedBox(height: 10),
-              Text(
-                S.get('notes_premium_required'),
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  color: Color(0xFF7A746F),
-                ),
-              ),
-              const SizedBox(height: 10),
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const PaywallScreen()),
-                  );
-                },
-                child: Text(S.get('premium_title')),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    return _NotesListScreen();
   }
 }
 
