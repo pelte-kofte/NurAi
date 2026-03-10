@@ -66,6 +66,7 @@ class WidgetPayloadService {
     if (!widgetEnabled) {
       return <String, dynamic>{
         'generatedAtEpochMs': now.millisecondsSinceEpoch,
+        'lang': LocalPreferencesService.language.value,
         'isWidgetEnabled': false,
         'upcomingPrayers': const <Map<String, dynamic>>[],
       };
@@ -77,6 +78,7 @@ class WidgetPayloadService {
     if (!location.hasCoordinates) {
       return <String, dynamic>{
         'generatedAtEpochMs': now.millisecondsSinceEpoch,
+        'lang': LocalPreferencesService.language.value,
         'isWidgetEnabled': true,
         'timeZone': location.timezone ?? now.timeZoneName,
         'upcomingPrayers': const <Map<String, dynamic>>[],
@@ -88,6 +90,7 @@ class WidgetPayloadService {
         upcoming.isNotEmpty ? upcoming.first : _findNextPrayer(now, location);
     return <String, dynamic>{
       'generatedAtEpochMs': now.millisecondsSinceEpoch,
+      'lang': LocalPreferencesService.language.value,
       'isWidgetEnabled': true,
       'nextPrayerName': next.label,
       'nextPrayerTimeEpochMs': next.time.millisecondsSinceEpoch,

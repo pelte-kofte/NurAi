@@ -82,6 +82,7 @@ struct IftarAttributes: ActivityAttributes {
         var subtitle: String
         var iftarDate: Date
         var endDate: Date
+        var lang: String?
         var mode: String
         var postMessage: String
         var phase: String
@@ -93,6 +94,7 @@ struct IftarAttributes: ActivityAttributes {
             case iftarDate
             case endDate
             case endEpochMs
+            case lang
             case mode
             case postMessage
             case postEndsAtDate
@@ -105,6 +107,7 @@ struct IftarAttributes: ActivityAttributes {
             subtitle: String,
             iftarDate: Date,
             endDate: Date,
+            lang: String?,
             mode: String,
             postMessage: String,
             phase: String
@@ -113,6 +116,7 @@ struct IftarAttributes: ActivityAttributes {
             self.subtitle = subtitle
             self.iftarDate = iftarDate
             self.endDate = endDate
+            self.lang = lang
             self.mode = mode
             self.postMessage = postMessage
             self.phase = phase
@@ -154,6 +158,7 @@ struct IftarAttributes: ActivityAttributes {
                 endDate = iftarDate.addingTimeInterval(600)
             }
             mode = try container.decodeIfPresent(String.self, forKey: .mode) ?? "countdown"
+            lang = try container.decodeIfPresent(String.self, forKey: .lang)
             postMessage = try container.decodeIfPresent(String.self, forKey: .postMessage) ?? ""
             phase = try container.decodeIfPresent(String.self, forKey: .phase) ?? "countdown"
 
@@ -169,6 +174,7 @@ struct IftarAttributes: ActivityAttributes {
             try container.encode(subtitle, forKey: .subtitle)
             try container.encode(Int64(iftarDate.timeIntervalSince1970 * 1000), forKey: .iftarEpochMs)
             try container.encode(endDate, forKey: .endDate)
+            try container.encodeIfPresent(lang, forKey: .lang)
             try container.encode(mode, forKey: .mode)
             try container.encode(postMessage, forKey: .postMessage)
             try container.encode(phase, forKey: .phase)
@@ -246,7 +252,7 @@ struct NurAiWidgetsLiveActivity: Widget {
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(spacing: 8) {
                             LiveActivityAvatarView(size: 20)
-                            Text(localizedTitle())
+                            Text(localizedTitle(for: context.state))
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
@@ -277,16 +283,17 @@ struct NurAiWidgetsLiveActivity: Widget {
         }
     }
 
-    private var isTurkish: Bool {
-        Locale.current.languageCode?.lowercased() == "tr"
+    private func isTurkish(for state: IftarAttributes.ContentState) -> Bool {
+        let payloadLanguage = state.lang?.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        return (payloadLanguage?.isEmpty == false ? payloadLanguage : Locale.current.languageCode?.lowercased()) == "tr"
     }
 
-    private func localizedTitle() -> String {
-        isTurkish ? "İftara" : "To iftar"
+    private func localizedTitle(for state: IftarAttributes.ContentState) -> String {
+        isTurkish(for: state) ? "İftara" : "To iftar"
     }
 
-    private func localizedSubtitle() -> String {
-        isTurkish ? "Kalan süre" : "Time remaining"
+    private func localizedSubtitle(for state: IftarAttributes.ContentState) -> String {
+        isTurkish(for: state) ? "Kalan süre" : "Time remaining"
     }
 
     @ViewBuilder
@@ -485,14 +492,14 @@ struct NurAiWidgetsLiveActivity: Widget {
         if !trimmed.isEmpty {
             return trimmed
         }
-        if isTurkish {
+        if isTurkish(for: state) {
             return "Allah kabul etsin"
         }
         return "May Allah accept it"
     }
 
-    private func postIftarSubtitle() -> String {
-        isTurkish ? "İftar vakti" : "Iftar time"
+    private func postIftarSubtitle(for state: IftarAttributes.ContentState) -> String {
+        isTurkish(for: state) ? "İftar vakti" : "Iftar time"
     }
 
     private func primaryLine(for state: IftarAttributes.ContentState, phase: DisplayPhase) -> String {
@@ -500,16 +507,16 @@ struct NurAiWidgetsLiveActivity: Widget {
         case .completed:
             return completionMessage(for: state)
         case .countdown, .ended:
-            return localizedTitle()
+            return localizedTitle(for: state)
         }
     }
 
     private func secondaryLine(for state: IftarAttributes.ContentState, phase: DisplayPhase) -> String {
         switch phase {
         case .completed:
-            return postIftarSubtitle()
+            return postIftarSubtitle(for: state)
         case .countdown, .ended:
-            return localizedSubtitle()
+            return localizedSubtitle(for: state)
         }
     }
 }

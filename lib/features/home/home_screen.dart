@@ -580,13 +580,26 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             locale: locale,
           ),
           builder: (context, snapshot) {
+            final localeCode = locale.languageCode.toLowerCase();
+            final resolvedReadableText = snapshot.data?.trim();
+            final hasReadableText =
+                resolvedReadableText != null && resolvedReadableText.isNotEmpty;
+            final readableText = hasReadableText
+                ? resolvedReadableText
+                : (localeCode == 'tr'
+                    ? ayah.turkishReadable
+                    : (snapshot.connectionState == ConnectionState.done
+                        ? S.get('meal_not_available')
+                        : S.get('prayer_times_loading')));
             return _buildPrimaryAyahCard(
               ayah: ayah,
-              readableText: snapshot.data ?? ayah.turkishReadable,
-              onShare: () => _shareAyahCard(
-                ayah: ayah,
-                readableText: snapshot.data ?? ayah.turkishReadable,
-              ),
+              readableText: readableText,
+              onShare: hasReadableText || localeCode == 'tr'
+                  ? () => _shareAyahCard(
+                        ayah: ayah,
+                        readableText: readableText,
+                      )
+                  : null,
             );
           },
         );

@@ -49,7 +49,8 @@ class IftarLiveActivityService {
         final timeZone =
             AdhanNotificationService.notificationPayloadTimeZone(payload);
         if (iftarEpochMs == null) {
-          _log('tap_start_missing_iftar_epoch_ms type=$type timeZone=$timeZone');
+          _log(
+              'tap_start_missing_iftar_epoch_ms type=$type timeZone=$timeZone');
           await maybeStartOrUpdate();
           return;
         }
@@ -357,6 +358,7 @@ class IftarLiveActivityService {
     return <String, dynamic>{
       'title': S.get('iftar_countdown_title'),
       'subtitle': S.get('iftar_countdown_subtitle'),
+      'lang': LocalPreferencesService.language.value,
       'mode': 'countdown',
       'postMessage': _postMessageForLocale(),
       'phase': phase,

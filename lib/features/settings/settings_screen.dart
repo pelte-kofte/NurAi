@@ -9,6 +9,7 @@ import '../../data/user_profile_service.dart';
 import '../../data/widget_payload_service.dart';
 import '../../data/iftar_live_activity_service.dart';
 import '../../l10n/app_strings.dart';
+import '../../services/feedback_service.dart';
 import '../notes/notes_screen.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -145,7 +146,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 24),
           _buildRow(
             title: S.get('send_feedback'),
-            onTap: () => _showStubDialog(S.get('stub_feedback')),
+            onTap: _showFeedbackSheet,
           ),
           _buildSectionTitle(S.get('legal')),
           _buildRow(
@@ -642,42 +643,145 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {});
   }
 
-  void _showStubDialog(String message) {
-    showDialog(
+  Future<void> _showFeedbackSheet() async {
+    await showModalBottomSheet<void>(
       context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) {
-        return AlertDialog(
-          backgroundColor: Theme.of(context).colorScheme.surface,
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+        final colorScheme = Theme.of(ctx).colorScheme;
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildFeedbackAction(
+                context: ctx,
+                title: S.get('feedback_email_action'),
+                icon: Icons.mail_outline_rounded,
+                onTap: () async {
+                  Navigator.of(ctx).pop();
+                  final result = await FeedbackService.composeFeedbackEmail();
+                  if (!mounted || result == FeedbackLaunchResult.launched) {
+                    return;
+                  }
+                  _showFeedbackFailure(S.get('feedback_email_failed'));
+                },
+              ),
+              _buildFeedbackAction(
+                context: ctx,
+                title: S.get('feedback_rate_action'),
+                icon: Icons.star_outline_rounded,
+                onTap: () async {
+                  Navigator.of(ctx).pop();
+                  final result = await FeedbackService.requestRating();
+                  if (!mounted || result == FeedbackLaunchResult.launched) {
+                    return;
+                  }
+                  _showFeedbackFailure(S.get('feedback_review_failed'));
+                },
+              ),
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                style: TextButton.styleFrom(
+                  foregroundColor:
+                      colorScheme.onSurface.withValues(alpha: 0.76),
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: Text(
+                  S.get('cancel'),
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildFeedbackAction({
+    required BuildContext context,
+    required String title,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Material(
+        color: colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  size: 18,
+                  color: colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                      color: colorScheme.onSurface,
+                    ),
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 18,
+                  color: colorScheme.onSurface.withValues(alpha: 0.42),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showFeedbackFailure(String message) {
+    final messenger = ScaffoldMessenger.maybeOf(context);
+    if (messenger == null) return;
+    messenger
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
           content: Text(
             message,
             style: TextStyle(
               fontFamily: 'Inter',
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: FontWeight.w400,
-              color:
-                  Theme.of(ctx).colorScheme.onSurface.withValues(alpha: 0.72),
-              height: 1.5,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: Text(
-                S.get('ok'),
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
+        ),
+      );
   }
 
   Future<void> _showNotificationSoundSettingsCta() async {
@@ -752,7 +856,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       mode: LaunchMode.externalApplication,
     );
     if (launched || !mounted) return;
-    _showStubDialog(S.get('link_open_failed'));
+    _showFeedbackFailure(S.get('link_open_failed'));
   }
 }
 

@@ -41,11 +41,14 @@ class ShareCardService {
         sharePositionOrigin: sharePositionOrigin,
       );
     } catch (error, stackTrace) {
-      debugPrint('ShareCardService.shareDailyCard failed: $error');
-      debugPrintStack(
-        label: 'ShareCardService.shareDailyCard stack trace',
-        stackTrace: stackTrace,
-      );
+      assert(() {
+        debugPrint('ShareCardService.shareDailyCard failed: $error');
+        debugPrintStack(
+          label: 'ShareCardService.shareDailyCard stack trace',
+          stackTrace: stackTrace,
+        );
+        return true;
+      }());
       rethrow;
     }
   }

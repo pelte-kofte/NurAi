@@ -52,8 +52,6 @@
 		</array>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>Location is used on-device to calculate qibla direction and prayer times.</string>
-		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-		<string>Location is used to calculate qibla direction and prayer times.</string>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
 		<key>BGTaskSchedulerPermittedIdentifiers</key>

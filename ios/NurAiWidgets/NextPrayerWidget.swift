@@ -9,7 +9,15 @@ private let staleDataRefreshInterval: TimeInterval = 5 * 60
 private let disabledRefreshInterval: TimeInterval = 3 * 60 * 60
 private let lockScreenPeriodicRefreshInterval: TimeInterval = 12 * 60
 
-private func localized(_ key: String, fallback: String) -> String {
+private func localized(_ key: String, fallback: String, languageCode: String? = nil) -> String {
+  if
+    let languageCode,
+    let path = Bundle.main.path(forResource: languageCode, ofType: "lproj"),
+    let bundle = Bundle(path: path)
+  {
+    let value = bundle.localizedString(forKey: key, value: fallback, table: nil)
+    return value == key ? fallback : value
+  }
   let value = NSLocalizedString(key, comment: "")
   return value == key ? fallback : value
 }
@@ -26,6 +34,7 @@ struct UpcomingPrayerPayload: Decodable {
 
 struct NextPrayerPayload: Decodable {
   let generatedAtEpochMs: Int64?
+  let lang: String?
   let nextPrayerName: String?
   let nextPrayerTimeEpochMs: Int64?
   let timeZone: String?
@@ -127,7 +136,7 @@ struct NextPrayerWidgetView: View {
   }
 
   private var prayerName: String {
-    selectedPrayer?.name ?? localized("next_prayer_widget_no_data", fallback: "Set location in app")
+    selectedPrayer?.name ?? localized("next_prayer_widget_no_data", fallback: "Set location in app", languageCode: payloadLanguageCode)
   }
 
   private var locationLabel: String {
@@ -139,12 +148,13 @@ struct NextPrayerWidgetView: View {
   }
 
   private var shortTitleText: String {
-    if Locale.current.languageCode?.lowercased() == "tr" {
+    if isTurkishLanguage() {
       return "Sıradaki"
     }
     return localized(
       "next_prayer_title_short",
-      fallback: localized("next_prayer_widget_title", fallback: "Next Prayer")
+      fallback: localized("next_prayer_widget_title", fallback: "Next Prayer", languageCode: payloadLanguageCode),
+      languageCode: payloadLanguageCode
     )
   }
 
@@ -186,7 +196,7 @@ struct NextPrayerWidgetView: View {
       HStack(spacing: 4) {
         Image(systemName: "moon.stars.fill")
           .font(.caption2)
-        Text(localized("next_prayer_widget_enable_short", fallback: "Enable in Settings"))
+        Text(localized("next_prayer_widget_enable_short", fallback: "Enable in Settings", languageCode: payloadLanguageCode))
           .font(.caption2)
           .lineLimit(1)
       }
@@ -199,7 +209,7 @@ struct NextPrayerWidgetView: View {
     case .accessoryRectangular:
       VStack(alignment: .leading, spacing: 6) {
         accessoryHeader(icon: "moon.stars.fill")
-        Text(localized("next_prayer_widget_enable_short", fallback: "Enable in Settings"))
+        Text(localized("next_prayer_widget_enable_short", fallback: "Enable in Settings", languageCode: payloadLanguageCode))
           .font(.system(size: 13, weight: .medium))
           .lineLimit(2)
           .minimumScaleFactor(0.8)
@@ -210,7 +220,7 @@ struct NextPrayerWidgetView: View {
         Image(systemName: "moon.stars.fill")
           .font(.system(size: 20, weight: .semibold))
           .foregroundStyle(clayAccent)
-        Text(localized("next_prayer_widget_enable_short", fallback: "Enable in Settings"))
+        Text(localized("next_prayer_widget_enable_short", fallback: "Enable in Settings", languageCode: payloadLanguageCode))
           .font(.caption.weight(.semibold))
           .multilineTextAlignment(.center)
           .lineLimit(2)
@@ -228,7 +238,7 @@ struct NextPrayerWidgetView: View {
       HStack(spacing: 4) {
         Image(systemName: "clock.badge.exclamationmark")
           .font(.caption2)
-        Text(localized("next_prayer_widget_no_data", fallback: "Set location in app"))
+        Text(localized("next_prayer_widget_no_data", fallback: "Set location in app", languageCode: payloadLanguageCode))
           .font(.caption2)
           .lineLimit(1)
       }
@@ -245,7 +255,7 @@ struct NextPrayerWidgetView: View {
     case .accessoryRectangular:
       VStack(alignment: .leading, spacing: 4) {
         accessoryHeader(icon: "location.slash")
-        Text(localized("next_prayer_widget_no_data", fallback: "Set location in app"))
+        Text(localized("next_prayer_widget_no_data", fallback: "Set location in app", languageCode: payloadLanguageCode))
           .font(.system(size: 13, weight: .medium))
           .lineLimit(2)
           .minimumScaleFactor(0.8)
@@ -254,7 +264,7 @@ struct NextPrayerWidgetView: View {
     default:
       VStack(alignment: .leading, spacing: 8) {
         homeHeader(icon: "clock")
-        Text(localized("next_prayer_widget_no_data", fallback: "Set location in app"))
+        Text(localized("next_prayer_widget_no_data", fallback: "Set location in app", languageCode: payloadLanguageCode))
           .font(.system(size: 15, weight: .medium))
           .lineLimit(2)
           .minimumScaleFactor(0.8)
@@ -273,7 +283,7 @@ struct NextPrayerWidgetView: View {
       HStack(spacing: 4) {
         Image(systemName: "arrow.clockwise")
           .font(.caption2)
-        Text(localized("next_prayer_widget_refreshing", fallback: "Updating"))
+        Text(localized("next_prayer_widget_refreshing", fallback: "Updating", languageCode: payloadLanguageCode))
           .font(.caption2)
           .lineLimit(1)
       }
@@ -286,7 +296,7 @@ struct NextPrayerWidgetView: View {
     case .accessoryRectangular:
       VStack(alignment: .leading, spacing: 4) {
         accessoryHeader(icon: "arrow.clockwise")
-        Text(localized("next_prayer_widget_refreshing", fallback: "Updating"))
+        Text(localized("next_prayer_widget_refreshing", fallback: "Updating", languageCode: payloadLanguageCode))
           .font(.system(size: 13, weight: .medium))
           .lineLimit(2)
           .minimumScaleFactor(0.8)
@@ -295,7 +305,7 @@ struct NextPrayerWidgetView: View {
     default:
       VStack(alignment: .leading, spacing: 8) {
         homeHeader(icon: "clock")
-        Text(localized("next_prayer_widget_refreshing", fallback: "Updating"))
+        Text(localized("next_prayer_widget_refreshing", fallback: "Updating", languageCode: payloadLanguageCode))
           .font(.system(size: 15, weight: .medium))
           .lineLimit(2)
           .minimumScaleFactor(0.8)
@@ -524,7 +534,7 @@ struct NextPrayerWidgetView: View {
 
   private func inlineRightText() -> String {
     if targetDate == nil {
-      return localized("next_prayer_widget_no_data", fallback: "Set location")
+      return localized("next_prayer_widget_no_data", fallback: "Set location", languageCode: payloadLanguageCode)
     }
     guard let targetDate else { return "--" }
     let diff = max(0, Int(targetDate.timeIntervalSince(Date())))
@@ -535,12 +545,12 @@ struct NextPrayerWidgetView: View {
   }
 
   private func remainingPrefixText(nowLabel: Bool = true) -> String {
-    let fallback = localized("next_prayer_widget_no_data", fallback: "No data")
+    let fallback = localized("next_prayer_widget_no_data", fallback: "No data", languageCode: payloadLanguageCode)
     guard let targetDate else { return fallback }
     let diff = max(0, Int(targetDate.timeIntervalSince(Date())))
     if diff < 60 {
       return nowLabel
-        ? localized("next_prayer_widget_now", fallback: "Now")
+        ? localized("next_prayer_widget_now", fallback: "Now", languageCode: payloadLanguageCode)
         : localizedMinuteText(0)
     }
     let hours = diff / 3600
@@ -598,13 +608,21 @@ struct NextPrayerWidgetView: View {
 
   private func localizedRemainingSuffix() -> String {
     if isTurkishLanguage() {
-      return " \(localized("next_prayer_widget_remaining_suffix", fallback: "kaldı"))"
+      return " \(localized("next_prayer_widget_remaining_suffix", fallback: "kaldı", languageCode: payloadLanguageCode))"
     }
     return ""
   }
 
+  private var payloadLanguageCode: String? {
+    let trimmed = entry.payload?.lang?.trimmingCharacters(in: .whitespacesAndNewlines)
+    if let trimmed, !trimmed.isEmpty {
+      return trimmed.lowercased()
+    }
+    return nil
+  }
+
   private func isTurkishLanguage() -> Bool {
-    (Locale.current.languageCode ?? "").lowercased() == "tr"
+    (payloadLanguageCode ?? Locale.current.languageCode ?? "").lowercased() == "tr"
   }
 
   private func timeZoneShortLabel() -> String {

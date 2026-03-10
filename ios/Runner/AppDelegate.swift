@@ -215,6 +215,7 @@ import WidgetKit
   private func parseIftarState(_ args: [String: Any]) -> IftarAttributes.ContentState {
     let title = (args["title"] as? String) ?? "İftara"
     let subtitle = (args["subtitle"] as? String) ?? "Kalan süre"
+    let lang = (args["lang"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
     let mode = (args["mode"] as? String) ?? "countdown"
     let postMessage = (args["postMessage"] as? String) ?? ""
     let phase = (args["phase"] as? String) ?? "countdown"
@@ -238,6 +239,7 @@ import WidgetKit
       subtitle: subtitle,
       iftarDate: iftarDate,
       endDate: endDate,
+      lang: lang,
       mode: mode,
       postMessage: postMessage,
       phase: phase
@@ -599,6 +601,7 @@ struct IftarAttributes: ActivityAttributes {
     var subtitle: String
     var iftarDate: Date
     var endDate: Date
+    var lang: String?
     var mode: String
     var postMessage: String
     var phase: String
@@ -610,6 +613,7 @@ struct IftarAttributes: ActivityAttributes {
       case iftarDate
       case endDate
       case endEpochMs
+      case lang
       case mode
       case postMessage
       case postEndsAtDate
@@ -622,6 +626,7 @@ struct IftarAttributes: ActivityAttributes {
       subtitle: String,
       iftarDate: Date,
       endDate: Date,
+      lang: String?,
       mode: String,
       postMessage: String,
       phase: String
@@ -630,6 +635,7 @@ struct IftarAttributes: ActivityAttributes {
       self.subtitle = subtitle
       self.iftarDate = iftarDate
       self.endDate = endDate
+      self.lang = lang
       self.mode = mode
       self.postMessage = postMessage
       self.phase = phase
@@ -660,6 +666,7 @@ struct IftarAttributes: ActivityAttributes {
         endDate = iftarDate.addingTimeInterval(600)
       }
       mode = try container.decodeIfPresent(String.self, forKey: .mode) ?? "countdown"
+      lang = try container.decodeIfPresent(String.self, forKey: .lang)
       postMessage = try container.decodeIfPresent(String.self, forKey: .postMessage) ?? ""
       phase = try container.decodeIfPresent(String.self, forKey: .phase) ?? "countdown"
     }
@@ -670,6 +677,7 @@ struct IftarAttributes: ActivityAttributes {
       try container.encode(subtitle, forKey: .subtitle)
       try container.encode(Int64(iftarDate.timeIntervalSince1970 * 1000), forKey: .iftarEpochMs)
       try container.encode(endDate, forKey: .endDate)
+      try container.encodeIfPresent(lang, forKey: .lang)
       try container.encode(mode, forKey: .mode)
       try container.encode(postMessage, forKey: .postMessage)
       try container.encode(phase, forKey: .phase)

@@ -103,20 +103,36 @@ class _TodayScreenState extends State<TodayScreen> {
             locale: Localizations.localeOf(context),
           ),
           builder: (context, snapshot) {
+            final localeCode =
+                Localizations.localeOf(context).languageCode.toLowerCase();
+            final resolvedReadableText = snapshot.data?.trim();
+            final hasReadableText =
+                resolvedReadableText != null && resolvedReadableText.isNotEmpty;
+            final readableText = hasReadableText
+                ? resolvedReadableText
+                : (localeCode == 'tr'
+                    ? dailyAyah.turkishReadable
+                    : (snapshot.connectionState == ConnectionState.done
+                        ? S.get('meal_not_available')
+                        : S.get('prayer_times_loading')));
             return _buildVerseCard(
               context,
               dailyAyah,
-              readableText: snapshot.data ?? dailyAyah.turkishReadable,
-              onShare: () => _shareAyahCard(
-                context,
-                dailyAyah: dailyAyah,
-                readableText: snapshot.data ?? dailyAyah.turkishReadable,
-              ),
-              onFavorite: () => _saveAyahFavorite(
-                context,
-                dailyAyah: dailyAyah,
-                readableText: snapshot.data ?? dailyAyah.turkishReadable,
-              ),
+              readableText: readableText,
+              onShare: hasReadableText || localeCode == 'tr'
+                  ? () => _shareAyahCard(
+                        context,
+                        dailyAyah: dailyAyah,
+                        readableText: readableText,
+                      )
+                  : null,
+              onFavorite: hasReadableText || localeCode == 'tr'
+                  ? () => _saveAyahFavorite(
+                        context,
+                        dailyAyah: dailyAyah,
+                        readableText: readableText,
+                      )
+                  : null,
             );
           },
         ),
