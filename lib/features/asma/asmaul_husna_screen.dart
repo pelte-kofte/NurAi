@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../data/asmaul_husna_favorites_service.dart';
 import '../../data/asmaul_husna_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../services/share_card_service.dart';
@@ -18,9 +17,7 @@ class _AsmaulHusnaScreenState extends State<AsmaulHusnaScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   List<AsmaulHusnaName> _allNames = const [];
-  Set<String> _favoriteIds = <String>{};
   bool _loading = true;
-  bool _showFavoritesOnly = false;
   String _query = '';
 
   @override
@@ -40,51 +37,20 @@ class _AsmaulHusnaScreenState extends State<AsmaulHusnaScreen> {
 
   Future<void> _loadData() async {
     final names = await AsmaulHusnaService.getAllNames();
-    final favorites = await AsmaulHusnaFavoritesService.getFavoriteIds();
     if (!mounted) return;
     setState(() {
       _allNames = names;
-      _favoriteIds = favorites;
       _loading = false;
     });
-  }
-
-  Future<void> _reloadFavorites() async {
-    final favorites = await AsmaulHusnaFavoritesService.getFavoriteIds();
-    if (!mounted) return;
-    setState(() => _favoriteIds = favorites);
   }
 
   void _handleSearchChanged() {
     setState(() => _query = _searchController.text);
   }
 
-  Future<void> _toggleFavorite(AsmaulHusnaName item) async {
-    final isNowFavorite = await AsmaulHusnaFavoritesService.toggle(item.id);
-    if (!mounted) return;
-    setState(() {
-      if (isNowFavorite) {
-        _favoriteIds.add(item.id);
-      } else {
-        _favoriteIds.remove(item.id);
-      }
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          S.get(
-            isNowFavorite ? 'asma_favorite_added' : 'asma_favorite_removed',
-          ),
-        ),
-      ),
-    );
-  }
-
   List<AsmaulHusnaName> _filteredItems(String languageCode) {
     final filtered = _allNames.where(
-      (item) =>
-          (!_showFavoritesOnly || _favoriteIds.contains(item.id)) &&
-          item.matchesQuery(_query, languageCode),
+      (item) => item.matchesQuery(_query, languageCode),
     );
     return filtered.toList(growable: false);
   }
@@ -151,24 +117,6 @@ class _AsmaulHusnaScreenState extends State<AsmaulHusnaScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8,
-                        children: [
-                          ChoiceChip(
-                            label: Text(S.get('asma_filter_all')),
-                            selected: !_showFavoritesOnly,
-                            onSelected: (_) =>
-                                setState(() => _showFavoritesOnly = false),
-                          ),
-                          ChoiceChip(
-                            label: Text(S.get('asma_filter_favorites')),
-                            selected: _showFavoritesOnly,
-                            onSelected: (_) =>
-                                setState(() => _showFavoritesOnly = true),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
@@ -178,9 +126,7 @@ class _AsmaulHusnaScreenState extends State<AsmaulHusnaScreen> {
                           child: Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 32),
                             child: Text(
-                              _showFavoritesOnly
-                                  ? S.get('asma_favorites_empty')
-                                  : S.get('asma_empty_state'),
+                              S.get('asma_empty_state'),
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontFamily: 'Inter',
@@ -200,22 +146,17 @@ class _AsmaulHusnaScreenState extends State<AsmaulHusnaScreen> {
                               const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final item = items[index];
-                            final isFavorite = _favoriteIds.contains(item.id);
                             return _AsmaListTile(
                               item: item,
                               languageCode: languageCode,
-                              isFavorite: isFavorite,
-                              onFavoriteTap: () => _toggleFavorite(item),
                               onTap: () async {
                                 await Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (_) => AsmaulHusnaDetailScreen(
                                       item: item,
-                                      initialIsFavorite: isFavorite,
                                     ),
                                   ),
                                 );
-                                await _reloadFavorites();
                               },
                             );
                           },
@@ -231,16 +172,12 @@ class _AsmaListTile extends StatelessWidget {
   const _AsmaListTile({
     required this.item,
     required this.languageCode,
-    required this.isFavorite,
     required this.onTap,
-    required this.onFavoriteTap,
   });
 
   final AsmaulHusnaName item;
   final String languageCode;
-  final bool isFavorite;
   final VoidCallback onTap;
-  final VoidCallback onFavoriteTap;
 
   @override
   Widget build(BuildContext context) {
@@ -261,59 +198,41 @@ class _AsmaListTile extends StatelessWidget {
               color: colorScheme.outlineVariant.withValues(alpha: 0.32),
             ),
           ),
-          child: Row(
+          child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      item.nameArabic,
-                      textDirection: TextDirection.rtl,
-                      style: TextStyle(
-                        fontFamily: 'Amiri',
-                        fontSize: 28,
-                        fontWeight: FontWeight.w700,
-                        color: colorScheme.onSurface,
-                        height: 1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      item.localizedName(languageCode),
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: colorScheme.onSurface.withValues(alpha: 0.84),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      item.localizedMeaning(languageCode),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 13,
-                        fontWeight: FontWeight.w400,
-                        color: colorScheme.onSurface.withValues(alpha: 0.68),
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
+              Text(
+                item.nameArabic,
+                textDirection: TextDirection.rtl,
+                style: TextStyle(
+                  fontFamily: 'Amiri',
+                  fontSize: 28,
+                  fontWeight: FontWeight.w700,
+                  color: colorScheme.onSurface,
+                  height: 1.2,
                 ),
               ),
-              IconButton(
-                onPressed: onFavoriteTap,
-                tooltip: S.get('today_card_add_to_favorites'),
-                icon: Icon(
-                  isFavorite ? Icons.favorite_rounded : Icons.favorite_border,
-                  size: 20,
-                  color: isFavorite
-                      ? colorScheme.primary
-                      : colorScheme.onSurface.withValues(alpha: 0.55),
+              const SizedBox(height: 6),
+              Text(
+                item.localizedName(languageCode),
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: colorScheme.onSurface.withValues(alpha: 0.84),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                item.localizedMeaning(languageCode),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: colorScheme.onSurface.withValues(alpha: 0.68),
+                  height: 1.5,
                 ),
               ),
             ],
@@ -328,11 +247,9 @@ class AsmaulHusnaDetailScreen extends StatefulWidget {
   const AsmaulHusnaDetailScreen({
     super.key,
     required this.item,
-    required this.initialIsFavorite,
   });
 
   final AsmaulHusnaName item;
-  final bool initialIsFavorite;
 
   @override
   State<AsmaulHusnaDetailScreen> createState() =>
@@ -340,25 +257,7 @@ class AsmaulHusnaDetailScreen extends StatefulWidget {
 }
 
 class _AsmaulHusnaDetailScreenState extends State<AsmaulHusnaDetailScreen> {
-  late bool _isFavorite = widget.initialIsFavorite;
-
   String get _languageCode => Localizations.localeOf(context).languageCode;
-
-  Future<void> _toggleFavorite() async {
-    final isNowFavorite =
-        await AsmaulHusnaFavoritesService.toggle(widget.item.id);
-    if (!mounted) return;
-    setState(() => _isFavorite = isNowFavorite);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          S.get(
-            isNowFavorite ? 'asma_favorite_added' : 'asma_favorite_removed',
-          ),
-        ),
-      ),
-    );
-  }
 
   Future<void> _shareItem() async {
     try {
@@ -426,14 +325,6 @@ class _AsmaulHusnaDetailScreenState extends State<AsmaulHusnaDetailScreen> {
             onPressed: _shareItem,
             tooltip: S.get('asma_detail_share'),
             icon: const Icon(Icons.ios_share_rounded, size: 20),
-          ),
-          IconButton(
-            onPressed: _toggleFavorite,
-            tooltip: S.get('today_card_add_to_favorites'),
-            icon: Icon(
-              _isFavorite ? Icons.favorite_rounded : Icons.favorite_border,
-              size: 20,
-            ),
           ),
         ],
       ),

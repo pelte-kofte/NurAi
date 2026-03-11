@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../data/adhan_times_service.dart';
-import '../../data/asmaul_husna_favorites_service.dart';
 import '../../data/asmaul_husna_service.dart';
 import '../../data/daily_ayah_service.dart';
 import '../../data/daily_content_service.dart';
@@ -1031,13 +1030,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   Future<void> _openAsmaDetail(AsmaulHusnaName asma) async {
-    final isFavorite = await AsmaulHusnaFavoritesService.isFavorite(asma.id);
     if (!mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => AsmaulHusnaDetailScreen(
           item: asma,
-          initialIsFavorite: isFavorite,
         ),
       ),
     );
@@ -1074,15 +1071,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   ),
                 ),
                 const SizedBox(height: 4),
-                _buildActionTile(
-                  context: sheetContext,
-                  icon: Icons.star_border_rounded,
-                  label: S.get('today_card_add_to_favorites'),
-                  onTap: () => Navigator.of(sheetContext).pop(
-                    _HomeAsmaCardMenuAction.favorite,
-                  ),
-                ),
-                const SizedBox(height: 4),
                 Divider(
                   height: 1,
                   color: sheetColorScheme.outlineVariant.withValues(alpha: 0.4),
@@ -1107,18 +1095,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         await _shareAsmaCard(
           asma: asma,
           languageCode: languageCode,
-        );
-        break;
-      case _HomeAsmaCardMenuAction.favorite:
-        final saved = await AsmaulHusnaFavoritesService.addIfAbsent(asma.id);
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              S.get(
-                  saved ? 'asma_favorite_added' : 'today_card_favorite_exists'),
-            ),
-          ),
         );
         break;
     }
@@ -1441,7 +1417,6 @@ class _PrimaryDailyCardStyle {
 
 enum _HomeAsmaCardMenuAction {
   share,
-  favorite,
 }
 
 enum _PrayerType { fajr, dhuhr, asr, maghrib, isha, none }

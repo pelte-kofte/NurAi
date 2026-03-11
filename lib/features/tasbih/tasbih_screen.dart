@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../data/asmaul_husna_service.dart';
 import '../../l10n/app_strings.dart';
 
 class TasbihScreen extends StatefulWidget {
@@ -16,6 +17,8 @@ class _TasbihScreenState extends State<TasbihScreen> {
   static const String _keyCustomDhikr = 'tasbih_custom_dhikr';
   static const String _keyGoal = 'tasbih_goal_value';
   static const String _keyCount = 'tasbih_current_count';
+  static const String _keyAsmaId = 'tasbih_asma_id';
+  static const String _asmaDhikrKey = 'asmaul_husna';
   static const String _customDhikrKey = 'custom';
   static const int _customGoalValue = -1;
 
@@ -29,6 +32,8 @@ class _TasbihScreenState extends State<TasbihScreen> {
 
   String _selectedDhikrKey = _baseDhikrs.first.key;
   String _customDhikr = '';
+  List<AsmaulHusnaName> _asmaNames = const [];
+  String? _selectedAsmaId;
   int _goal = 33;
   int _currentCount = 0;
   bool _loading = true;
@@ -42,6 +47,10 @@ class _TasbihScreenState extends State<TasbihScreen> {
   List<_DhikrOption> get _dhikrOptions => [
         ..._baseDhikrs,
         _DhikrOption(
+          key: _asmaDhikrKey,
+          label: S.get('tasbih_dhikr_asmaul_husna'),
+        ),
+        _DhikrOption(
           key: _customDhikrKey,
           label: _customDhikr.trim().isEmpty
               ? '${S.get('custom')}...'
@@ -51,7 +60,25 @@ class _TasbihScreenState extends State<TasbihScreen> {
 
   List<int> get _goalOptions => const [33, 99, 100, _customGoalValue];
 
+  String get _languageCode => Localizations.localeOf(context).languageCode;
+
+  bool get _isAsmaSelected => _selectedDhikrKey == _asmaDhikrKey;
+
+  AsmaulHusnaName? get _selectedAsma {
+    final selectedId = _selectedAsmaId;
+    if (selectedId == null) return _asmaNames.isEmpty ? null : _asmaNames.first;
+    for (final item in _asmaNames) {
+      if (item.id == selectedId) return item;
+    }
+    return _asmaNames.isEmpty ? null : _asmaNames.first;
+  }
+
   String get _currentDhikrLabel {
+    if (_isAsmaSelected) {
+      final asma = _selectedAsma;
+      if (asma == null) return S.get('tasbih_dhikr_asmaul_husna');
+      return asma.localizedDhikr(_languageCode);
+    }
     if (_selectedDhikrKey == _customDhikrKey) {
       return _customDhikr.trim().isEmpty
           ? '${S.get('custom')}...'
@@ -65,19 +92,37 @@ class _TasbihScreenState extends State<TasbihScreen> {
         .label;
   }
 
+  String? get _currentDhikrSupportingText {
+    final asma = _selectedAsma;
+    if (!_isAsmaSelected || asma == null) return null;
+    return '${asma.nameArabic} • ${asma.localizedName(_languageCode)}';
+  }
+
   Future<void> _loadState() async {
     final prefs = await SharedPreferences.getInstance();
+    final asmaNames = await AsmaulHusnaService.getAllNames();
     final dhikr = prefs.getString(_keyDhikr) ?? _baseDhikrs.first.key;
     final customDhikr = prefs.getString(_keyCustomDhikr) ?? '';
     final goal = prefs.getInt(_keyGoal) ?? 33;
     final current = prefs.getInt(_keyCount) ?? 0;
+    final savedAsmaId = prefs.getString(_keyAsmaId);
+    final fallbackAsmaId = asmaNames.isEmpty ? null : asmaNames.first.id;
+    final hasDhikrOption = [
+      ..._baseDhikrs.map((item) => item.key),
+      _asmaDhikrKey,
+      _customDhikrKey,
+    ].contains(dhikr);
 
     if (!mounted) return;
     setState(() {
-      _selectedDhikrKey = dhikr;
+      _asmaNames = asmaNames;
+      _selectedDhikrKey = hasDhikrOption ? dhikr : _baseDhikrs.first.key;
       _customDhikr = customDhikr;
       _goal = goal <= 0 ? 33 : goal;
-      _currentCount = current < 0 ? 0 : current;
+      _currentCount = current.clamp(0, _goal);
+      _selectedAsmaId = asmaNames.any((item) => item.id == savedAsmaId)
+          ? savedAsmaId
+          : fallbackAsmaId;
       _loading = false;
     });
   }
@@ -88,11 +133,22 @@ class _TasbihScreenState extends State<TasbihScreen> {
     await prefs.setString(_keyCustomDhikr, _customDhikr);
     await prefs.setInt(_keyGoal, _goal);
     await prefs.setInt(_keyCount, _currentCount);
+    if (_selectedAsmaId != null) {
+      await prefs.setString(_keyAsmaId, _selectedAsmaId!);
+    } else {
+      await prefs.remove(_keyAsmaId);
+    }
   }
 
   Future<void> _increment() async {
-    HapticFeedback.lightImpact();
-    setState(() => _currentCount += 1);
+    if (_currentCount >= _goal) return;
+    final nextCount = (_currentCount + 1).clamp(0, _goal);
+    if (nextCount == _goal) {
+      HapticFeedback.mediumImpact();
+    } else {
+      HapticFeedback.lightImpact();
+    }
+    setState(() => _currentCount = nextCount);
     await _saveState();
   }
 
@@ -113,7 +169,28 @@ class _TasbihScreenState extends State<TasbihScreen> {
       await _saveState();
       return;
     }
-    setState(() => _selectedDhikrKey = key);
+    setState(() {
+      _selectedDhikrKey = key;
+      if (key == _asmaDhikrKey &&
+          _selectedAsmaId == null &&
+          _asmaNames.isNotEmpty) {
+        _selectedAsmaId = _asmaNames.first.id;
+      }
+    });
+    await _saveState();
+  }
+
+  Future<void> _onAsmaChanged(String? id) async {
+    if (id == null) return;
+    setState(() => _selectedAsmaId = id);
+    await _saveState();
+  }
+
+  Future<void> _goToNextAsma() async {
+    if (_asmaNames.isEmpty) return;
+    final currentIndex = _asmaNames.indexWhere((item) => item.id == _selectedAsmaId);
+    final nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % _asmaNames.length;
+    setState(() => _selectedAsmaId = _asmaNames[nextIndex].id);
     await _saveState();
   }
 
@@ -339,6 +416,51 @@ class _TasbihScreenState extends State<TasbihScreen> {
               ),
             ],
           ),
+          if (_isAsmaSelected && _asmaNames.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: Text(
+                    S.get('tasbih_asma_name'),
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: _buildDropdownField<String>(
+                    value: _selectedAsma?.id ?? _asmaNames.first.id,
+                    items: _asmaNames
+                        .map(
+                          (e) => DropdownMenuItem<String>(
+                            value: e.id,
+                            child: Text(
+                              '${e.nameArabic} • ${e.localizedName(_languageCode)}',
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: _onAsmaChanged,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: _goToNextAsma,
+                  tooltip: S.get('tasbih_next_name'),
+                  icon: const Icon(Icons.arrow_forward_rounded),
+                ),
+              ],
+            ),
+          ],
           const SizedBox(height: 8),
           Row(
             children: [
@@ -399,6 +521,19 @@ class _TasbihScreenState extends State<TasbihScreen> {
               color: colorScheme.onSurface,
             ),
           ),
+          if (_currentDhikrSupportingText != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _currentDhikrSupportingText!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ],
           const SizedBox(height: 8),
           Text(
             '$_currentCount / $_goal',
@@ -409,6 +544,19 @@ class _TasbihScreenState extends State<TasbihScreen> {
               color: colorScheme.onSurface,
             ),
           ),
+          if (_currentCount >= _goal) ...[
+            const SizedBox(height: 8),
+            Text(
+              S.get('tasbih_target_reached'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.primary,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -429,7 +577,9 @@ class _TasbihScreenState extends State<TasbihScreen> {
           ),
           child: Center(
             child: Text(
-              S.get('tasbih_tap_to_count'),
+              _currentCount >= _goal
+                  ? S.get('tasbih_target_reached')
+                  : S.get('tasbih_tap_to_count'),
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 18,
