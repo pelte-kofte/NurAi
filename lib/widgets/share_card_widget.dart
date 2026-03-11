@@ -29,6 +29,11 @@ class ShareCardPayload {
 }
 
 class ShareCardWidget extends StatelessWidget {
+  static const double _canvasWidth = 1080;
+  static const double _canvasHeight = 1350;
+  static const double _cardWidth = 860;
+  static const double _textWidth = 628;
+
   const ShareCardWidget({
     super.key,
     required this.payload,
@@ -48,222 +53,206 @@ class ShareCardWidget extends StatelessWidget {
       hasArabic: hasArabic,
       type: payload.type,
     );
+    final contentMaxLines = _contentMaxLines(
+      payload.content,
+      hasArabic: hasArabic,
+      type: payload.type,
+    );
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final canvasWidth =
-            constraints.maxWidth.isFinite ? constraints.maxWidth : 1080.0;
-        final canvasHeight =
-            constraints.maxHeight.isFinite ? constraints.maxHeight : 1350.0;
-
-        return Material(
-          color: palette.background,
-          child: SizedBox(
-            width: canvasWidth,
-            height: canvasHeight,
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: palette.background,
+    return Material(
+      color: palette.background,
+      child: SizedBox(
+        width: _canvasWidth,
+        height: _canvasHeight,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: palette.background,
+                ),
+              ),
+            ),
+            Positioned(
+              top: -140,
+              right: -100,
+              child: _AccentHalo(
+                size: 380,
+                color:
+                    palette.turquoise.withValues(alpha: isDark ? 0.10 : 0.12),
+              ),
+            ),
+            Positioned(
+              bottom: -170,
+              left: -120,
+              child: _AccentHalo(
+                size: 400,
+                color: palette.indigo.withValues(alpha: isDark ? 0.10 : 0.08),
+              ),
+            ),
+            Positioned.fill(
+              child: Center(
+                child: Container(
+                  width: _cardWidth,
+                  height: 1160,
+                  padding: const EdgeInsets.fromLTRB(84, 64, 84, 52),
+                  decoration: BoxDecoration(
+                    color: palette.panel,
+                    borderRadius: BorderRadius.circular(44),
+                    border: Border.all(
+                      color: palette.border,
+                      width: 1.2,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color:
+                            Colors.black.withValues(alpha: isDark ? 0.22 : 0.07),
+                        blurRadius: 40,
+                        offset: const Offset(0, 20),
+                      ),
+                    ],
                   ),
-                ),
-                Positioned(
-                  top: -140,
-                  right: -100,
-                  child: _AccentHalo(
-                    size: 380,
-                    color: palette.turquoise
-                        .withValues(alpha: isDark ? 0.10 : 0.12),
-                  ),
-                ),
-                Positioned(
-                  bottom: -170,
-                  left: -120,
-                  child: _AccentHalo(
-                    size: 400,
-                    color: palette.indigo.withValues(alpha: isDark ? 0.10 : 0.08),
-                  ),
-                ),
-                Positioned.fill(
-                  child: Align(
-                    alignment: Alignment.center,
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(56, 84, 56, 72),
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 920),
-                        child: Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.fromLTRB(78, 64, 78, 52),
-                          decoration: BoxDecoration(
-                            color: palette.panel,
-                            borderRadius: BorderRadius.circular(44),
-                            border: Border.all(
-                              color: palette.border,
-                              width: 1.2,
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _iconForType(payload.type),
+                            size: 26,
+                            color: palette.accent,
+                          ),
+                          const SizedBox(width: 12),
+                          Flexible(
+                            child: Text(
+                              payload.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: false,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontFamily: 'Inter',
+                                fontSize: 28,
+                                fontWeight: FontWeight.w600,
+                                height: 1.25,
+                                letterSpacing: 0.8,
+                                color: palette.label,
+                              ),
                             ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black
-                                    .withValues(alpha: isDark ? 0.22 : 0.07),
-                                blurRadius: 40,
-                                offset: const Offset(0, 20),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 26),
+                      Container(
+                        width: 104,
+                        height: 2,
+                        decoration: BoxDecoration(
+                          color: palette.clay.withValues(alpha: 0.70),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      ),
+                      const Spacer(),
+                      SizedBox(
+                        width: _textWidth,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            if (hasArabic) ...[
+                              Text(
+                                payload.arabicText!,
+                                textAlign: TextAlign.center,
+                                textDirection: TextDirection.rtl,
+                                maxLines: 4,
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'Amiri',
+                                  fontSize: 60,
+                                  height: 1.48,
+                                  color: palette.primaryText,
+                                ),
+                              ),
+                              const SizedBox(height: 28),
+                            ],
+                            Text(
+                              payload.content,
+                              textAlign: TextAlign.center,
+                              maxLines: contentMaxLines,
+                              overflow: TextOverflow.ellipsis,
+                              softWrap: true,
+                              style: TextStyle(
+                                fontFamily: 'Merriweather',
+                                fontSize: contentFontSize,
+                                height: 1.58,
+                                color: palette.primaryText,
+                              ),
+                            ),
+                            if (hasReference) ...[
+                              const SizedBox(height: 26),
+                              SizedBox(
+                                width: 560,
+                                child: Text(
+                                  payload.reference!,
+                                  textAlign: TextAlign.center,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontFamily: 'Inter',
+                                    fontSize: 21,
+                                    fontWeight: FontWeight.w500,
+                                    height: 1.45,
+                                    color: palette.secondaryText,
+                                    letterSpacing: 0.2,
+                                  ),
+                                ),
                               ),
                             ],
-                          ),
-                          child: Column(
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    _iconForType(payload.type),
-                                    size: 26,
-                                    color: palette.accent,
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Flexible(
-                                    child: Text(
-                                      payload.title,
-                                      maxLines: 2,
-                                      overflow: TextOverflow.ellipsis,
-                                      softWrap: true,
-                                      textAlign: TextAlign.center,
-                                      style: TextStyle(
-                                        fontFamily: 'Inter',
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.w600,
-                                        height: 1.25,
-                                        letterSpacing: 0.8,
-                                        color: palette.label,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 26),
-                              Container(
-                                width: 104,
-                                height: 2,
-                                decoration: BoxDecoration(
-                                  color: palette.clay.withValues(alpha: 0.70),
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                              ),
-                              const SizedBox(height: 34),
-                              Expanded(
-                                child: Center(
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(maxWidth: 720),
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        if (hasArabic) ...[
-                                          Text(
-                                            payload.arabicText!,
-                                            textAlign: TextAlign.center,
-                                            textDirection: TextDirection.rtl,
-                                            maxLines: 4,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontFamily: 'Amiri',
-                                              fontSize: 60,
-                                              height: 1.48,
-                                              color: palette.primaryText,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 28),
-                                        ],
-                                        Text(
-                                          payload.content,
-                                          textAlign: TextAlign.center,
-                                          maxLines: hasArabic ? 9 : 12,
-                                          overflow: TextOverflow.ellipsis,
-                                          softWrap: true,
-                                          style: TextStyle(
-                                            fontFamily: 'Merriweather',
-                                            fontSize: contentFontSize,
-                                            height: 1.5,
-                                            color: palette.primaryText,
-                                          ),
-                                        ),
-                                        if (hasReference) ...[
-                                          const SizedBox(height: 24),
-                                          Text(
-                                            payload.reference!,
-                                            textAlign: TextAlign.center,
-                                            maxLines: 3,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: TextStyle(
-                                              fontFamily: 'Inter',
-                                              fontSize: 22,
-                                              fontWeight: FontWeight.w500,
-                                              color: palette.secondaryText,
-                                              letterSpacing: 0.2,
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                children: [
-                                  Expanded(
-                                    child: Container(
-                                      height: 1,
-                                      decoration: BoxDecoration(
-                                        gradient: LinearGradient(
-                                          colors: [
-                                            palette.border.withValues(alpha: 0),
-                                            palette.border,
-                                            palette.border.withValues(alpha: 0),
-                                          ],
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 20),
-                              Text(
-                                'Duaya',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.1,
-                                  color: palette.branding,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                'duaya.app',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  letterSpacing: 0.5,
-                                  color:
-                                      palette.secondaryText.withValues(alpha: 0.84),
-                                ),
-                              ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      Container(
+                        width: double.infinity,
+                        height: 1,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              palette.border.withValues(alpha: 0),
+                              palette.border,
+                              palette.border.withValues(alpha: 0),
                             ],
                           ),
                         ),
                       ),
-                    ),
+                      const SizedBox(height: 20),
+                      Text(
+                        'Duaya',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 1.1,
+                          color: palette.branding,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'duaya.app',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                          letterSpacing: 0.5,
+                          color: palette.secondaryText.withValues(alpha: 0.84),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
     );
   }
 
@@ -287,6 +276,23 @@ class ShareCardWidget extends StatelessWidget {
     if (length > 320) return 29;
     if (length > 220) return 32;
     return 36;
+  }
+
+  static int _contentMaxLines(
+    String text, {
+    required bool hasArabic,
+    required ShareCardType type,
+  }) {
+    final length = text.trim().length;
+    if (hasArabic) {
+      if (type == ShareCardType.asma) {
+        return length > 150 ? 7 : 6;
+      }
+      return length > 220 ? 8 : 7;
+    }
+    if (length > 420) return 12;
+    if (length > 320) return 11;
+    return 10;
   }
 
   static IconData _iconForType(ShareCardType type) {

@@ -74,16 +74,12 @@ class ShareCardService {
           data: theme,
           child: Material(
             color: Colors.transparent,
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints.tightFor(
-                  width: 1080,
-                  height: 1350,
-                ),
-                child: ShareCardWidget(
-                  payload: payload,
-                  isDark: theme.brightness == Brightness.dark,
-                ),
+            child: SizedBox(
+              width: captureSize.width,
+              height: captureSize.height,
+              child: ShareCardWidget(
+                payload: payload,
+                isDark: theme.brightness == Brightness.dark,
               ),
             ),
           ),
