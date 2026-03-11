@@ -42,7 +42,7 @@ class NurAIApp extends StatelessWidget {
           valueListenable: LocalPreferencesService.language,
           builder: (context, langCode, _) {
             return MaterialApp(
-              title: 'Duaya',
+              title: 'Duada',
               debugShowCheckedModeBanner: false,
               navigatorObservers: [routeObserver],
               locale: Locale(langCode),

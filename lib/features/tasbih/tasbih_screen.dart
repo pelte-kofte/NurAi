@@ -18,6 +18,7 @@ class _TasbihScreenState extends State<TasbihScreen> {
   static const String _keyGoal = 'tasbih_goal_value';
   static const String _keyCount = 'tasbih_current_count';
   static const String _keyAsmaId = 'tasbih_asma_id';
+  static const String _keyAsmaMode = 'tasbih_asma_mode';
   static const String _asmaDhikrKey = 'asmaul_husna';
   static const String _customDhikrKey = 'custom';
   static const int _customGoalValue = -1;
@@ -34,6 +35,7 @@ class _TasbihScreenState extends State<TasbihScreen> {
   String _customDhikr = '';
   List<AsmaulHusnaName> _asmaNames = const [];
   String? _selectedAsmaId;
+  _AsmaTasbihMode _asmaMode = _AsmaTasbihMode.single;
   int _goal = 33;
   int _currentCount = 0;
   bool _loading = true;
@@ -58,11 +60,31 @@ class _TasbihScreenState extends State<TasbihScreen> {
         ),
       ];
 
-  List<int> get _goalOptions => const [33, 99, 100, _customGoalValue];
+  List<int> get _goalOptions => _isAsmaMemorizationMode
+      ? const [33, 99]
+      : const [33, 99, 100, _customGoalValue];
 
-  String get _languageCode => Localizations.localeOf(context).languageCode;
+  String get _languageCode => AsmaulHusnaService.currentLanguageCode();
 
   bool get _isAsmaSelected => _selectedDhikrKey == _asmaDhikrKey;
+
+  bool get _isAsmaMemorizationMode =>
+      _isAsmaSelected && _asmaMode == _AsmaTasbihMode.memorization;
+
+  int get _effectiveGoal {
+    if (!_isAsmaMemorizationMode || _asmaNames.isEmpty) return _goal;
+    return _goal.clamp(1, _asmaNames.length);
+  }
+
+  int get _activeAsmaIndex {
+    if (_asmaNames.isEmpty) return 0;
+    if (_isAsmaMemorizationMode) {
+      return _currentCount.clamp(0, _asmaNames.length - 1);
+    }
+    final selectedId = _selectedAsmaId;
+    final index = _asmaNames.indexWhere((item) => item.id == selectedId);
+    return index >= 0 ? index : 0;
+  }
 
   AsmaulHusnaName? get _selectedAsma {
     final selectedId = _selectedAsmaId;
@@ -73,11 +95,18 @@ class _TasbihScreenState extends State<TasbihScreen> {
     return _asmaNames.isEmpty ? null : _asmaNames.first;
   }
 
+  AsmaulHusnaName? get _activeAsma {
+    if (_asmaNames.isEmpty) return null;
+    return _asmaNames[_activeAsmaIndex];
+  }
+
   String get _currentDhikrLabel {
     if (_isAsmaSelected) {
-      final asma = _selectedAsma;
+      final asma = _isAsmaMemorizationMode ? _activeAsma : _selectedAsma;
       if (asma == null) return S.get('tasbih_dhikr_asmaul_husna');
-      return asma.localizedDhikr(_languageCode);
+      return _isAsmaMemorizationMode
+          ? asma.localizedName(_languageCode)
+          : asma.localizedDhikr(_languageCode);
     }
     if (_selectedDhikrKey == _customDhikrKey) {
       return _customDhikr.trim().isEmpty
@@ -93,9 +122,25 @@ class _TasbihScreenState extends State<TasbihScreen> {
   }
 
   String? get _currentDhikrSupportingText {
-    final asma = _selectedAsma;
+    final asma = _isAsmaMemorizationMode ? _activeAsma : _selectedAsma;
     if (!_isAsmaSelected || asma == null) return null;
+    if (_isAsmaMemorizationMode) return asma.nameArabic;
     return '${asma.nameArabic} • ${asma.localizedName(_languageCode)}';
+  }
+
+  String? get _currentDhikrMeaningText {
+    final asma = _isAsmaMemorizationMode ? _activeAsma : null;
+    if (asma == null) return null;
+    return asma.localizedMeaning(_languageCode);
+  }
+
+  String? get _nextAsmaPreview {
+    if (!_isAsmaMemorizationMode || _asmaNames.isEmpty) return null;
+    if (_currentCount >= _effectiveGoal) return null;
+    final nextIndex = (_activeAsmaIndex + 1).clamp(0, _asmaNames.length - 1);
+    if (nextIndex == _activeAsmaIndex) return null;
+    final next = _asmaNames[nextIndex];
+    return '${next.nameArabic} • ${next.localizedName(_languageCode)}';
   }
 
   Future<void> _loadState() async {
@@ -106,20 +151,31 @@ class _TasbihScreenState extends State<TasbihScreen> {
     final goal = prefs.getInt(_keyGoal) ?? 33;
     final current = prefs.getInt(_keyCount) ?? 0;
     final savedAsmaId = prefs.getString(_keyAsmaId);
+    final savedAsmaMode = prefs.getString(_keyAsmaMode);
     final fallbackAsmaId = asmaNames.isEmpty ? null : asmaNames.first.id;
     final hasDhikrOption = [
       ..._baseDhikrs.map((item) => item.key),
       _asmaDhikrKey,
       _customDhikrKey,
     ].contains(dhikr);
+    final selectedDhikr = hasDhikrOption ? dhikr : _baseDhikrs.first.key;
+    final asmaMode = _AsmaTasbihModeParser.fromStorage(savedAsmaMode);
+    final normalizedGoal = _normalizeGoal(
+      value: goal <= 0 ? 33 : goal,
+      isAsmaMemorizationMode:
+          selectedDhikr == _asmaDhikrKey &&
+              asmaMode == _AsmaTasbihMode.memorization,
+      asmaCount: asmaNames.length,
+    );
 
     if (!mounted) return;
     setState(() {
       _asmaNames = asmaNames;
-      _selectedDhikrKey = hasDhikrOption ? dhikr : _baseDhikrs.first.key;
+      _selectedDhikrKey = selectedDhikr;
       _customDhikr = customDhikr;
-      _goal = goal <= 0 ? 33 : goal;
-      _currentCount = current.clamp(0, _goal);
+      _asmaMode = asmaMode;
+      _goal = normalizedGoal;
+      _currentCount = current.clamp(0, normalizedGoal);
       _selectedAsmaId = asmaNames.any((item) => item.id == savedAsmaId)
           ? savedAsmaId
           : fallbackAsmaId;
@@ -133,6 +189,7 @@ class _TasbihScreenState extends State<TasbihScreen> {
     await prefs.setString(_keyCustomDhikr, _customDhikr);
     await prefs.setInt(_keyGoal, _goal);
     await prefs.setInt(_keyCount, _currentCount);
+    await prefs.setString(_keyAsmaMode, _asmaMode.storageValue);
     if (_selectedAsmaId != null) {
       await prefs.setString(_keyAsmaId, _selectedAsmaId!);
     } else {
@@ -141,9 +198,9 @@ class _TasbihScreenState extends State<TasbihScreen> {
   }
 
   Future<void> _increment() async {
-    if (_currentCount >= _goal) return;
-    final nextCount = (_currentCount + 1).clamp(0, _goal);
-    if (nextCount == _goal) {
+    if (_currentCount >= _effectiveGoal) return;
+    final nextCount = (_currentCount + 1).clamp(0, _effectiveGoal);
+    if (nextCount == _effectiveGoal) {
       HapticFeedback.mediumImpact();
     } else {
       HapticFeedback.lightImpact();
@@ -165,6 +222,7 @@ class _TasbihScreenState extends State<TasbihScreen> {
       setState(() {
         _customDhikr = custom;
         _selectedDhikrKey = _customDhikrKey;
+        _asmaMode = _AsmaTasbihMode.single;
       });
       await _saveState();
       return;
@@ -174,6 +232,35 @@ class _TasbihScreenState extends State<TasbihScreen> {
       if (key == _asmaDhikrKey &&
           _selectedAsmaId == null &&
           _asmaNames.isNotEmpty) {
+        _selectedAsmaId = _asmaNames.first.id;
+      }
+      if (key != _asmaDhikrKey) {
+        _asmaMode = _AsmaTasbihMode.single;
+      }
+      _goal = _normalizeGoal(
+        value: _goal,
+        isAsmaMemorizationMode:
+            key == _asmaDhikrKey && _asmaMode == _AsmaTasbihMode.memorization,
+        asmaCount: _asmaNames.length,
+      );
+      if (_currentCount > _goal) {
+        _currentCount = _goal;
+      }
+    });
+    await _saveState();
+  }
+
+  Future<void> _onAsmaModeChanged(_AsmaTasbihMode mode) async {
+    if (_asmaMode == mode) return;
+    setState(() {
+      _asmaMode = mode;
+      _currentCount = 0;
+      _goal = _normalizeGoal(
+        value: _goal,
+        isAsmaMemorizationMode: mode == _AsmaTasbihMode.memorization,
+        asmaCount: _asmaNames.length,
+      );
+      if (_selectedAsmaId == null && _asmaNames.isNotEmpty) {
         _selectedAsmaId = _asmaNames.first.id;
       }
     });
@@ -188,8 +275,10 @@ class _TasbihScreenState extends State<TasbihScreen> {
 
   Future<void> _goToNextAsma() async {
     if (_asmaNames.isEmpty) return;
-    final currentIndex = _asmaNames.indexWhere((item) => item.id == _selectedAsmaId);
-    final nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % _asmaNames.length;
+    final currentIndex =
+        _asmaNames.indexWhere((item) => item.id == _selectedAsmaId);
+    final nextIndex =
+        currentIndex < 0 ? 0 : (currentIndex + 1) % _asmaNames.length;
     setState(() => _selectedAsmaId = _asmaNames[nextIndex].id);
     await _saveState();
   }
@@ -200,7 +289,11 @@ class _TasbihScreenState extends State<TasbihScreen> {
       final custom = await _askCustomGoal();
       if (custom == null) return;
       setState(() {
-        _goal = custom;
+        _goal = _normalizeGoal(
+          value: custom,
+          isAsmaMemorizationMode: _isAsmaMemorizationMode,
+          asmaCount: _asmaNames.length,
+        );
         if (_currentCount > _goal) {
           _currentCount = _goal;
         }
@@ -209,7 +302,11 @@ class _TasbihScreenState extends State<TasbihScreen> {
       return;
     }
     setState(() {
-      _goal = value;
+      _goal = _normalizeGoal(
+        value: value,
+        isAsmaMemorizationMode: _isAsmaMemorizationMode,
+        asmaCount: _asmaNames.length,
+      );
       if (_currentCount > _goal) {
         _currentCount = _goal;
       }
@@ -310,7 +407,13 @@ class _TasbihScreenState extends State<TasbihScreen> {
                   Navigator.of(ctx).pop();
                   return;
                 }
-                Navigator.of(ctx).pop(parsed);
+                Navigator.of(ctx).pop(
+                  _normalizeGoal(
+                    value: parsed,
+                    isAsmaMemorizationMode: _isAsmaMemorizationMode,
+                    asmaCount: _asmaNames.length,
+                  ),
+                );
               },
               child: Text(S.get('save')),
             ),
@@ -320,6 +423,17 @@ class _TasbihScreenState extends State<TasbihScreen> {
     );
     controller.dispose();
     return value;
+  }
+
+  int _normalizeGoal({
+    required int value,
+    required bool isAsmaMemorizationMode,
+    required int asmaCount,
+  }) {
+    final normalized = value <= 0 ? 33 : value;
+    if (!isAsmaMemorizationMode || asmaCount <= 0) return normalized;
+    final memorizationGoal = normalized <= 33 ? 33 : 99;
+    return memorizationGoal.clamp(1, asmaCount);
   }
 
   @override
@@ -372,8 +486,7 @@ class _TasbihScreenState extends State<TasbihScreen> {
   }
 
   Widget _buildSelectors() {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
+    final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(14),
@@ -418,46 +531,77 @@ class _TasbihScreenState extends State<TasbihScreen> {
           ),
           if (_isAsmaSelected && _asmaNames.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    S.get('tasbih_asma_name'),
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      color: colorScheme.onSurfaceVariant,
+                Text(
+                  S.get('tasbih_asma_mode'),
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildAsmaModeChip(
+                      mode: _AsmaTasbihMode.single,
+                      label: S.get('tasbih_asma_mode_single'),
                     ),
-                  ),
+                    _buildAsmaModeChip(
+                      mode: _AsmaTasbihMode.memorization,
+                      label: S.get('tasbih_asma_mode_memorization'),
+                    ),
+                  ],
                 ),
-                Flexible(
-                  child: _buildDropdownField<String>(
-                    value: _selectedAsma?.id ?? _asmaNames.first.id,
-                    items: _asmaNames
-                        .map(
-                          (e) => DropdownMenuItem<String>(
-                            value: e.id,
-                            child: Text(
-                              '${e.nameArabic} • ${e.localizedName(_languageCode)}',
-                              overflow: TextOverflow.ellipsis,
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                color: colorScheme.onSurface,
-                              ),
-                            ),
+                if (!_isAsmaMemorizationMode) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          S.get('tasbih_asma_name'),
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 13,
+                            color: colorScheme.onSurfaceVariant,
                           ),
-                        )
-                        .toList(),
-                    onChanged: _onAsmaChanged,
+                        ),
+                      ),
+                      Flexible(
+                        child: _buildDropdownField<String>(
+                          value: _selectedAsma?.id ?? _asmaNames.first.id,
+                          items: _asmaNames
+                              .map(
+                                (e) => DropdownMenuItem<String>(
+                                  value: e.id,
+                                  child: Text(
+                                    '${e.nameArabic} • ${e.localizedName(_languageCode)}',
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontFamily: 'Inter',
+                                      color: colorScheme.onSurface,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                          onChanged: _onAsmaChanged,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        onPressed: _goToNextAsma,
+                        tooltip: S.get('tasbih_next_name'),
+                        icon: const Icon(Icons.arrow_forward_rounded),
+                      ),
+                    ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                IconButton(
-                  onPressed: _goToNextAsma,
-                  tooltip: S.get('tasbih_next_name'),
-                  icon: const Icon(Icons.arrow_forward_rounded),
-                ),
+                ],
               ],
             ),
           ],
@@ -512,31 +656,62 @@ class _TasbihScreenState extends State<TasbihScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Text(
-            _currentDhikrLabel,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontFamily: 'Merriweather',
-              fontSize: 20,
-              color: colorScheme.onSurface,
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            child: Text(
+              _currentDhikrLabel,
+              key: ValueKey<String>(_currentDhikrLabel),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Merriweather',
+                fontSize: 20,
+                color: colorScheme.onSurface,
+              ),
             ),
           ),
           if (_currentDhikrSupportingText != null) ...[
             const SizedBox(height: 8),
-            Text(
-              _currentDhikrSupportingText!,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-                color: colorScheme.onSurfaceVariant,
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              child: Text(
+                _currentDhikrSupportingText!,
+                key: ValueKey<String>(_currentDhikrSupportingText!),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: _isAsmaMemorizationMode ? 'Amiri' : 'Inter',
+                  fontSize: _isAsmaMemorizationMode ? 28 : 14,
+                  fontWeight: _isAsmaMemorizationMode
+                      ? FontWeight.w700
+                      : FontWeight.w500,
+                  color: _isAsmaMemorizationMode
+                      ? colorScheme.onSurface
+                      : colorScheme.onSurfaceVariant,
+                  height: _isAsmaMemorizationMode ? 1.3 : null,
+                ),
               ),
             ),
           ],
-          const SizedBox(height: 8),
+          if (_currentDhikrMeaningText != null) ...[
+            const SizedBox(height: 10),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              child: Text(
+                _currentDhikrMeaningText!,
+                key: ValueKey<String>(_currentDhikrMeaningText!),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 14,
+                  fontWeight: FontWeight.w400,
+                  color: colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 10),
           Text(
-            '$_currentCount / $_goal',
+            '$_currentCount / $_effectiveGoal',
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 34,
@@ -544,16 +719,44 @@ class _TasbihScreenState extends State<TasbihScreen> {
               color: colorScheme.onSurface,
             ),
           ),
-          if (_currentCount >= _goal) ...[
+          if (_currentCount >= _effectiveGoal) ...[
             const SizedBox(height: 8),
             Text(
-              S.get('tasbih_target_reached'),
+              _isAsmaMemorizationMode
+                  ? S.get('tasbih_completed')
+                  : S.get('tasbih_target_reached'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
                 color: colorScheme.primary,
+              ),
+            ),
+          ],
+          if (_isAsmaMemorizationMode &&
+              _currentCount < _effectiveGoal &&
+              _nextAsmaPreview != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              S.get('tasbih_next_name'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.secondary,
+                letterSpacing: 0.6,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              _nextAsmaPreview!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: colorScheme.onSurfaceVariant,
               ),
             ),
           ],
@@ -577,9 +780,14 @@ class _TasbihScreenState extends State<TasbihScreen> {
           ),
           child: Center(
             child: Text(
-              _currentCount >= _goal
-                  ? S.get('tasbih_target_reached')
-                  : S.get('tasbih_tap_to_count'),
+              _currentCount >= _effectiveGoal
+                  ? (_isAsmaMemorizationMode
+                      ? S.get('tasbih_completed')
+                      : S.get('tasbih_target_reached'))
+                  : (_isAsmaMemorizationMode
+                      ? S.get('tasbih_tap_for_next_name')
+                      : S.get('tasbih_tap_to_count')),
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 18,
@@ -659,6 +867,17 @@ class _TasbihScreenState extends State<TasbihScreen> {
       ),
     );
   }
+
+  Widget _buildAsmaModeChip({
+    required _AsmaTasbihMode mode,
+    required String label,
+  }) {
+    return ChoiceChip(
+      label: Text(label),
+      selected: _asmaMode == mode,
+      onSelected: (_) => _onAsmaModeChanged(mode),
+    );
+  }
 }
 
 class _DhikrOption {
@@ -669,4 +888,24 @@ class _DhikrOption {
 
   final String key;
   final String label;
+}
+
+enum _AsmaTasbihMode {
+  single,
+  memorization,
+}
+
+extension _AsmaTasbihModeStorage on _AsmaTasbihMode {
+  String get storageValue => switch (this) {
+        _AsmaTasbihMode.single => 'single',
+        _AsmaTasbihMode.memorization => 'memorization',
+      };
+}
+
+class _AsmaTasbihModeParser {
+  static _AsmaTasbihMode fromStorage(String? value) {
+    return value == 'memorization'
+        ? _AsmaTasbihMode.memorization
+        : _AsmaTasbihMode.single;
+  }
 }

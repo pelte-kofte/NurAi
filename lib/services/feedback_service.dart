@@ -16,7 +16,7 @@ enum FeedbackLaunchResult {
 class FeedbackService {
   FeedbackService._();
 
-  static const String appName = 'Duaya';
+  static const String appName = 'Duada';
   static const String feedbackEmail = 'nurai@forvibe.app';
   // Fill this with the real App Store app id to enable direct review-page fallback.
   static const String? iosAppStoreId = null;
@@ -30,7 +30,7 @@ class FeedbackService {
     final packageInfo = await PackageInfo.fromPlatform();
     final languageCode = LocalPreferencesService.language.value.toLowerCase();
     final subject =
-        languageCode == 'tr' ? 'Duaya Geri Bildirim' : 'Duaya Feedback';
+        languageCode == 'tr' ? 'Duada Geri Bildirim' : 'Duada Feedback';
     final body = await _buildEmailBody(
       languageCode: languageCode,
       packageInfo: packageInfo,

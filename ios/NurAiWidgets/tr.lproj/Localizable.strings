@@ -11,8 +11,8 @@
 "next_prayer_title_short" = "Sıradaki Vakit";
 "next_prayer_widget_description" = "Sonraki vakit ve kalan sureyi gosterir.";
 "next_prayer_widget_enable_short" = "Ayarlardan aç";
-"next_prayer_widget_enable_full" = "Duaya Ayarlar'dan Siradaki Vakit Widget'ini etkinlestirin";
-"next_prayer_widget_no_data" = "Konumu Duaya'da ayarlayin";
+"next_prayer_widget_enable_full" = "Duada Ayarlar'dan Siradaki Vakit Widget'ini etkinlestirin";
+"next_prayer_widget_no_data" = "Konumu Duada'da ayarlayin";
 "next_prayer_widget_location_current" = "Mevcut konum";
 "next_prayer_widget_refreshing" = "Güncelleniyor";
 "next_prayer_widget_now" = "Şimdi";

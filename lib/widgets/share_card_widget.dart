@@ -2,33 +2,8 @@ import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
 
+import '../services/share_card_service.dart';
 import '../theme/app_theme.dart';
-
-enum ShareCardType {
-  ayah,
-  hadith,
-  quote,
-  reminder,
-  asma,
-}
-
-class ShareCardPayload {
-  const ShareCardPayload({
-    required this.title,
-    required this.content,
-    required this.type,
-    this.reference,
-    this.arabicText,
-    this.localeCode,
-  });
-
-  final String title;
-  final String content;
-  final ShareCardType type;
-  final String? reference;
-  final String? arabicText;
-  final String? localeCode;
-}
 
 class ShareCardWidget extends StatelessWidget {
   static const double _canvasWidth = 1080;
@@ -191,7 +166,7 @@ class ShareCardWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 18),
                       Text(
-                        'Duaya',
+                        'Duada',
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 22,

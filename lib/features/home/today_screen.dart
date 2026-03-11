@@ -9,7 +9,6 @@ import '../../data/quran_turkish_meal_service.dart';
 import '../../data/today_card_favorites_service.dart';
 import '../../services/share_card_service.dart';
 import '../../l10n/app_strings.dart';
-import '../../widgets/share_card_widget.dart';
 
 enum _TodayCardMenuAction {
   share,
@@ -139,51 +138,61 @@ class _TodayScreenState extends State<TodayScreen> {
         const SizedBox(height: 14),
         ValueListenableBuilder<int>(
           valueListenable: DailyContentService.revision,
-          builder: (context, _, __) => _buildContentCard(
-            context: context,
-            title: S.get('daily_hadith_title'),
-            body: DailyContentService.todayHadith?.text ??
-                S.get('daily_hadith_empty'),
-            source: DailyContentService.todayHadith?.source,
-            onShare: () => _shareDailyTextCard(
-              context,
+          builder: (context, _, __) {
+            final hadith = DailyContentService.todayHadith;
+            final hasHadith = hadith?.text.trim().isNotEmpty ?? false;
+            return _buildContentCard(
+              context: context,
               title: S.get('daily_hadith_title'),
-              body: DailyContentService.todayHadith?.text ??
-                  S.get('daily_hadith_empty'),
-              source: DailyContentService.todayHadith?.source,
-            ),
-            onFavorite: () => _saveTextFavorite(
-              context,
-              title: S.get('daily_hadith_title'),
-              body: DailyContentService.todayHadith?.text ??
-                  S.get('daily_hadith_empty'),
-              source: DailyContentService.todayHadith?.source,
-              type: TodayCardFavoriteType.hadith,
-            ),
-          ),
+              body: hadith?.text ?? S.get('daily_hadith_empty'),
+              source: hadith?.source,
+              onShare: hasHadith
+                  ? () => _shareDailyTextCard(
+                        context,
+                        title: S.get('daily_hadith_title'),
+                        body: hadith!.text,
+                        source: hadith.source,
+                      )
+                  : null,
+              onFavorite: hasHadith
+                  ? () => _saveTextFavorite(
+                        context,
+                        title: S.get('daily_hadith_title'),
+                        body: hadith!.text,
+                        source: hadith.source,
+                        type: TodayCardFavoriteType.hadith,
+                      )
+                  : null,
+            );
+          },
         ),
         const SizedBox(height: 14),
         ValueListenableBuilder<int>(
           valueListenable: DailyContentService.revision,
-          builder: (context, _, __) => _buildContentCard(
-            context: context,
-            title: S.get('daily_word_title'),
-            body: DailyContentService.todayWord?.text ??
-                S.get('daily_word_empty'),
-            onShare: () => _shareDailyTextCard(
-              context,
+          builder: (context, _, __) {
+            final reminder = DailyContentService.todayWord;
+            final hasReminder = reminder?.text.trim().isNotEmpty ?? false;
+            return _buildContentCard(
+              context: context,
               title: S.get('daily_word_title'),
-              body: DailyContentService.todayWord?.text ??
-                  S.get('daily_word_empty'),
-            ),
-            onFavorite: () => _saveTextFavorite(
-              context,
-              title: S.get('daily_word_title'),
-              body: DailyContentService.todayWord?.text ??
-                  S.get('daily_word_empty'),
-              type: TodayCardFavoriteType.reminder,
-            ),
-          ),
+              body: reminder?.text ?? S.get('daily_word_empty'),
+              onShare: hasReminder
+                  ? () => _shareDailyTextCard(
+                        context,
+                        title: S.get('daily_word_title'),
+                        body: reminder!.text,
+                      )
+                  : null,
+              onFavorite: hasReminder
+                  ? () => _saveTextFavorite(
+                        context,
+                        title: S.get('daily_word_title'),
+                        body: reminder!.text,
+                        type: TodayCardFavoriteType.reminder,
+                      )
+                  : null,
+            );
+          },
         ),
         const SizedBox(height: 14),
         FutureBuilder<DailyQuoteItem>(

@@ -17,7 +17,6 @@ import '../../main.dart';
 import '../../models/prayer_location.dart';
 import '../../models/reading_context.dart';
 import '../../theme/app_theme.dart';
-import '../../widgets/share_card_widget.dart';
 import '../../widgets/next_prayer_pill.dart';
 import '../../widgets/quick_actions_popover.dart';
 import '../adhan/adhan_times_screen.dart';
@@ -604,25 +603,31 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         );
       case HomeDailyContentType.hadith:
         final hadith = DailyContentService.todayHadith;
+        final hasHadith = hadith?.text.trim().isNotEmpty ?? false;
         return _buildPrimaryCard(
           title: S.get('daily_hadith_title'),
           body: hadith?.text ?? S.get('daily_hadith_empty'),
           source: hadith?.source,
-          onShare: () => _shareDailyTextCard(
-            title: S.get('daily_hadith_title'),
-            body: hadith?.text ?? S.get('daily_hadith_empty'),
-            source: hadith?.source,
-          ),
+          onShare: hasHadith
+              ? () => _shareDailyTextCard(
+                    title: S.get('daily_hadith_title'),
+                    body: hadith!.text,
+                    source: hadith.source,
+                  )
+              : null,
         );
       case HomeDailyContentType.gentleReminder:
         final reminder = DailyContentService.todayWord;
+        final hasReminder = reminder?.text.trim().isNotEmpty ?? false;
         return _buildPrimaryCard(
           title: S.get('daily_word_title'),
           body: reminder?.text ?? S.get('daily_word_empty'),
-          onShare: () => _shareDailyTextCard(
-            title: S.get('daily_word_title'),
-            body: reminder?.text ?? S.get('daily_word_empty'),
-          ),
+          onShare: hasReminder
+              ? () => _shareDailyTextCard(
+                    title: S.get('daily_word_title'),
+                    body: reminder!.text,
+                  )
+              : null,
         );
       case HomeDailyContentType.quote:
         return FutureBuilder<DailyQuoteItem>(
@@ -632,15 +637,18 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           ),
           builder: (context, snapshot) {
             final quote = snapshot.data;
+            final hasQuote = quote?.text.trim().isNotEmpty ?? false;
             return _buildPrimaryCard(
               title: S.get('daily_quote_title'),
               body: quote?.text ?? '',
               source: quote?.source,
-              onShare: () => _shareDailyTextCard(
-                title: S.get('daily_quote_title'),
-                body: quote?.text ?? '',
-                source: quote?.source,
-              ),
+              onShare: hasQuote
+                  ? () => _shareDailyTextCard(
+                        title: S.get('daily_quote_title'),
+                        body: quote!.text,
+                        source: quote.source,
+                      )
+                  : null,
             );
           },
         );
@@ -1018,8 +1026,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         payload: ShareCardPayload(
           title: title ?? S.get('daily_asma_title'),
           arabicText: asma.nameArabic,
-          content:
-              '${asma.localizedName(languageCode)}\n${asma.localizedMeaning(languageCode)}',
+          content: _buildAsmaShareContent(
+            asma: asma,
+            languageCode: languageCode,
+            includeDhikr: false,
+          ),
           type: ShareCardType.asma,
           localeCode: languageCode,
         ),
@@ -1027,6 +1038,28 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     } catch (_) {
       _showShareError();
     }
+  }
+
+  String _buildAsmaShareContent({
+    required AsmaulHusnaName asma,
+    required String languageCode,
+    required bool includeDhikr,
+  }) {
+    final parts = <String>[
+      asma.localizedName(languageCode),
+      asma.localizedMeaning(languageCode),
+    ];
+    final reflection = asma.localizedReflection(languageCode).trim();
+    if (reflection.isNotEmpty) {
+      parts.add('${S.get('asma_reflection_label')}: $reflection');
+    }
+    if (includeDhikr) {
+      final dhikr = asma.localizedDhikr(languageCode).trim();
+      if (dhikr.isNotEmpty) {
+        parts.add('${S.get('asma_dhikr_label')}: $dhikr');
+      }
+    }
+    return parts.join('\n');
   }
 
   Future<void> _openAsmaDetail(AsmaulHusnaName asma) async {

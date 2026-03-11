@@ -1,17 +1,34 @@
-import 'dart:io';
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 
-import '../widgets/share_card_widget.dart';
+enum ShareCardType {
+  ayah,
+  hadith,
+  quote,
+  reminder,
+  asma,
+}
+
+class ShareCardPayload {
+  const ShareCardPayload({
+    required this.title,
+    required this.content,
+    required this.type,
+    this.reference,
+    this.arabicText,
+    this.localeCode,
+  });
+
+  final String title;
+  final String content;
+  final ShareCardType type;
+  final String? reference;
+  final String? arabicText;
+  final String? localeCode;
+}
 
 class ShareCardService {
   ShareCardService._();
-
-  static final ScreenshotController _controller = ScreenshotController();
 
   static Future<void> shareDailyCard({
     required BuildContext context,
@@ -19,24 +36,9 @@ class ShareCardService {
   }) async {
     final sharePositionOrigin = _shareOriginForContext(context);
     try {
-      final pngBytes = await _captureCard(
-        context: context,
-        payload: payload,
-      );
-      if (pngBytes.isEmpty) {
-        throw StateError('Share card capture returned empty bytes.');
-      }
-
-      final file = await _writeTempFile(
-        pngBytes,
-        title: payload.title,
-      );
-      if (!await file.exists()) {
-        throw StateError('Share card file was not created: ${file.path}');
-      }
-
-      await Share.shareXFiles(
-        [XFile(file.path, mimeType: 'image/png')],
+      // Image-based share cards can be restored later after a full redesign.
+      await Share.share(
+        _buildShareText(payload),
         subject: payload.title,
         sharePositionOrigin: sharePositionOrigin,
       );
@@ -53,58 +55,6 @@ class ShareCardService {
     }
   }
 
-  static Future<Uint8List> _captureCard({
-    required BuildContext context,
-    required ShareCardPayload payload,
-  }) {
-    final theme = Theme.of(context);
-    const captureSize = Size(1080, 1350);
-    final captureContext = Directionality(
-      textDirection: TextDirection.ltr,
-      child: MediaQuery(
-        data: const MediaQueryData(
-          size: captureSize,
-          padding: EdgeInsets.zero,
-          viewPadding: EdgeInsets.zero,
-          viewInsets: EdgeInsets.zero,
-          devicePixelRatio: 1,
-          textScaler: TextScaler.noScaling,
-        ),
-        child: Theme(
-          data: theme,
-          child: Material(
-            color: Colors.transparent,
-            child: SizedBox(
-              width: captureSize.width,
-              height: captureSize.height,
-              child: ShareCardWidget(
-                payload: payload,
-                isDark: theme.brightness == Brightness.dark,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-    return _controller.captureFromWidget(
-      InheritedTheme.captureAll(context, captureContext),
-      pixelRatio: 1,
-      delay: const Duration(milliseconds: 80),
-    );
-  }
-
-  static Future<File> _writeTempFile(
-    Uint8List bytes, {
-    required String title,
-  }) async {
-    final directory = await getTemporaryDirectory();
-    final safeTitle = _sanitizeFileName(title);
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    final file = File('${directory.path}/duaya_${safeTitle}_$timestamp.png');
-    await file.writeAsBytes(bytes, flush: true);
-    return file;
-  }
-
   static Rect _shareOriginForContext(BuildContext context) {
     final renderObject = context.findRenderObject();
     if (renderObject is RenderBox && renderObject.hasSize) {
@@ -114,11 +64,28 @@ class ShareCardService {
     return const Rect.fromLTWH(0, 0, 1, 1);
   }
 
-  static String _sanitizeFileName(String title) {
-    final normalized = title.toLowerCase().trim().replaceAll(' ', '_');
-    return normalized.replaceAll(RegExp(r'[^a-z0-9_]+'), '').replaceAll(
-          RegExp(r'_+'),
-          '_',
-        );
+  static String _buildShareText(ShareCardPayload payload) {
+    final sections = <String>[
+      _normalizeBlock(payload.title),
+      _normalizeBlock(payload.arabicText),
+      _normalizeBlock(payload.content),
+      _normalizeBlock(payload.reference),
+      _shareAttribution(payload.localeCode),
+    ];
+    return sections.where((section) => section.isNotEmpty).join('\n\n');
+  }
+
+  static String _normalizeBlock(String? value) {
+    if (value == null) return '';
+    return value
+        .trim()
+        .replaceAll(RegExp(r'\r\n?'), '\n')
+        .replaceAll(RegExp(r'\n{3,}'), '\n\n');
+  }
+
+  static String _shareAttribution(String? localeCode) {
+    return localeCode?.toLowerCase() == 'tr'
+        ? 'Duada ile paylaşıldı'
+        : 'Shared via Duada';
   }
 }

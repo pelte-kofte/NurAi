@@ -48,7 +48,7 @@ class NextPrayerWidgetProvider : AppWidgetProvider() {
 
             if (payload == null) {
                 views.setTextViewText(R.id.widget_title, "Next Prayer")
-                views.setTextViewText(R.id.widget_primary, "Open Duaya to update")
+                views.setTextViewText(R.id.widget_primary, "Open Duada to update")
                 views.setTextViewText(R.id.widget_secondary, "")
                 views.setViewVisibility(R.id.widget_location, View.GONE)
                 views.setViewVisibility(R.id.widget_notifications, View.GONE)

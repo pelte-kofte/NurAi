@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import '../../data/asmaul_husna_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../services/share_card_service.dart';
-import '../../widgets/share_card_widget.dart';
 
 class AsmaulHusnaScreen extends StatefulWidget {
   const AsmaulHusnaScreen({super.key});
@@ -264,10 +263,9 @@ class _AsmaulHusnaDetailScreenState extends State<AsmaulHusnaDetailScreen> {
       await ShareCardService.shareDailyCard(
         context: context,
         payload: ShareCardPayload(
-          title: S.get('asma_screen_title'),
+          title: widget.item.localizedName(_languageCode),
           arabicText: widget.item.nameArabic,
-          content:
-              '${widget.item.localizedName(_languageCode)}\n${widget.item.localizedMeaning(_languageCode)}',
+          content: _buildShareContent(),
           type: ShareCardType.asma,
           localeCode: _languageCode,
         ),
@@ -278,6 +276,21 @@ class _AsmaulHusnaDetailScreenState extends State<AsmaulHusnaDetailScreen> {
         SnackBar(content: Text(S.get('daily_card_share_failed'))),
       );
     }
+  }
+
+  String _buildShareContent() {
+    final parts = <String>[
+      widget.item.localizedMeaning(_languageCode),
+    ];
+    final reflection = widget.item.localizedReflection(_languageCode).trim();
+    if (reflection.isNotEmpty) {
+      parts.add('${S.get('asma_reflection_label')}: $reflection');
+    }
+    final dhikr = widget.item.localizedDhikr(_languageCode).trim();
+    if (dhikr.isNotEmpty) {
+      parts.add('${S.get('asma_dhikr_label')}: $dhikr');
+    }
+    return parts.join('\n');
   }
 
   Future<void> _copyItem() async {
