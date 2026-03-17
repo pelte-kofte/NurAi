@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
+import 'core/ads/ad_service.dart';
 import 'data/quran_data.dart';
 import 'data/reading_progress_service.dart';
 import 'data/bookmark_service.dart';
@@ -25,6 +26,8 @@ final RouteObserver<ModalRoute<void>> routeObserver =
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await LocalPreferencesService.init();
+  await PremiumService.init();
+  await AdService.initialize();
   runApp(const NurAIApp());
 }
 

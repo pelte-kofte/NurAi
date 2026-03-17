@@ -3,14 +3,17 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/ads/banner_ad_widget.dart';
 import '../../data/adhan_notification_service.dart';
 import '../../data/local_preferences_service.dart';
+import '../../data/premium_service.dart';
 import '../../data/user_profile_service.dart';
 import '../../data/widget_payload_service.dart';
 import '../../data/iftar_live_activity_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../services/feedback_service.dart';
 import '../notes/notes_screen.dart';
+import 'premium_page.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key, this.scrollController});
@@ -66,6 +69,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title: S.get('my_notes'),
             icon: Icons.note_alt_outlined,
             onTap: _openNotes,
+          ),
+          ValueListenableBuilder<bool>(
+            valueListenable: PremiumService.isPremium,
+            builder: (context, isPremium, _) {
+              return _buildRow(
+                title: 'Duada Premium',
+                icon: Icons.workspace_premium_outlined,
+                value: isPremium ? 'Active' : null,
+                onTap: _openPremiumPage,
+              );
+            },
           ),
           const SizedBox(height: 14),
           const SizedBox(height: 6),
@@ -156,6 +170,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _buildRow(
             title: S.get('terms'),
             onTap: () => _openExternalUrl(_termsOfUseUrl),
+          ),
+          ValueListenableBuilder<bool>(
+            valueListenable: PremiumService.isPremium,
+            builder: (context, isPremium, _) {
+              if (isPremium) {
+                return const SizedBox.shrink();
+              }
+              return const BannerAdWidget();
+            },
           ),
         ],
       ),
@@ -303,6 +326,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => const NotesScreen(),
+      ),
+    );
+  }
+
+  void _openPremiumPage() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const PremiumPage(),
       ),
     );
   }
