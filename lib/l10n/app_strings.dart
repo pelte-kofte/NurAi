@@ -96,9 +96,9 @@ class S {
       'ayah_count_suffix': 'ayet',
       'juz_selected': 'Cüz seçildi',
       'juz_label': 'Cüz',
-      'ramadan_hub_title': 'Ramazan Rehberi',
+      'ramadan_hub_title': 'Manevi Rehber',
       'ramadan_intro':
-          'Ramazan, kalbi sadeleştirip niyeti tazeleyen bir yolculuktur.',
+          'Niyetinizi tazeleyen, okuma duzeninizi destekleyen ve gunluk manevi akisiniza eslik eden sade bir rehber.',
       'ramadan_section_reading': 'Okuma',
       'ramadan_section_daily_note': 'Bugün için küçük not',
       'ramadan_section_duas': 'Dualar',
@@ -454,9 +454,9 @@ class S {
       'ayah_count_suffix': 'ayahs',
       'juz_selected': 'Juz selected',
       'juz_label': 'Juz',
-      'ramadan_hub_title': 'Ramadan Guide',
+      'ramadan_hub_title': 'Spiritual Guide',
       'ramadan_intro':
-          'Ramadan is a journey that simplifies the heart and refreshes intention.',
+          'A simple guide to refresh your intention, support your reading rhythm, and accompany your daily spiritual practice.',
       'ramadan_section_reading': 'Reading',
       'ramadan_section_daily_note': 'A small note for today',
       'ramadan_section_duas': 'Duas',

@@ -32,14 +32,30 @@ class ShareCardService {
 
   static Future<void> shareDailyCard({
     required BuildContext context,
-    required ShareCardPayload payload,
+    ShareCardPayload? payload,
+    String? title,
+    String? content,
+    ShareCardType? type,
+    String? reference,
+    String? arabicText,
+    String? localeCode,
   }) async {
+    final resolvedPayload = payload ??
+        ShareCardPayload(
+          title: title!,
+          content: content!,
+          type: type!,
+          reference: reference,
+          arabicText: arabicText,
+          localeCode: localeCode,
+        );
+
     final sharePositionOrigin = _shareOriginForContext(context);
     try {
       // Image-based share cards can be restored later after a full redesign.
       await Share.share(
-        _buildShareText(payload),
-        subject: payload.title,
+        _buildShareText(resolvedPayload),
+        subject: resolvedPayload.title,
         sharePositionOrigin: sharePositionOrigin,
       );
     } catch (error, stackTrace) {

@@ -44,6 +44,12 @@ class PremiumService {
     unawaited(_refreshFromStore());
   }
 
+  static Future<void> dispose() async {
+    await _purchaseSubscription?.cancel();
+    _purchaseSubscription = null;
+    _isInitialized = false;
+  }
+
   static Future<void> setPremiumDebug(bool value) async {
     await _setPremium(value);
   }
@@ -67,13 +73,28 @@ class PremiumService {
         return;
       }
 
-      if (response.productDetails.isEmpty) {
+      if (response.productDetails.isEmpty ||
+          response.notFoundIDs.contains(monthlyProductId)) {
         productNotifier.value = null;
         errorMessage.value = 'Subscription is not available right now.';
         return;
       }
 
-      productNotifier.value = response.productDetails.first;
+      ProductDetails? monthlyProduct;
+      for (final product in response.productDetails) {
+        if (product.id == monthlyProductId) {
+          monthlyProduct = product;
+          break;
+        }
+      }
+
+      if (monthlyProduct == null) {
+        productNotifier.value = null;
+        errorMessage.value = 'Subscription is not available right now.';
+        return;
+      }
+
+      productNotifier.value = monthlyProduct;
       errorMessage.value = null;
     } catch (_) {
       productNotifier.value = null;
@@ -99,12 +120,20 @@ class PremiumService {
     try {
       isLoading.value = true;
       errorMessage.value = null;
-      final purchaseParam = PurchaseParam(productDetails: resolvedProduct);
-      await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
+      await _buyMonthlySubscription(resolvedProduct);
     } catch (_) {
       isLoading.value = false;
       errorMessage.value = 'Purchase could not be started.';
     }
+  }
+
+  static Future<void> _buyMonthlySubscription(
+    ProductDetails productDetails,
+  ) async {
+    // The in_app_purchase package uses the non-consumable purchase API
+    // for auto-renewable subscriptions as well.
+    final purchaseParam = PurchaseParam(productDetails: productDetails);
+    await _inAppPurchase.buyNonConsumable(purchaseParam: purchaseParam);
   }
 
   static Future<void> restorePurchases() async {

@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../core/config/seasonal_config.dart';
 import '../models/ayah.dart';
 import 'quran_data.dart';
 import 'quran_english_service.dart';
@@ -28,19 +29,19 @@ class DailyAyahService {
   /// Surah numbers containing themes of mercy, patience, encouragement.
   /// Used during Ramadan for more relevant selections.
   static const _ramadanPreferredSurahs = [
-    1,   // Fatiha - opening, mercy
-    2,   // Bakara - fasting verses (183-187)
-    3,   // Al-Imran - patience, steadfastness
-    13,  // Ra'd - remembrance
-    25,  // Furqan - servants of Rahman
-    36,  // Yasin - heart of Quran
-    55,  // Rahman - mercy
-    67,  // Mulk - reflection
-    73,  // Muzzammil - night prayer
-    87,  // A'la - purification
-    93,  // Duha - comfort
-    94,  // Inshirah - ease after hardship
-    97,  // Qadr - Night of Power
+    1, // Fatiha - opening, mercy
+    2, // Bakara - fasting verses (183-187)
+    3, // Al-Imran - patience, steadfastness
+    13, // Ra'd - remembrance
+    25, // Furqan - servants of Rahman
+    36, // Yasin - heart of Quran
+    55, // Rahman - mercy
+    67, // Mulk - reflection
+    73, // Muzzammil - night prayer
+    87, // A'la - purification
+    93, // Duha - comfort
+    94, // Inshirah - ease after hardship
+    97, // Qadr - Night of Power
     112, // Ikhlas - sincerity
   ];
 
@@ -110,6 +111,7 @@ class DailyAyahService {
   /// Checks if current date falls within Ramadan.
   /// Uses approximate Gregorian dates (updated yearly).
   static bool _isRamadan() {
+    if (!SeasonalConfig.isRamadanSeason) return false;
     final now = DateTime.now();
 
     // Ramadan 2025: approx March 1 - March 30
@@ -124,7 +126,7 @@ class DailyAyahService {
     if (range == null) return false;
 
     return now.isAfter(range.$1.subtract(const Duration(days: 1))) &&
-           now.isBefore(range.$2.add(const Duration(days: 1)));
+        now.isBefore(range.$2.add(const Duration(days: 1)));
   }
 
   /// Exposes Ramadan status for UI hints (if needed).

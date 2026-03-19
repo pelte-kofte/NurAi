@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../../core/config/seasonal_config.dart';
 import '../../core/ads/banner_ad_widget.dart';
 import '../../data/adhan_notification_service.dart';
 import '../../data/local_preferences_service.dart';
@@ -125,7 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
-          if (!kIsWeb && Platform.isIOS)
+          if (SeasonalConfig.isRamadanSeason && !kIsWeb && Platform.isIOS)
             ValueListenableBuilder<bool>(
               valueListenable: IftarLiveActivityService.isSupported,
               builder: (context, isSupported, _) {
@@ -137,7 +138,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 );
               },
             ),
-          if (!kIsWeb && Platform.isIOS)
+          if (SeasonalConfig.isRamadanSeason && !kIsWeb && Platform.isIOS)
             ValueListenableBuilder<bool>(
               valueListenable: IftarLiveActivityService.isSupported,
               builder: (context, isSupported, _) {

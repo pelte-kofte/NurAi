@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../core/config/seasonal_config.dart';
 import '../../data/adhan_times_service.dart';
 import '../../data/asmaul_husna_service.dart';
 import '../../data/daily_ayah_service.dart';
@@ -298,6 +299,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   String? _iftarCountdown(PrayerLocation location) {
+    if (!SeasonalConfig.isRamadanSeason) return null;
     if (!location.hasCoordinates) return null;
     final times = AdhanTimesService.computeTimes(
       _now,
@@ -434,7 +436,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 title: S.get('ramadan_hub_title'),
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const RamadanHubScreen()),
+                    MaterialPageRoute(
+                      builder: (_) => const RamadanHubScreen(),
+                    ),
                   );
                 },
               ),

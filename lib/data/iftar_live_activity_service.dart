@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 
+import '../core/config/seasonal_config.dart';
 import '../l10n/app_strings.dart';
 import '../models/prayer_location.dart';
 import 'adhan_notification_service.dart';
@@ -78,6 +79,12 @@ class IftarLiveActivityService {
 
   static Future<void> scheduleIftarNotifications() async {
     if (kIsWeb) return;
+    if (!SeasonalConfig.isRamadanSeason) {
+      _cancelTimers();
+      await _cancelBackgroundTasks();
+      await endIfNeeded();
+      return;
+    }
 
     final now = DateTime.now();
     final location = LocalPreferencesService.prayerLocation.value;
@@ -131,6 +138,12 @@ class IftarLiveActivityService {
   }
 
   static Future<void> maybeStartOrUpdate() async {
+    if (!SeasonalConfig.isRamadanSeason) {
+      _cancelTimers();
+      await _cancelBackgroundTasks();
+      await endIfNeeded();
+      return;
+    }
     if (!_isIosRuntime || !isSupported.value) {
       _log(
         'skip_start iosRuntime=$_isIosRuntime isSupported=${isSupported.value}',

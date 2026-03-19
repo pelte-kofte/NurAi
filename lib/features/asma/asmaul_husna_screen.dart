@@ -262,13 +262,11 @@ class _AsmaulHusnaDetailScreenState extends State<AsmaulHusnaDetailScreen> {
     try {
       await ShareCardService.shareDailyCard(
         context: context,
-        payload: ShareCardPayload(
-          title: widget.item.localizedName(_languageCode),
-          arabicText: widget.item.nameArabic,
-          content: _buildShareContent(),
-          type: ShareCardType.asma,
-          localeCode: _languageCode,
-        ),
+        title: widget.item.localizedName(_languageCode),
+        arabicText: widget.item.nameArabic,
+        content: _buildShareContent(),
+        type: ShareCardType.asma,
+        localeCode: _languageCode,
       );
     } catch (_) {
       if (!mounted) return;

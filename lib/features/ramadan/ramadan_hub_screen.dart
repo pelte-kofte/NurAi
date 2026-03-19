@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/config/seasonal_config.dart';
 import '../../data/collective_reading_service.dart';
 import '../../data/quran_data.dart';
 import '../../data/ramadan_daily_note_service.dart';
@@ -38,6 +39,11 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
   }
 
   Future<void> _loadDailyNote(String languageCode) async {
+    if (!SeasonalConfig.isRamadanSeason) {
+      if (!mounted) return;
+      setState(() => _dailyNote = null);
+      return;
+    }
     final assetPath = switch (languageCode) {
       'tr' => 'assets/ramadan/daily_notes_tr.json',
       'en' => 'assets/ramadan/daily_notes_en.json',
@@ -79,8 +85,7 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
   Future<void> _showJuzPicker() async {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final secondaryTextColor =
-        theme.textTheme.bodyMedium?.color ??
+    final secondaryTextColor = theme.textTheme.bodyMedium?.color ??
         colorScheme.onSurface.withValues(alpha: 0.72);
     final chosenJuz = await showModalBottomSheet<int>(
       context: context,
@@ -196,8 +201,7 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final secondaryTextColor =
-        theme.textTheme.bodyMedium?.color ??
+    final secondaryTextColor = theme.textTheme.bodyMedium?.color ??
         colorScheme.onSurface.withValues(alpha: 0.72);
     const hatimCtx = ReadingContext.hatim();
     final hatimProgress = ReadingProgressService.getContextProgress(hatimCtx);
@@ -257,19 +261,22 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
           _SectionHeader(S.get('juz_title')),
           const SizedBox(height: 10),
           _buildJuzIntentionCard(),
-          const SizedBox(height: 22),
-          _SectionHeader(S.get('ramadan_section_daily_note')),
-          const SizedBox(height: 10),
-          _DailyNoteCard(
-              text: _dailyNote?.text ?? S.get('prayer_times_loading')),
-          const SizedBox(height: 22),
-          _SectionHeader(S.get('ramadan_section_duas')),
-          const SizedBox(height: 10),
-          _SimpleNavCard(
-            title: S.get('ramadan_suggestions_entry'),
-            leadingIcon: Icons.menu_book_outlined,
-            onTap: _openDuas,
-          ),
+          if (SeasonalConfig.isRamadanSeason) ...[
+            const SizedBox(height: 22),
+            _SectionHeader(S.get('ramadan_section_daily_note')),
+            const SizedBox(height: 10),
+            _DailyNoteCard(
+              text: _dailyNote?.text ?? S.get('prayer_times_loading'),
+            ),
+            const SizedBox(height: 22),
+            _SectionHeader(S.get('ramadan_section_duas')),
+            const SizedBox(height: 10),
+            _SimpleNavCard(
+              title: S.get('ramadan_suggestions_entry'),
+              leadingIcon: Icons.menu_book_outlined,
+              onTap: _openDuas,
+            ),
+          ],
         ],
       ),
     );
@@ -314,8 +321,8 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
                 fontWeight: FontWeight.w400,
                 color: Theme.of(context).textTheme.bodyMedium?.color ??
                     Theme.of(context).colorScheme.onSurface.withValues(
-                      alpha: 0.72,
-                    ),
+                          alpha: 0.72,
+                        ),
               ),
             ),
           ],
@@ -350,8 +357,8 @@ class _RamadanHubScreenState extends State<RamadanHubScreen> {
                   fontWeight: FontWeight.w400,
                   color: Theme.of(context).textTheme.bodyMedium?.color ??
                       Theme.of(context).colorScheme.onSurface.withValues(
-                        alpha: 0.72,
-                      ),
+                            alpha: 0.72,
+                          ),
                   decoration: TextDecoration.underline,
                 ),
               ),
@@ -466,8 +473,7 @@ class _DailyNoteCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final secondaryTextColor =
-        theme.textTheme.bodyMedium?.color ??
+    final secondaryTextColor = theme.textTheme.bodyMedium?.color ??
         colorScheme.onSurface.withValues(alpha: 0.72);
     return Container(
       width: double.infinity,
@@ -580,8 +586,7 @@ class _SimpleNavCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
-    final secondaryTextColor =
-        theme.textTheme.bodyMedium?.color ??
+    final secondaryTextColor = theme.textTheme.bodyMedium?.color ??
         colorScheme.onSurface.withValues(alpha: 0.72);
     final chevron = Directionality.of(context) == TextDirection.rtl
         ? Icons.chevron_left_rounded

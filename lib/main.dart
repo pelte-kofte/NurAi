@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/ads/ad_service.dart';
+import 'core/config/seasonal_config.dart';
 import 'data/quran_data.dart';
 import 'data/reading_progress_service.dart';
 import 'data/bookmark_service.dart';
@@ -128,6 +129,9 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
   }
 
   void _handleNotificationTapLaunch() {
+    if (!SeasonalConfig.isRamadanSeason) {
+      return;
+    }
     final payload = AdhanNotificationService.lastNotificationTapPayload.value;
     final type = AdhanNotificationService.notificationPayloadType(payload);
     if (type != AdhanNotificationService.iftarWarmupStartLiveActivityType &&
@@ -152,7 +156,9 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
         LocalPreferencesService.adhanEnabled.value) {
       AdhanNotificationService.rescheduleForToday();
     }
-    if (state == AppLifecycleState.resumed && _isAppReady) {
+    if (SeasonalConfig.isRamadanSeason &&
+        state == AppLifecycleState.resumed &&
+        _isAppReady) {
       IftarLiveActivityService.scheduleIftarNotifications();
       IftarLiveActivityService.maybeStartOrUpdate();
     }
@@ -181,8 +187,10 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
     if (LocalPreferencesService.adhanEnabled.value) {
       AdhanNotificationService.rescheduleForToday();
     }
-    await IftarLiveActivityService.scheduleIftarNotifications();
-    await IftarLiveActivityService.maybeStartOrUpdate();
+    if (SeasonalConfig.isRamadanSeason) {
+      await IftarLiveActivityService.scheduleIftarNotifications();
+      await IftarLiveActivityService.maybeStartOrUpdate();
+    }
     await WidgetPayloadService.writeNextPrayerPayload();
   }
 
