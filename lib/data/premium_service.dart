@@ -1,9 +1,13 @@
+// ignore_for_file: avoid_print
+
 import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../l10n/app_strings.dart';
 
 class PremiumService {
   PremiumService._();
@@ -15,33 +19,65 @@ class PremiumService {
   static SharedPreferences? _prefs;
   static StreamSubscription<List<PurchaseDetails>>? _purchaseSubscription;
   static bool _isInitialized = false;
+  static Future<void>? _initFuture;
+  static Future<void>? _productLoadFuture;
+  static int _productLoadRequestId = 0;
+  static bool _isRestoringPurchases = false;
 
   static final isPremium = ValueNotifier<bool>(false);
   static final isLoading = ValueNotifier<bool>(false);
   static final productNotifier = ValueNotifier<ProductDetails?>(null);
   static final errorMessage = ValueNotifier<String?>(null);
+  static final isProductLoading = ValueNotifier<bool>(false);
+  static final showProductRetryAction = ValueNotifier<bool>(false);
 
   static bool get isDebugUnlockAvailable => !kReleaseMode;
   static ProductDetails? get product => productNotifier.value;
 
-  static Future<void> init() async {
-    _prefs ??= await SharedPreferences.getInstance();
-    isPremium.value = _prefs?.getBool(_keyEntitled) ?? false;
+  static void _log(String message) {
+    assert(() {
+      // Keep premium diagnostics in debug builds only.
+      print('[PremiumService] $message');
+      return true;
+    }());
+  }
 
-    if (_isInitialized) {
-      return;
+  static Future<void> init() async {
+    if (_initFuture != null) {
+      return _initFuture!;
     }
 
-    _purchaseSubscription = _inAppPurchase.purchaseStream.listen(
-      _handlePurchaseUpdates,
-      onError: (_) {
-        isLoading.value = false;
-        errorMessage.value = 'Purchases are unavailable right now.';
-      },
-    );
-    _isInitialized = true;
-    await loadProducts();
-    unawaited(_refreshFromStore());
+    final completer = Completer<void>();
+    _initFuture = completer.future;
+
+    try {
+      _prefs ??= await SharedPreferences.getInstance();
+      isPremium.value = _prefs?.getBool(_keyEntitled) ?? false;
+      _log(
+        'init: storedPremium=${_prefs?.getBool(_keyEntitled)} '
+        'effectivePremium=${isPremium.value}',
+      );
+
+      if (!_isInitialized) {
+        _purchaseSubscription = _inAppPurchase.purchaseStream.listen(
+          _handlePurchaseUpdates,
+          onError: (Object error) {
+            isLoading.value = false;
+            errorMessage.value = S.get('premium_purchase_unavailable');
+            print('PremiumService.purchaseStream error: $error');
+          },
+        );
+        _isInitialized = true;
+      }
+
+      unawaited(loadProducts());
+      unawaited(_refreshFromStore());
+      completer.complete();
+    } catch (error, stackTrace) {
+      _initFuture = null;
+      completer.completeError(error, stackTrace);
+      rethrow;
+    }
   }
 
   static Future<void> dispose() async {
@@ -55,28 +91,79 @@ class PremiumService {
   }
 
   static Future<void> loadProducts() async {
+    if (_productLoadFuture != null) {
+      return _productLoadFuture!;
+    }
+
+    final completer = Completer<void>();
+    _productLoadFuture = completer.future;
+    final requestId = ++_productLoadRequestId;
+
+    try {
+      await _loadProductsInternal(
+        requestId: requestId,
+        allowRetry: true,
+      );
+      completer.complete();
+    } catch (error, stackTrace) {
+      completer.completeError(error, stackTrace);
+      rethrow;
+    } finally {
+      if (identical(_productLoadFuture, completer.future)) {
+        _productLoadFuture = null;
+      }
+    }
+  }
+
+  static Future<void> _loadProductsInternal({
+    required int requestId,
+    required bool allowRetry,
+  }) async {
+    _setProductLoadingState(
+      requestId: requestId,
+      isLoadingNow: true,
+      showRetryActionNow: false,
+    );
+
     try {
       final isAvailable = await _inAppPurchase.isAvailable();
+      print('PremiumService.loadProducts isAvailable: $isAvailable');
       if (!isAvailable) {
-        productNotifier.value = null;
-        errorMessage.value = 'Purchases are unavailable right now.';
+        _setProductUnavailable(
+          requestId: requestId,
+          reason: 'store unavailable',
+          allowRetry: allowRetry,
+        );
         return;
       }
 
-      final response = await _inAppPurchase.queryProductDetails({
-        monthlyProductId,
-      });
+      final productIds = <String>{monthlyProductId};
+      print('PremiumService.loadProducts queriedProductIds: $productIds');
+
+      final response = await _inAppPurchase.queryProductDetails(productIds);
+      print(
+        'PremiumService.loadProducts response: '
+        'productDetails=${response.productDetails.map((product) => '${product.id}:${product.price}').toList()} '
+        'notFound=${response.notFoundIDs} '
+        'error=${response.error}',
+      );
 
       if (response.error != null) {
-        productNotifier.value = null;
-        errorMessage.value = response.error!.message;
+        await _setProductUnavailable(
+          requestId: requestId,
+          reason: 'queryProductDetails error: ${response.error}',
+          allowRetry: allowRetry,
+        );
         return;
       }
 
       if (response.productDetails.isEmpty ||
           response.notFoundIDs.contains(monthlyProductId)) {
-        productNotifier.value = null;
-        errorMessage.value = 'Subscription is not available right now.';
+        await _setProductUnavailable(
+          requestId: requestId,
+          reason: 'empty product response for $monthlyProductId',
+          allowRetry: allowRetry,
+        );
         return;
       }
 
@@ -89,17 +176,70 @@ class PremiumService {
       }
 
       if (monthlyProduct == null) {
-        productNotifier.value = null;
-        errorMessage.value = 'Subscription is not available right now.';
+        await _setProductUnavailable(
+          requestId: requestId,
+          reason: 'monthly product not resolved from productDetails',
+          allowRetry: allowRetry,
+        );
+        return;
+      }
+
+      if (requestId != _productLoadRequestId) {
         return;
       }
 
       productNotifier.value = monthlyProduct;
       errorMessage.value = null;
-    } catch (_) {
-      productNotifier.value = null;
-      errorMessage.value = 'Purchases are unavailable right now.';
+      isProductLoading.value = false;
+      showProductRetryAction.value = false;
+    } catch (error) {
+      await _setProductUnavailable(
+        requestId: requestId,
+        reason: 'exception: $error',
+        allowRetry: allowRetry,
+      );
     }
+  }
+
+  static void _setProductLoadingState({
+    required int requestId,
+    required bool isLoadingNow,
+    required bool showRetryActionNow,
+  }) {
+    if (requestId != _productLoadRequestId) {
+      return;
+    }
+    isProductLoading.value = isLoadingNow;
+    showProductRetryAction.value = showRetryActionNow;
+  }
+
+  static Future<void> _setProductUnavailable({
+    required int requestId,
+    required String reason,
+    required bool allowRetry,
+  }) async {
+    if (requestId != _productLoadRequestId) {
+      return;
+    }
+
+    productNotifier.value = null;
+    print('PremiumService.loadProducts unavailable: $reason');
+
+    if (allowRetry) {
+      print('PremiumService.loadProducts retrying once after delay.');
+      await Future<void>.delayed(const Duration(milliseconds: 1500));
+      if (requestId != _productLoadRequestId) {
+        return;
+      }
+      await _loadProductsInternal(
+        requestId: requestId,
+        allowRetry: false,
+      );
+      return;
+    }
+
+    isProductLoading.value = false;
+    showProductRetryAction.value = true;
   }
 
   static Future<void> buyMonthly() async {
@@ -123,7 +263,7 @@ class PremiumService {
       await _buyMonthlySubscription(resolvedProduct);
     } catch (_) {
       isLoading.value = false;
-      errorMessage.value = 'Purchase could not be started.';
+      errorMessage.value = S.get('premium_purchase_start_failed');
     }
   }
 
@@ -146,11 +286,18 @@ class PremiumService {
         isLoading.value = true;
         errorMessage.value = null;
       }
+      _log(
+        '_restorePurchases: '
+        'silent=$silent '
+        'premiumBefore=${isPremium.value}',
+      );
+      _isRestoringPurchases = true;
       await _inAppPurchase.restorePurchases();
     } catch (_) {
+      _isRestoringPurchases = false;
       if (!silent) {
         isLoading.value = false;
-        errorMessage.value = 'Restore failed. Please try again.';
+        errorMessage.value = S.get('premium_restore_failed');
       }
     }
   }
@@ -162,6 +309,22 @@ class PremiumService {
   static Future<void> _handlePurchaseUpdates(
     List<PurchaseDetails> purchases,
   ) async {
+    _log(
+      '_handlePurchaseUpdates: '
+      'count=${purchases.length} '
+      'isRestoring=$_isRestoringPurchases '
+      'premiumBefore=${isPremium.value}',
+    );
+    if (purchases.isEmpty) {
+      if (_isRestoringPurchases) {
+        await _setPremium(false);
+        _log('restore completed with no purchases; premium reset to false');
+        isLoading.value = false;
+        _isRestoringPurchases = false;
+      }
+      return;
+    }
+
     for (final purchase in purchases) {
       switch (purchase.status) {
         case PurchaseStatus.pending:
@@ -170,13 +333,14 @@ class PremiumService {
         case PurchaseStatus.purchased:
         case PurchaseStatus.restored:
           await _setPremium(true);
+          _log('purchase update marked premium=true status=${purchase.status}');
           isLoading.value = false;
           errorMessage.value = null;
           break;
         case PurchaseStatus.error:
           isLoading.value = false;
           errorMessage.value =
-              purchase.error?.message ?? 'Purchase failed. Please try again.';
+              purchase.error?.message ?? S.get('premium_purchase_failed');
           break;
         case PurchaseStatus.canceled:
           isLoading.value = false;
@@ -189,6 +353,8 @@ class PremiumService {
         } catch (_) {}
       }
     }
+
+    _isRestoringPurchases = false;
   }
 
   static Future<void> _setPremium(bool value) async {

@@ -76,8 +76,8 @@ class ShareCardWidget extends StatelessWidget {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color:
-                            Colors.black.withValues(alpha: isDark ? 0.22 : 0.07),
+                        color: Colors.black
+                            .withValues(alpha: isDark ? 0.22 : 0.07),
                         blurRadius: 40,
                         offset: const Offset(0, 20),
                       ),
@@ -177,7 +177,7 @@ class ShareCardWidget extends StatelessWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'duaya.app',
+                        'Duada',
                         style: TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 16,
@@ -329,10 +329,8 @@ class _ShareCardFitter {
       label: 'arabic_translation_reference',
       payload: ShareCardPayload(
         title: 'Daily Ayah',
-        arabicText:
-            'لَا يُكَلِّفُ ٱللَّهُ نَفْسًا إِلَّا وُسْعَهَا',
-        content:
-            'Allah does not burden a soul beyond what it can bear.',
+        arabicText: 'لَا يُكَلِّفُ ٱللَّهُ نَفْسًا إِلَّا وُسْعَهَا',
+        content: 'Allah does not burden a soul beyond what it can bear.',
         reference: 'Al-Baqarah 2:286',
         type: ShareCardType.ayah,
       ),
@@ -416,23 +414,27 @@ class _ShareCardFitter {
 
     final arabicStyle = TextStyle(
       fontFamily: 'Amiri',
-      fontSize: lerpDouble(spec.arabicFontSize, spec.minArabicFontSize, 1 - scale)!,
-      height: lerpDouble(spec.arabicLineHeight, spec.minArabicLineHeight, 1 - scale)!,
+      fontSize:
+          lerpDouble(spec.arabicFontSize, spec.minArabicFontSize, 1 - scale)!,
+      height: lerpDouble(
+          spec.arabicLineHeight, spec.minArabicLineHeight, 1 - scale)!,
       color: palette.primaryText,
     );
     final contentStyle = TextStyle(
       fontFamily: 'Merriweather',
-      fontSize: lerpDouble(spec.contentFontSize, spec.minContentFontSize, 1 - scale)!,
-      height: lerpDouble(spec.contentLineHeight, spec.minContentLineHeight, 1 - scale)!,
+      fontSize:
+          lerpDouble(spec.contentFontSize, spec.minContentFontSize, 1 - scale)!,
+      height: lerpDouble(
+          spec.contentLineHeight, spec.minContentLineHeight, 1 - scale)!,
       color: palette.primaryText,
     );
     final referenceStyle = TextStyle(
       fontFamily: 'Inter',
-      fontSize:
-          lerpDouble(spec.referenceFontSize, spec.minReferenceFontSize, 1 - scale)!,
+      fontSize: lerpDouble(
+          spec.referenceFontSize, spec.minReferenceFontSize, 1 - scale)!,
       fontWeight: FontWeight.w500,
-      height:
-          lerpDouble(spec.referenceLineHeight, spec.minReferenceLineHeight, 1 - scale)!,
+      height: lerpDouble(
+          spec.referenceLineHeight, spec.minReferenceLineHeight, 1 - scale)!,
       letterSpacing: 0.2,
       color: palette.secondaryText,
     );
@@ -470,7 +472,8 @@ class _ShareCardFitter {
 
     if (hasArabic) reservedHeight += arabicMeasure.height + arabicGap;
 
-    var contentAvailable = (availableHeight - reservedHeight).clamp(0.0, availableHeight);
+    var contentAvailable =
+        (availableHeight - reservedHeight).clamp(0.0, availableHeight);
 
     var contentMeasure = _measureContent(
       payload: payload,
@@ -487,13 +490,14 @@ class _ShareCardFitter {
     if (useEllipsisFallback && hasArabic && totalHeight > availableHeight) {
       final overflow = totalHeight - availableHeight;
       final arabicLineHeight = arabicStyle.fontSize! * arabicStyle.height!;
-      final reducibleLines = (arabicMeasure.lineCount - spec.minArabicLinesWhenShared)
-          .clamp(0, spec.maxArabicLines);
+      final reducibleLines =
+          (arabicMeasure.lineCount - spec.minArabicLinesWhenShared)
+              .clamp(0, spec.maxArabicLines);
       if (reducibleLines > 0 && arabicLineHeight > 0) {
         final linesToTrim =
             (overflow / arabicLineHeight).ceil().clamp(0, reducibleLines);
-        final targetArabicLines =
-            (arabicMeasure.lineCount - linesToTrim).clamp(spec.minArabicLinesWhenShared, spec.maxArabicLines);
+        final targetArabicLines = (arabicMeasure.lineCount - linesToTrim)
+            .clamp(spec.minArabicLinesWhenShared, spec.maxArabicLines);
         arabicMeasure = _measureText(
           text: payload.arabicText!,
           style: arabicStyle,
@@ -502,8 +506,10 @@ class _ShareCardFitter {
           maxLines: targetArabicLines,
           ellipsis: true,
         );
-        reservedHeight =
-            referenceMeasure.height + referenceGap + arabicMeasure.height + arabicGap;
+        reservedHeight = referenceMeasure.height +
+            referenceGap +
+            arabicMeasure.height +
+            arabicGap;
         contentAvailable =
             (availableHeight - reservedHeight).clamp(0.0, availableHeight);
         contentMeasure = _measureContent(

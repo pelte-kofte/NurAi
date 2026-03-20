@@ -75,9 +75,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             valueListenable: PremiumService.isPremium,
             builder: (context, isPremium, _) {
               return _buildRow(
-                title: 'Duada Premium',
+                title: S.get('premium_app_title'),
                 icon: Icons.workspace_premium_outlined,
-                value: isPremium ? 'Active' : null,
+                value: isPremium ? S.get('premium_status_active') : null,
                 onTap: _openPremiumPage,
               );
             },

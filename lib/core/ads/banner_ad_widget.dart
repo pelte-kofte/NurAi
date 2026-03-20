@@ -19,15 +19,27 @@ class BannerAdWidget extends StatefulWidget {
 class _BannerAdWidgetState extends State<BannerAdWidget> {
   BannerAd? _bannerAd;
   bool _isLoaded = false;
+  String? _lastBuildLog;
+
+  void _log(String message) {
+    assert(() {
+      // Keep banner diagnostics in debug builds only.
+      // ignore: avoid_print
+      print('[BannerAdWidget] $message');
+      return true;
+    }());
+  }
 
   @override
   void initState() {
     super.initState();
+    _log('initState: premium=${PremiumService.isPremium.value}');
     PremiumService.isPremium.addListener(_handlePremiumChanged);
     _loadBanner();
   }
 
   void _handlePremiumChanged() {
+    _log('premium changed: premium=${PremiumService.isPremium.value}');
     if (PremiumService.isPremium.value) {
       _disposeBanner();
       if (mounted) {
@@ -42,7 +54,13 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
   }
 
   Future<void> _loadBanner() async {
+    _log(
+      'loadBanner requested: '
+      'premium=${PremiumService.isPremium.value} '
+      'canRequestAds=${AdService.canRequestAds}',
+    );
     if (!AdService.canRequestAds) {
+      _log('loadBanner aborted because ads cannot be requested.');
       return;
     }
 
@@ -50,22 +68,34 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
       size: AdSize.banner,
       listener: BannerAdListener(
         onAdLoaded: (ad) {
+          final bannerAd = ad as BannerAd;
+          _log(
+            'onAdLoaded: premium=${PremiumService.isPremium.value} '
+            'size=${bannerAd.size.width}x${bannerAd.size.height}',
+          );
           if (PremiumService.isPremium.value) {
-            ad.dispose();
+            bannerAd.dispose();
             return;
           }
 
           if (!mounted) {
-            ad.dispose();
+            bannerAd.dispose();
             return;
           }
 
           setState(() {
-            _bannerAd = ad as BannerAd;
+            _bannerAd = bannerAd;
             _isLoaded = true;
           });
         },
         onAdFailedToLoad: (ad, error) {
+          _log(
+            'onAdFailedToLoad: '
+            'code=${error.code} '
+            'message=${error.message} '
+            'domain=${error.domain} '
+            'responseInfo=${error.responseInfo}',
+          );
           ad.dispose();
           if (!mounted) return;
           setState(() {
@@ -77,20 +107,29 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
     );
 
     if (banner == null) {
+      _log('loadBanner aborted because createBannerAd returned null.');
       return;
     }
 
+    _log(
+      'banner created: '
+      'adUnitId=${banner.adUnitId} '
+      'size=${banner.size.width}x${banner.size.height}',
+    );
     await banner.load();
+    _log('banner.load() invoked.');
   }
 
   @override
   void dispose() {
+    _log('dispose');
     PremiumService.isPremium.removeListener(_handlePremiumChanged);
     _disposeBanner();
     super.dispose();
   }
 
   void _disposeBanner() {
+    _log('disposeBanner: hasBanner=${_bannerAd != null} isLoaded=$_isLoaded');
     _bannerAd?.dispose();
     _bannerAd = null;
     _isLoaded = false;
@@ -98,6 +137,14 @@ class _BannerAdWidgetState extends State<BannerAdWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final buildLog = 'build: premium=${PremiumService.isPremium.value} '
+        'isLoaded=$_isLoaded '
+        'hasBanner=${_bannerAd != null}';
+    if (_lastBuildLog != buildLog) {
+      _log(buildLog);
+      _lastBuildLog = buildLog;
+    }
+
     if (PremiumService.isPremium.value) {
       return const SizedBox.shrink();
     }

@@ -250,12 +250,28 @@ class S {
       'delete': 'Sil',
       'cancel': 'Vazgeç',
       'premium_title': 'Premium',
+      'premium_app_title': 'Duada Premium',
       'premium_unlock': 'Premium\'u aç',
       'premium_unlock_soon': 'Yakında',
       'premium_restore': 'Geri yükle',
+      'premium_restore_purchases': 'Satın alımları geri yükle',
       'premium_restore_not_available':
           'Geri yükleme şu anda kullanılabilir değil.',
       'premium_disclaimer': 'Ödeme altyapısı yakında.',
+      'premium_description': 'Reklamları kaldırır ve uygulamayı destekler.',
+      'premium_active': 'Premium aktif.',
+      'premium_status_active': 'Aktif',
+      'premium_subscribe_monthly': 'Aylık abone ol',
+      'premium_subscription_loading': 'Abonelik yükleniyor...',
+      'premium_try_again': 'Tekrar dene',
+      'premium_purchase_unavailable':
+          'Satın alımlar şu anda kullanılamıyor.',
+      'premium_purchase_start_failed':
+          'Satın alma başlatılamadı.',
+      'premium_restore_failed':
+          'Geri yükleme başarısız oldu. Lütfen tekrar deneyin.',
+      'premium_purchase_failed':
+          'Satın alma başarısız oldu. Lütfen tekrar deneyin.',
       'premium_local_notes_disclaimer':
           'Notlar bu cihazda yerel olarak saklanır.',
       'premium_feature_ayah_notes': 'Gelişmiş not araçları (yakında)',
@@ -609,12 +625,26 @@ class S {
       'delete': 'Delete',
       'cancel': 'Cancel',
       'premium_title': 'Premium',
+      'premium_app_title': 'Duada Premium',
       'premium_unlock': 'Unlock Premium',
       'premium_unlock_soon': 'Coming soon',
       'premium_restore': 'Restore',
+      'premium_restore_purchases': 'Restore Purchases',
       'premium_restore_not_available':
           'Restore is not available at the moment.',
       'premium_disclaimer': 'Payment infrastructure is coming soon.',
+      'premium_description': 'Removes ads and supports the app.',
+      'premium_active': 'Premium is active.',
+      'premium_status_active': 'Active',
+      'premium_subscribe_monthly': 'Subscribe Monthly',
+      'premium_subscription_loading': 'Subscription loading...',
+      'premium_try_again': 'Try Again',
+      'premium_purchase_unavailable':
+          'Purchases are unavailable right now.',
+      'premium_purchase_start_failed':
+          'Purchase could not be started.',
+      'premium_restore_failed': 'Restore failed. Please try again.',
+      'premium_purchase_failed': 'Purchase failed. Please try again.',
       'premium_local_notes_disclaimer':
           'Notes are stored locally on this device.',
       'premium_feature_ayah_notes': 'Advanced note tools (coming soon)',

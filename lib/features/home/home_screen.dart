@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../core/config/seasonal_config.dart';
+import '../../core/ads/banner_ad_widget.dart';
 import '../../data/adhan_times_service.dart';
 import '../../data/asmaul_husna_service.dart';
 import '../../data/daily_ayah_service.dart';
@@ -441,6 +442,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     ),
                   );
                 },
+              ),
+              const BannerAdWidget(
+                margin: EdgeInsets.only(top: 24, bottom: 8),
               ),
             ],
           ),
