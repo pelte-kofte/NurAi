@@ -6,6 +6,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
+import '../core/config/seasonal_config.dart';
 import '../l10n/app_strings.dart';
 import '../models/prayer_location.dart';
 import 'adhan_times_service.dart';
@@ -306,6 +307,14 @@ class AdhanNotificationService {
 
     final today = DateTime.now();
     await schedulePrayerNotificationsFor(today, selection);
+    if (!SeasonalConfig.isRamadanSeason) {
+      await cancelIftarLiveActivityNotificationsForDate(today);
+      await cancelIftarLiveActivityNotificationsForDate(
+        today.add(const Duration(days: 1)),
+      );
+      await WidgetPayloadService.writeNextPrayerPayload();
+      return;
+    }
     final todayMaghrib = AdhanTimesService.computeTimes(
       today,
       selection,
@@ -396,6 +405,10 @@ class AdhanNotificationService {
     bool includeWarmup = true,
   }) async {
     if (kIsWeb) return;
+    if (!SeasonalConfig.isRamadanSeason) {
+      await cancelIftarLiveActivityNotificationsForDate(maghrib);
+      return;
+    }
     final now = DateTime.now();
     final warmupAt = maghrib.subtract(_iftarWarmupOffset);
     final warmupId = _iftarNotificationIdFor(maghrib, isWarmup: true);
