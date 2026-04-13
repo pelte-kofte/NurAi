@@ -33,8 +33,11 @@ class S {
       'splash_subtitle':
           'Her yeni vakit, Rabbine yakınlaşmak için bir davettir.',
       'home_section_now_upcoming': 'Bir sonraki vakit',
-      'home_section_for_today': 'Bugün İçin',
+      'home_section_for_today': 'Bugün',
       'home_see_more_for_today': 'Bugün için daha fazlasını gör',
+      'today_choose_direction_label': '',
+      'today_choose_fit_label': '',
+      'today_calm_start_label': '',
       'home_section_explore': 'Keşfet',
       'home_time_to_maghrib': 'İftara kalan',
       'today_screen_title': 'Bugün',
@@ -99,6 +102,161 @@ class S {
       'ramadan_hub_title': 'Manevi Rehber',
       'ramadan_intro':
           'Niyetinizi tazeleyen, okuma duzeninizi destekleyen ve gunluk manevi akisiniza eslik eden sade bir rehber.',
+      'guided_helper_title': 'Bugün sana nasıl yardımcı olayım?',
+      'guided_helper_subtitle': 'Şu an sana iyi gelecek kısa bir alan açalım.',
+      'guided_helper_calmer': 'Huzur bulmak istiyorum',
+      'guided_helper_read_quran': 'Kur’an okumak istiyorum',
+      'guided_helper_short_dhikr': 'Kısa zikir istiyorum',
+      'guided_helper_daily_reminder': 'Günlük bir hatırlatma istiyorum',
+      'guided_helper_before_sleep': 'Geceye geçiş istiyorum',
+      'guided_helper_prepare_prayer': 'Namaz vaktine hazırlanmak istiyorum',
+      'guided_helper_message_calmer': 'Sana daha sakin bir başlangıç açıyorum.',
+      'guided_helper_message_read_quran': 'Kaldığın yerden devam edebilirsin.',
+      'guided_helper_message_short_dhikr': 'Kısa bir zikir alanı açıyorum.',
+      'guided_helper_message_daily_reminder':
+          'Bugün için nazik bir hatırlatma açıyorum.',
+      'guided_helper_message_before_sleep':
+          'Geceye daha yumuşak geçiş için kısa bir alan açıyorum.',
+      'guided_helper_message_prepare_prayer':
+          'Namaz vaktine hazırlanman için açıyorum.',
+      'companion_flow_title': 'Şu an bana eşlik et',
+      'companion_flow_home_subtitle': 'Kısa bir duruş',
+      'companion_flow_step_verse': 'Ayet',
+      'companion_flow_step_breathe': 'Nefes',
+      'companion_flow_step_dhikr': 'Zikir',
+      'companion_flow_step_finish': 'Tamam',
+      'companion_flow_verse_text': 'Kalpler ancak Allah’ı anmakla huzur bulur.',
+      'companion_flow_verse_text_1':
+          'Kalpler ancak Allah’ı anmakla huzur bulur.',
+      'companion_flow_verse_text_2': 'Allah’ın rahmetinden ümit kesmeyin.',
+      'companion_flow_verse_text_3':
+          'Şüphesiz zorlukla beraber bir kolaylık vardır.',
+      'companion_flow_verse_text_4': 'Allah kuluna kâfi değil midir?',
+      'companion_flow_verse_text_5': 'Ben çok yakınım.',
+      'companion_flow_verse_text_6': 'Şüphesiz Rabbim benimle beraberdir.',
+      'companion_flow_verse_text_7': 'Allah sabredenlerle beraberdir.',
+      'companion_flow_verse_text_8': 'Biz sana şah damarından daha yakınız.',
+      'companion_flow_verse_text_9': 'Rabbin seni bırakmadı ve sana darılmadı.',
+      'companion_flow_verse_text_10':
+          'Allah’a dayan; vekil olarak Allah yeter.',
+      'companion_flow_verse_hint': 'Birkaç saniye bu sözün içinde kal.',
+      'companion_flow_breathe_text': 'Bir nefes al. Yavaşça ver.',
+      'companion_flow_breathe_hint': 'Hazır olduğunda ekrana dokun.',
+      'companion_flow_breathe_inhale': 'Nefes al',
+      'companion_flow_breathe_exhale': 'Ver',
+      'companion_flow_dhikr_text': 'Sakince tekrar et',
+      'companion_flow_dhikr_hint': 'Her dokunuşta bir kez “Elhamdülillah” de.',
+      'companion_flow_dhikr_hint_dynamic':
+          'Her dokunuşta bir kez “{dhikr}” de.',
+      'companion_flow_finish_cta': 'Tamamla',
+      'companion_flow_finish_title': 'Buradayım. Devam edebilirsin.',
+      'companion_flow_finish_body':
+          'Kısa bir durak bazen kalbi toparlamaya yeter.',
+      'companion_flow_close': 'Kapat',
+      'spiritual_progress_title': 'Tefekkür alanın',
+      'spiritual_streak_title': 'Son tefekkürün',
+      'spiritual_streak_value': '{count} gündür kısa bir tefekkür alanın var',
+      'spiritual_connection_status_today': 'Bugün tefekkür ettin',
+      'spiritual_connection_status_recent': 'Son tefekkürün hâlâ seninle',
+      'spiritual_connection_status_empty':
+          'İlk kısa duruşuna buradan başlayabilirsin',
+      'spiritual_connection_detail_gentle':
+          'Kısa tefekkürler biriktiğinde kalp daha sakin yerleşir.',
+      'spiritual_connection_detail_count':
+          'Son {count} gündür kendine kısa bir tefekkür alanı açıyorsun.',
+      'spiritual_connection_continuity': 'Son {count} gündür devam ediyorsun',
+      'spiritual_juz_label': 'Cüz yolculuğun',
+      'spiritual_progress_completed_label': 'Şu an {current}. cüzdesin',
+      'spiritual_progress_summary_empty':
+          'Henüz tamamlanan cüz yok · Yolculuk 1. cüzden başlıyor',
+      'spiritual_progress_summary':
+          '{completed} cüz tamamlandı · En son {highest}. cüzde iz bıraktın',
+      'spiritual_progress_all_completed':
+          '30 cüz tamamlandı. Hatmin tamamlandı.',
+      'spiritual_daily_goal_label': 'Bugün için kısa bir okuma alanı',
+      'spiritual_daily_status_done': 'Bugün kendine kısa bir alan açtın',
+      'spiritual_daily_status_pending':
+          'Hazır olduğunda bugün için kısa bir duruş açabilirsin',
+      'daily_morning_reminder_title': 'Nazik bir hatırlatma',
+      'daily_morning_reminder_body': 'Güne dua ile başla.',
+      'daily_evening_reminder_title': 'Nazik bir hatırlatma',
+      'daily_evening_reminder_body': 'Günü dua ile kapat.',
+      'daily_reminder_variant_1': 'Kısa bir tefekkür için 10 saniyen var mı?',
+      'daily_reminder_variant_2': 'Bugün kendine küçük bir alan açabilirsin.',
+      'daily_reminder_variant_3': 'Kısa bir duruş sana iyi gelebilir.',
+      'spiritual_notifications_title': 'Manevi bildirimler',
+      'spiritual_notifications_times': 'Bildirim vakitleri',
+      'spiritual_notifications_hint':
+          'Günün seçtiğin anlarında ayet, kısa hatırlatma ve tefekkür içerikleri gönderilir.',
+      'spiritual_notifications_hint_free':
+          'Günün seçtiğin tek vaktinde ayet, kısa hatırlatma ve tefekkür içerikleri gönderilir.',
+      'spiritual_notifications_hint_premium':
+          'Sabah, gün ortası ve gece için birden fazla manevi bildirim vakti ayarlayabilirsin.',
+      'spiritual_notifications_sheet_hint':
+          'Sana iyi gelecek zamanları seç. Bildirimler yumuşak bir zaman kaymasıyla gelir.',
+      'spiritual_notifications_sheet_hint_free':
+          'Ücretsiz planda tek vakit seçilir. Premium ile sabah, gün ortası ve geceyi birlikte açabilirsin.',
+      'spiritual_notification_time_morning': 'Sabah',
+      'spiritual_notification_time_midday': 'Gün ortası',
+      'spiritual_notification_time_night': 'Gece',
+      'spiritual_notifications_limit_note':
+          'Ücretsiz planda 1 manevi bildirim vakti',
+      'spiritual_notifications_limit_body':
+          'Premium ile sabah, gün ortası ve gece için birden fazla vakit açılır.',
+      'spiritual_notif_permission_title': 'Bildirim izni gerekli',
+      'spiritual_notif_permission_body':
+          'Gün içine yayılmış manevi içerikleri gönderebilmemiz için bildirim iznine ihtiyacımız var.',
+      'spiritual_reading_complete_message': 'Bugün tefekkür ettin 🤍',
+      'spiritual_streak_continues_suffix':
+          'Son {count} gündür bu alana yeniden dönüyorsun',
+      'reflection_morning_completed_message_1':
+          'Güne ayetle başladın. Allah bereket versin.',
+      'reflection_morning_completed_message_2':
+          'Sabahını hatırlamayla açtın. Rabbim kabul etsin.',
+      'reflection_morning_completed_message_3':
+          'Günün ilk adımı hayırla oldu. Elhamdülillah.',
+      'reflection_evening_completed_message_1':
+          'Günü tefekkürle kapatıyorsun. Rabbim huzur versin.',
+      'reflection_evening_completed_message_2':
+          'Akşamını hatırlamayla tamamladın. Allah kabul etsin.',
+      'reflection_evening_completed_message_3':
+          'Bugünü ayetle mühürledin. Ne güzel bir kapanış.',
+      'today_intent_calmer_title': 'Sakin bir başlangıç',
+      'today_intent_calmer_body':
+          'Bugün biraz yavaşlayıp kalbini dinlendirecek daha sakin içerikleri öne aldık.',
+      'today_intent_reminder_title': 'Bugünün içeriği',
+      'today_intent_reminder_body':
+          'Bugünün akışında sana eşlik edecek genel içerikleri öne aldık.',
+      'today_intent_morning_reflection_title': 'Sabah için ayetle başlangıç',
+      'today_intent_morning_reflection_body':
+          'Güne anlamlı bir ayet ve kısa bir hatırlatma ile başlayabilirsin.',
+      'today_intent_evening_reflection_title': 'Akşam için kısa bir tefekkür',
+      'today_intent_evening_reflection_body':
+          'Geceye geçmeden önce daha sakin bir söz ve hatırlatma öne çıkarıldı.',
+      'today_intent_sleep_title': 'Gece için kısa bir hatırlatma',
+      'today_intent_sleep_body':
+          'Günü daha sakin kapatman için kısa ve yumuşak bir başlangıç hazırladık.',
+      'home_feeling_prompt_title': 'Bugün nasıl hissediyorsun?',
+      'home_feeling_prompt_subtitle': 'Kısa ve sakin bir yön seçelim.',
+      'home_feeling_prompt_chip_calmer': 'İçim dar',
+      'home_feeling_prompt_chip_tired': 'Yorgunum',
+      'home_feeling_prompt_chip_focus': 'Odaklanmak istiyorum',
+      'home_feeling_prompt_chip_before_sleep': 'Uyku öncesi',
+      'home_feeling_prompt_chip_gratitude': 'Şükretmek istiyorum',
+      'home_feeling_prompt_message_calmer':
+          'Biraz yavaşlayalım. Sana daha sakin bir akış açıyorum.',
+      'home_feeling_prompt_message_tired':
+          'Seni yormayan kısa bir zikir alanına geçiyoruz.',
+      'home_feeling_prompt_message_focus':
+          'Dikkatini toparlayacak sade bir okuma alanı açıyorum.',
+      'home_feeling_prompt_message_before_sleep':
+          'Geceye daha yumuşak geçiş için kısa bir akış hazırladım.',
+      'home_feeling_prompt_message_gratitude':
+          'Şükrü besleyecek güzel isimlere birlikte yönelelim.',
+      'home_guided_helper_title': 'Bugün sana nasıl yardımcı olayım?',
+      'home_guided_helper_subtitle':
+          'İhtiyacına göre sana uygun bir başlangıç seç.',
+      'home_guided_helper_cta': 'Rehberi Aç',
       'ramadan_section_reading': 'Okuma',
       'ramadan_section_daily_note': 'Bugün için küçük not',
       'ramadan_section_duas': 'Dualar',
@@ -123,7 +281,24 @@ class S {
       'ramadan_continue_juz': 'Cüze Devam Et',
       'ramadan_change_juz': 'Cüzü Değiştir',
       'ramadan_completed': 'Tamamlandı',
+      'ramadan_completed_hint':
+          'Bu cüz tamamlandı. İstersen sonraki cüz için niyetini güncelleyebilirsin.',
       'ramadan_mark_completed': 'Tamamladım',
+      'undo': 'Geri al',
+      'reading_reset_action': 'Sıfırla',
+      'reading_reset_title': 'İlerleme sıfırlansın mı?',
+      'reading_reset_subtitle': 'Bu işlem geri alınmaz.',
+      'reading_reset_confirm': 'İlerlemeyi sıfırla',
+      'reading_reminder': 'Okuma hatırlatması',
+      'reading_reminder_time': 'Okuma hatırlatma saati',
+      'reading_reminder_title': 'Okuma hatırlatması',
+      'reading_reminder_body_hatim':
+          'Hatmine kaldığın yerden devam etmek ister misin?',
+      'reading_reminder_body_juz': 'Cüz okumaya kaldığın yerden dönebilirsin.',
+      'reading_reminder_variant_1': 'Kaldığın yer seni bekliyor.',
+      'reading_reminder_variant_2':
+          'İstersen kısa bir okumayla kaldığın yerden devam edebilirsin.',
+      'reading_reminder_variant_3': 'Bugün okumana küçük bir yer açabilirsin.',
       'ramadan_note_title': 'Ramazan Notu',
       'duas_title': 'Kısa Dualar',
       'coming_soon': 'Yakında eklenecek',
@@ -144,8 +319,7 @@ class S {
       'qibla_location_read_failed':
           'Konum bilgisi alınamadı.\nLütfen tekrar deneyin.',
       'reading_juz_label': 'Cüz',
-      'reading_juz_companion_subtitle':
-          '{juz}. Cüz · Sessizce eşlik ediyorsunuz',
+      'reading_juz_companion_subtitle': '{juz}. Cüz · Kısa bir duruş alanı',
       'bookmarks_title': 'Kaydedilenler',
       'bookmarks_empty':
           'Henüz kaydettiğiniz ayet yok.\n\nOkurken bir ayeti kaydetmek için yer imi simgesine dokunun.',
@@ -159,7 +333,7 @@ class S {
       // Quick Actions
       'quick_actions': 'Hızlı işlemler',
       'qibla': 'Kıble Bulucu',
-      'adhan_alarms': 'Ezan bildirimleri',
+      'adhan_alarms': 'Bildirimleri Aç',
       'ezan_alarm_sound': 'Ezan Alarmı (sesli)',
       'adhan_times': 'Ezan Vakitleri',
       'tasbih': 'Tesbih',
@@ -207,6 +381,20 @@ class S {
       'system': 'Sistem',
       'light': 'Açık',
       'dark': 'Koyu',
+      'off': 'Kapalı',
+      'minimal_mode': 'Sade mod',
+      'night_ritual_reminder': 'Gece hatırlatması',
+      'night_ritual_reminder_description':
+          'Her gün belirlediğin saatte sana eşlik eder',
+      'night_ritual_reminder_time': 'Hatırlatma saati',
+      'night_ritual_notification_title': 'Uyumadan önce sana eşlik edeyim mi?',
+      'night_ritual_notification_body': 'Gece için sakin bir eşlik hazır.',
+      'night_ritual_variant_1': 'Günü kısa bir tefekkürle kapatabilirsin.',
+      'night_ritual_variant_2':
+          'Uyumadan önce kendine yumuşak bir alan açmak ister misin?',
+      'night_ritual_prompt_title': 'Gece için eşlik hazır',
+      'night_ritual_prompt_cta': 'Başla',
+      'night_ritual_prompt_dismiss': 'Şimdi değil',
       'haptics': 'Haptik geri bildirim',
       'next_prayer_widget_toggle': 'Sıradaki Vakit Widget\'ı',
       'next_prayer_widget_hint':
@@ -230,6 +418,11 @@ class S {
       'feedback_rate_action': 'App Store’da puan ver',
       'feedback_email_failed': 'E-posta açılamadı.',
       'feedback_review_failed': 'Puan verme ekranı açılamadı.',
+      'feedback_prompt_title': 'Duada sana iyi geliyor mu?',
+      'feedback_prompt_subtitle': 'Kısa bir değerlendirmen çok yardımcı olur.',
+      'feedback_prompt_positive': 'Evet, değerlendir',
+      'feedback_prompt_feedback': 'Geri bildirim gönder',
+      'feedback_prompt_later': 'Şimdi değil',
       'legal': 'Yasal',
       'privacy_policy': 'Gizlilik Politikası',
       'terms': 'Kullanım Şartları',
@@ -258,16 +451,22 @@ class S {
       'premium_restore_not_available':
           'Geri yükleme şu anda kullanılabilir değil.',
       'premium_disclaimer': 'Ödeme altyapısı yakında.',
-      'premium_description': 'Reklamları kaldırır ve uygulamayı destekler.',
+      'premium_description':
+          'Reklamsız ve daha sakin bir deneyim sunar. Yakında gelecek özellikleri açar ve Duada’yı destekler.',
+      'premium_hero_title': 'Daha sakin kal',
+      'premium_hero_subtitle':
+          'Gün içinde sana sessizce eşlik eden, daha odaklı bir alan aç.',
       'premium_active': 'Premium aktif.',
       'premium_status_active': 'Aktif',
-      'premium_subscribe_monthly': 'Aylık abone ol',
+      'premium_subscribe_monthly': 'Aylık üyeliği başlat',
+      'premium_cta_upgrade': 'Premium’a Yükselt',
+      'premium_cta_trial_hint': 'İstersen birkaç gün dene',
+      'premium_cta_soft': 'Premium’u Aç',
       'premium_subscription_loading': 'Abonelik yükleniyor...',
+      'premium_cta_context': 'Reklamsız, sakin ve odaklı bir deneyim',
       'premium_try_again': 'Tekrar dene',
-      'premium_purchase_unavailable':
-          'Satın alımlar şu anda kullanılamıyor.',
-      'premium_purchase_start_failed':
-          'Satın alma başlatılamadı.',
+      'premium_purchase_unavailable': 'Satın alımlar şu anda kullanılamıyor.',
+      'premium_purchase_start_failed': 'Satın alma başlatılamadı.',
       'premium_restore_failed':
           'Geri yükleme başarısız oldu. Lütfen tekrar deneyin.',
       'premium_purchase_failed':
@@ -277,6 +476,57 @@ class S {
       'premium_feature_ayah_notes': 'Gelişmiş not araçları (yakında)',
       'premium_feature_notes_list': 'Notlar için gelişmiş düzenleme (yakında)',
       'premium_feature_sync_soon': 'Senkronizasyon (yakında)',
+      'premium_benefits_title': 'Seninle açılanlar',
+      'premium_benefits_subtitle':
+          'Günü daha sakin yaşaman için en çok hissedilen farklar.',
+      'premium_benefit_more_reminders': 'Daha fazla manevi hatırlatma',
+      'premium_benefit_night_guidance': 'Geceye geçiş alanı',
+      'premium_benefit_advanced_tasbih': 'Gelişmiş tesbih',
+      'premium_benefit_spiritual_progress': 'Tefekkür alanını daha sakin gör',
+      'premium_membership_label': 'Aylık üyelik',
+      'premium_focus_title': 'Duada hissi',
+      'premium_focus_value': 'Daha odaklı ve sakin',
+      'premium_active_card_title': 'Premium aktif',
+      'premium_active_card_subtitle': 'Daha sakin bir akış artık seninle',
+      'premium_active_card_body':
+          'Gün içinde sana daha yumuşak eşlik eden alanlar açıldı. İhtiyacın olan anlarda daha sade bir deneyim seni karşılıyor.',
+      'premium_active_pill_notifications': 'Daha fazla hatırlatma',
+      'premium_active_pill_night': 'Geceye geçiş açık',
+      'premium_active_pill_progress': 'Tefekkür görünümü',
+      'premium_home_status_subtitle': 'Bildirimlerin açık',
+      'premium_success_title': 'Premium hazır',
+      'premium_success_body':
+          'Artık daha sakin bir akış ve daha fazla manevi hatırlatma seninle.',
+      'premium_success_action_notifications': 'Bildirimleri düzenle',
+      'premium_success_action_night': 'Geceye geçişi aç',
+      'premium_success_action_progress': 'Tefekkür alanını gör',
+      'premium_cancel_anytime': 'Dilediğin zaman iptal edebilirsin',
+      'home_night_guidance_title': 'Geceye geçiş',
+      'home_night_guidance_body_locked':
+          'Günü daha sakin kapatmak için kısa bir alan burada.',
+      'home_night_guidance_body_active':
+          'Geceye daha yumuşak geçiş için hazırlanan alan şimdi açık.',
+      'home_night_guidance_limit_note': 'Premium ile açılır',
+      'home_unlock_cta': 'Kilidi aç',
+      'premium_compare_title': 'Neler değişiyor',
+      'premium_compare_subtitle':
+          'Ücretsiz sürüm sade kalır. Premium ise daha tam bir eşlik sunar.',
+      'premium_compare_free_title': 'Ücretsiz',
+      'premium_compare_premium_title': 'Premium',
+      'premium_compare_free_notifications': 'Tek bildirim vakti',
+      'premium_compare_free_night': 'Geceye geçiş yok',
+      'premium_compare_premium_notifications': 'Sabah, gün ortası ve gece',
+      'premium_compare_premium_night': 'Geceye geçiş açık',
+      'premium_compare_free_focus': 'Sade günlük akış',
+      'premium_compare_premium_focus': 'Daha sakin ve odaklı akış',
+      'premium_upsell_sheet_title': 'Duada Premium',
+      'premium_upsell_sheet_subtitle': 'Reklamsız, daha sakin bir deneyim.',
+      'premium_upsell_benefit_remove_ads': 'Reklamları kaldır',
+      'premium_upsell_benefit_upcoming_features':
+          'Yakında gelecek premium özelliklere eriş',
+      'premium_upsell_benefit_support': 'Duada’yı destekle',
+      'premium_upsell_primary_cta': 'Premium’u Gör',
+      'premium_upsell_secondary_cta': 'Şimdi Değil',
       'name_hint': 'İsminiz (isteğe bağlı)',
       'name_not_set': 'Belirtilmedi',
       'clear': 'Temizle',
@@ -299,13 +549,14 @@ class S {
       'prayer_times_title': 'Namaz Vakitleri',
       'prayer_times_subtitle_current': 'Mevcut konum',
       'prayer_times_subtitle_city_prefix': 'Konum',
-      'prayer_times_current_prefix': 'Current',
-      'prayer_times_city_prefix': 'City',
-      'prayer_times_not_set': 'Not set',
+      'prayer_times_current_prefix': 'Mevcut',
+      'prayer_times_city_prefix': 'Şehir',
+      'prayer_times_not_set': 'Ayarlanmadı',
       'prayer_times_enable_location_title': 'Namaz vakitleri hazır',
       'prayer_times_enable_location_body':
           'Konum izni vererek bulunduğun yere göre bugünün vakitlerini görebilirsin.',
       'prayer_times_use_current': 'Konumu kullan',
+      'prayer_times_location_active': 'Konum aktif',
       'prayer_times_choose_city': 'Şehir seç',
       'prayer_times_permission_denied': 'Konum izni verilmedi.',
       'prayer_times_open_settings': 'Ayarları aç',
@@ -407,8 +658,11 @@ class S {
       'splash_subtitle':
           'Each new prayer time is an invitation to draw near to Allah.',
       'home_section_now_upcoming': 'Next prayer time',
-      'home_section_for_today': 'For Today',
+      'home_section_for_today': 'Today',
       'home_see_more_for_today': 'See more for today',
+      'today_choose_direction_label': '',
+      'today_choose_fit_label': '',
+      'today_calm_start_label': '',
       'home_section_explore': 'Explore',
       'home_time_to_maghrib': 'Time to Iftar',
       'today_screen_title': 'Today',
@@ -473,6 +727,174 @@ class S {
       'ramadan_hub_title': 'Spiritual Guide',
       'ramadan_intro':
           'A simple guide to refresh your intention, support your reading rhythm, and accompany your daily spiritual practice.',
+      'guided_helper_title': 'How can I help you today?',
+      'guided_helper_subtitle':
+          'Let’s open a short space that feels right for this moment.',
+      'guided_helper_calmer': 'I want to feel calmer',
+      'guided_helper_read_quran': 'I want to read Quran',
+      'guided_helper_short_dhikr': 'I want a short dhikr',
+      'guided_helper_daily_reminder': 'I want a daily reminder',
+      'guided_helper_before_sleep': 'I want help easing into the night',
+      'guided_helper_prepare_prayer': 'I want to prepare for prayer',
+      'guided_helper_message_calmer':
+          'Opening a calmer starting point for you.',
+      'guided_helper_message_read_quran':
+          'You can continue from where you left off.',
+      'guided_helper_message_short_dhikr':
+          'Opening a short dhikr space for you.',
+      'guided_helper_message_daily_reminder':
+          'Opening a gentle reminder for today.',
+      'guided_helper_message_before_sleep':
+          'Opening a softer space for easing into the night.',
+      'guided_helper_message_prepare_prayer':
+          'Opening a gentle prayer preparation for you.',
+      'companion_flow_title': 'Stay with me now',
+      'companion_flow_home_subtitle': 'A short pause',
+      'companion_flow_step_verse': 'Verse',
+      'companion_flow_step_breathe': 'Breathe',
+      'companion_flow_step_dhikr': 'Dhikr',
+      'companion_flow_step_finish': 'Finish',
+      'companion_flow_verse_text':
+          'Surely in the remembrance of Allah do hearts find rest.',
+      'companion_flow_verse_text_1':
+          'Surely in the remembrance of Allah do hearts find rest.',
+      'companion_flow_verse_text_2': 'Do not despair of the mercy of Allah.',
+      'companion_flow_verse_text_3': 'Surely with hardship comes ease.',
+      'companion_flow_verse_text_4': 'Is Allah not enough for His servant?',
+      'companion_flow_verse_text_5': 'Indeed, I am near.',
+      'companion_flow_verse_text_6': 'Surely my Lord is with me.',
+      'companion_flow_verse_text_7': 'Surely Allah is with the patient.',
+      'companion_flow_verse_text_8':
+          'We are closer to him than his jugular vein.',
+      'companion_flow_verse_text_9':
+          'Your Lord has not forsaken you, nor is He displeased.',
+      'companion_flow_verse_text_10':
+          'Place your trust in Allah; Allah is enough as a Trustee.',
+      'companion_flow_verse_hint': 'Stay with these words for a few seconds.',
+      'companion_flow_breathe_text': 'Take a breath. Let it out slowly.',
+      'companion_flow_breathe_hint': 'Tap when you are ready to continue.',
+      'companion_flow_breathe_inhale': 'Inhale',
+      'companion_flow_breathe_exhale': 'Exhale',
+      'companion_flow_dhikr_text': 'Repeat gently',
+      'companion_flow_dhikr_hint': 'With each tap, say “Alhamdulillah” once.',
+      'companion_flow_dhikr_hint_dynamic': 'With each tap, say “{dhikr}” once.',
+      'companion_flow_finish_cta': 'Finish',
+      'companion_flow_finish_title': 'You can continue from here.',
+      'companion_flow_finish_body':
+          'A short pause can be enough to steady the heart.',
+      'companion_flow_close': 'Close',
+      'spiritual_progress_title': 'Your reflection space',
+      'spiritual_streak_title': 'Your last reflection',
+      'spiritual_streak_value':
+          'You have been making space to reflect for {count} days',
+      'spiritual_connection_status_today':
+          'You made space for reflection today',
+      'spiritual_connection_status_recent':
+          'Your last reflection is still with you',
+      'spiritual_connection_status_empty':
+          'You can begin your first short pause here',
+      'spiritual_connection_detail_gentle':
+          'Small moments of reflection can settle the heart gently.',
+      'spiritual_connection_detail_count':
+          'For the past {count} days, you’ve been making space to reflect.',
+      'spiritual_connection_continuity':
+          'You’ve been continuing for {count} days',
+      'spiritual_juz_label': 'Your juz journey',
+      'spiritual_progress_completed_label': 'You are now in Juz {current}',
+      'spiritual_progress_summary_empty':
+          'No completed juz yet · The journey begins from Juz 1',
+      'spiritual_progress_summary':
+          '{completed} juz completed · Your latest mark is in Juz {highest}',
+      'spiritual_progress_all_completed':
+          'All 30 juz are complete. Your khatm is complete.',
+      'spiritual_daily_goal_label': 'A short reading space for today',
+      'spiritual_daily_status_done':
+          'You made a little space for yourself today',
+      'spiritual_daily_status_pending':
+          'When you are ready, you can open a short pause for today',
+      'daily_morning_reminder_title': 'A gentle reminder',
+      'daily_morning_reminder_body': 'Begin the day with a prayer.',
+      'daily_evening_reminder_title': 'A gentle reminder',
+      'daily_evening_reminder_body': 'Close the day with a prayer.',
+      'daily_reminder_variant_1':
+          'Do you have 10 seconds for a quiet reflection?',
+      'daily_reminder_variant_2':
+          'You can make a little space for yourself today.',
+      'daily_reminder_variant_3': 'A short pause might feel good today.',
+      'spiritual_notifications_title': 'Spiritual notifications',
+      'spiritual_notifications_times': 'Notification times',
+      'spiritual_notifications_hint':
+          'Send calm daily ayah, reminder, and reflection notifications at the moments you choose.',
+      'spiritual_notifications_hint_free':
+          'Send calm daily ayah, reminder, and reflection notifications at one chosen time.',
+      'spiritual_notifications_hint_premium':
+          'Set multiple spiritual notification times for morning, midday, and night.',
+      'spiritual_notifications_sheet_hint':
+          'Choose the times that feel most supportive. Notifications arrive with a soft time offset.',
+      'spiritual_notifications_sheet_hint_free':
+          'Free includes one time. Premium unlocks morning, midday, and night together.',
+      'spiritual_notification_time_morning': 'Morning',
+      'spiritual_notification_time_midday': 'Midday',
+      'spiritual_notification_time_night': 'Night',
+      'spiritual_notifications_limit_note':
+          'Free includes 1 spiritual notification time',
+      'spiritual_notifications_limit_body':
+          'Premium unlocks multiple times across morning, midday, and night.',
+      'spiritual_notif_permission_title': 'Notification permission needed',
+      'spiritual_notif_permission_body':
+          'We need notification permission to send your daily spiritual reflections.',
+      'spiritual_reading_complete_message':
+          'You made space for reflection today 🤍',
+      'spiritual_streak_continues_suffix':
+          'For the past {count} days, you’ve been making space to reflect',
+      'reflection_morning_completed_message_1':
+          'You began the day with an ayah. May Allah place barakah in it.',
+      'reflection_morning_completed_message_2':
+          'You opened your morning with remembrance. May Allah accept it.',
+      'reflection_morning_completed_message_3':
+          'The first step of your day began in goodness. Alhamdulillah.',
+      'reflection_evening_completed_message_1':
+          'You are closing the day with reflection. May Allah grant you peace.',
+      'reflection_evening_completed_message_2':
+          'You completed your evening with remembrance. May Allah accept it.',
+      'reflection_evening_completed_message_3':
+          'You sealed this day with an ayah. What a beautiful ending.',
+      'today_intent_calmer_title': 'A calmer starting point',
+      'today_intent_calmer_body':
+          'We moved calmer reflections to the top so the first impression feels softer and quieter.',
+      'today_intent_reminder_title': 'Today\'s content',
+      'today_intent_reminder_body':
+          'We brought forward the more general daily content for a balanced start.',
+      'today_intent_morning_reflection_title': 'Begin with an ayah',
+      'today_intent_morning_reflection_body':
+          'We brought forward a meaningful ayah and a short reminder for the morning.',
+      'today_intent_evening_reflection_title': 'A short evening reflection',
+      'today_intent_evening_reflection_body':
+          'We brought forward a quieter reflection and reminder for the close of the day.',
+      'today_intent_sleep_title': 'A short reminder for the night',
+      'today_intent_sleep_body':
+          'We prepared a shorter, quieter starting point for the end of the day.',
+      'home_feeling_prompt_title': 'How are you feeling today?',
+      'home_feeling_prompt_subtitle': 'Let’s choose a calm direction.',
+      'home_feeling_prompt_chip_calmer': 'I feel overwhelmed',
+      'home_feeling_prompt_chip_tired': 'I feel tired',
+      'home_feeling_prompt_chip_focus': 'I want to focus',
+      'home_feeling_prompt_chip_before_sleep': 'Before sleep',
+      'home_feeling_prompt_chip_gratitude': 'I want to feel gratitude',
+      'home_feeling_prompt_message_calmer':
+          'Let’s slow things down a little. I’m opening a gentler flow for you.',
+      'home_feeling_prompt_message_tired':
+          'Let’s move into a short dhikr space that won’t feel heavy.',
+      'home_feeling_prompt_message_focus':
+          'I’m opening a simple reading space to help you gather your focus.',
+      'home_feeling_prompt_message_before_sleep':
+          'I prepared a short, softer flow for easing into the night.',
+      'home_feeling_prompt_message_gratitude':
+          'Let’s turn together toward beautiful names that nourish gratitude.',
+      'home_guided_helper_title': 'How can I help you today?',
+      'home_guided_helper_subtitle':
+          'Choose a gentle starting point for what you need today.',
+      'home_guided_helper_cta': 'Open Guide',
       'ramadan_section_reading': 'Reading',
       'ramadan_section_daily_note': 'A small note for today',
       'ramadan_section_duas': 'Duas',
@@ -498,7 +920,26 @@ class S {
       'ramadan_continue_juz': 'Continue Juz',
       'ramadan_change_juz': 'Change Juz',
       'ramadan_completed': 'Completed',
+      'ramadan_completed_hint':
+          'This juz is complete. You can update your intention for the next juz whenever you are ready.',
       'ramadan_mark_completed': 'I completed it',
+      'undo': 'Undo',
+      'reading_reset_action': 'Reset',
+      'reading_reset_title': 'Reset progress?',
+      'reading_reset_subtitle': 'This action cannot be undone.',
+      'reading_reset_confirm': 'Reset progress',
+      'reading_reminder': 'Reading reminder',
+      'reading_reminder_time': 'Reading reminder time',
+      'reading_reminder_title': 'Reading reminder',
+      'reading_reminder_body_hatim':
+          'Would you like to continue your khatm from where you left off?',
+      'reading_reminder_body_juz':
+          'You can return to your juz reading from where you left off.',
+      'reading_reminder_variant_1': 'Your place is waiting for you.',
+      'reading_reminder_variant_2':
+          'You can return to your reading with a short pause.',
+      'reading_reminder_variant_3':
+          'You can make a little space for reading today.',
       'ramadan_note_title': 'Ramadan Note',
       'duas_title': 'Short Duas',
       'coming_soon': 'Coming soon',
@@ -520,8 +961,7 @@ class S {
       'qibla_location_read_failed':
           'Could not read location.\nPlease try again.',
       'reading_juz_label': 'Juz',
-      'reading_juz_companion_subtitle':
-          '{juz}. Juz · You are accompanying silently',
+      'reading_juz_companion_subtitle': '{juz}. Juz · A short pause space',
       'bookmarks_title': 'Bookmarks',
       'bookmarks_empty':
           'You do not have any saved ayahs yet.\n\nTap the bookmark icon while reading to save an ayah.',
@@ -534,7 +974,7 @@ class S {
       // Quick Actions
       'quick_actions': 'Quick actions',
       'qibla': 'Qibla Finder',
-      'adhan_alarms': 'Adhan notifications',
+      'adhan_alarms': 'Enable Notifications',
       'ezan_alarm_sound': 'Adhan Alarm (with sound)',
       'adhan_times': 'Adhan Times',
       'tasbih': 'Tasbih',
@@ -582,6 +1022,22 @@ class S {
       'system': 'System',
       'light': 'Light',
       'dark': 'Dark',
+      'off': 'Off',
+      'minimal_mode': 'Minimal mode',
+      'night_ritual_reminder': 'Night reminder',
+      'night_ritual_reminder_description':
+          'A calm reminder stays with you each day at your chosen time',
+      'night_ritual_reminder_time': 'Reminder time',
+      'night_ritual_notification_title':
+          'Would you like a short pause before sleep?',
+      'night_ritual_notification_body': 'A calm night companion is ready.',
+      'night_ritual_variant_1':
+          'You can close the day with a short reflection.',
+      'night_ritual_variant_2':
+          'Would you like to make a gentle little space before sleep?',
+      'night_ritual_prompt_title': 'A calm night companion is ready',
+      'night_ritual_prompt_cta': 'Begin',
+      'night_ritual_prompt_dismiss': 'Not now',
       'haptics': 'Haptic feedback',
       'next_prayer_widget_toggle': 'Next Prayer Widget',
       'next_prayer_widget_hint':
@@ -605,6 +1061,11 @@ class S {
       'feedback_rate_action': 'Rate on the App Store',
       'feedback_email_failed': 'Could not open email.',
       'feedback_review_failed': 'Could not open the rating flow.',
+      'feedback_prompt_title': 'Is Duada helping you?',
+      'feedback_prompt_subtitle': 'A quick review would really help.',
+      'feedback_prompt_positive': 'Yes, rate it',
+      'feedback_prompt_feedback': 'Send feedback',
+      'feedback_prompt_later': 'Not now',
       'legal': 'Legal',
       'privacy_policy': 'Privacy Policy',
       'terms': 'Terms of Use',
@@ -633,16 +1094,22 @@ class S {
       'premium_restore_not_available':
           'Restore is not available at the moment.',
       'premium_disclaimer': 'Payment infrastructure is coming soon.',
-      'premium_description': 'Removes ads and supports the app.',
+      'premium_description':
+          'Offers a calmer experience without ads, includes access to upcoming premium features, and supports Duada.',
+      'premium_hero_title': 'A calmer rhythm',
+      'premium_hero_subtitle':
+          'Open a quieter, more focused space that gently stays with you through the day.',
       'premium_active': 'Premium is active.',
       'premium_status_active': 'Active',
       'premium_subscribe_monthly': 'Subscribe Monthly',
+      'premium_cta_upgrade': 'Upgrade to Premium',
+      'premium_cta_trial_hint': 'Try it for a few days',
+      'premium_cta_soft': 'Unlock Premium',
       'premium_subscription_loading': 'Subscription loading...',
+      'premium_cta_context': 'An ad-free, calmer, more focused experience',
       'premium_try_again': 'Try Again',
-      'premium_purchase_unavailable':
-          'Purchases are unavailable right now.',
-      'premium_purchase_start_failed':
-          'Purchase could not be started.',
+      'premium_purchase_unavailable': 'Purchases are unavailable right now.',
+      'premium_purchase_start_failed': 'Purchase could not be started.',
       'premium_restore_failed': 'Restore failed. Please try again.',
       'premium_purchase_failed': 'Purchase failed. Please try again.',
       'premium_local_notes_disclaimer':
@@ -650,6 +1117,58 @@ class S {
       'premium_feature_ayah_notes': 'Advanced note tools (coming soon)',
       'premium_feature_notes_list': 'Advanced note organization (coming soon)',
       'premium_feature_sync_soon': 'Sync (coming soon)',
+      'premium_benefits_title': 'What opens up for you',
+      'premium_benefits_subtitle':
+          'The differences you will feel most in your daily rhythm.',
+      'premium_benefit_more_reminders': 'More spiritual reminders',
+      'premium_benefit_night_guidance': 'Night transition space',
+      'premium_benefit_advanced_tasbih': 'Advanced tasbih',
+      'premium_benefit_spiritual_progress':
+          'A calmer view of your reflection space',
+      'premium_membership_label': 'Monthly membership',
+      'premium_focus_title': 'Duada feel',
+      'premium_focus_value': 'More calm and focus',
+      'premium_active_card_title': 'Premium active',
+      'premium_active_card_subtitle': 'A calmer rhythm is now with you',
+      'premium_active_card_body':
+          'A softer daily flow is now open for you. The experience stays close without feeling crowded.',
+      'premium_active_pill_notifications': 'More reminders',
+      'premium_active_pill_night': 'Night transition unlocked',
+      'premium_active_pill_progress': 'Reflection view',
+      'premium_home_status_subtitle': 'Your reminders are on',
+      'premium_success_title': 'Premium is ready',
+      'premium_success_body':
+          'You now have a calmer flow and more spiritual reminders.',
+      'premium_success_action_notifications': 'Adjust notifications',
+      'premium_success_action_night': 'Open night transition',
+      'premium_success_action_progress': 'View your reflection space',
+      'premium_cancel_anytime': 'You can cancel anytime',
+      'home_night_guidance_title': 'Night transition',
+      'home_night_guidance_body_locked':
+          'A short space is here to help you ease into the night.',
+      'home_night_guidance_body_active':
+          'Your night transition space is now open and ready.',
+      'home_night_guidance_limit_note': 'Unlock with Premium',
+      'home_unlock_cta': 'Unlock',
+      'premium_compare_title': 'What changes',
+      'premium_compare_subtitle':
+          'Free stays simple. Premium gives you the fuller experience.',
+      'premium_compare_free_title': 'Free',
+      'premium_compare_premium_title': 'Premium',
+      'premium_compare_free_notifications': 'One reminder time',
+      'premium_compare_free_night': 'No night transition',
+      'premium_compare_premium_notifications': 'Morning, midday, and night',
+      'premium_compare_premium_night': 'Night transition unlocked',
+      'premium_compare_free_focus': 'Simple daily flow',
+      'premium_compare_premium_focus': 'Calmer, more focused flow',
+      'premium_upsell_sheet_title': 'Duada Premium',
+      'premium_upsell_sheet_subtitle': 'A calmer experience without ads.',
+      'premium_upsell_benefit_remove_ads': 'Remove ads',
+      'premium_upsell_benefit_upcoming_features':
+          'Access upcoming premium features',
+      'premium_upsell_benefit_support': 'Support Duada',
+      'premium_upsell_primary_cta': 'View Premium',
+      'premium_upsell_secondary_cta': 'Not Now',
       'name_hint': 'Your name (optional)',
       'name_not_set': 'Not set',
       'clear': 'Clear',
@@ -679,6 +1198,7 @@ class S {
       'prayer_times_enable_location_body':
           'Allow location access or choose a city to see today\'s prayer times.',
       'prayer_times_use_current': 'Use current location',
+      'prayer_times_location_active': 'Location active',
       'prayer_times_choose_city': 'Choose city',
       'prayer_times_permission_denied': 'Location permission denied.',
       'prayer_times_open_settings': 'Open settings',

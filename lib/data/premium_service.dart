@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'adhan_notification_service.dart';
+import 'local_preferences_service.dart';
 import '../l10n/app_strings.dart';
 
 class PremiumService {
@@ -23,6 +25,7 @@ class PremiumService {
   static Future<void>? _productLoadFuture;
   static int _productLoadRequestId = 0;
   static bool _isRestoringPurchases = false;
+  static int _presentedActivationSuccessRevision = 0;
 
   static final isPremium = ValueNotifier<bool>(false);
   static final isLoading = ValueNotifier<bool>(false);
@@ -30,6 +33,7 @@ class PremiumService {
   static final errorMessage = ValueNotifier<String?>(null);
   static final isProductLoading = ValueNotifier<bool>(false);
   static final showProductRetryAction = ValueNotifier<bool>(false);
+  static final activationSuccessRevision = ValueNotifier<int>(0);
 
   static bool get isDebugUnlockAvailable => !kReleaseMode;
   static ProductDetails? get product => productNotifier.value;
@@ -70,6 +74,10 @@ class PremiumService {
         _isInitialized = true;
       }
 
+      if (!isPremium.value) {
+        unawaited(
+            _syncSpiritualNotificationAccessForTier(isPremiumUser: false));
+      }
       unawaited(loadProducts());
       unawaited(_refreshFromStore());
       completer.complete();
@@ -358,8 +366,38 @@ class PremiumService {
   }
 
   static Future<void> _setPremium(bool value) async {
+    final previousValue = isPremium.value;
     await _prefs?.setBool(_keyEntitled, value);
     isPremium.value = value;
+    await _syncSpiritualNotificationAccessForTier(isPremiumUser: value);
+    if (!previousValue && value) {
+      activationSuccessRevision.value = activationSuccessRevision.value + 1;
+    }
+  }
+
+  static bool markActivationSuccessPresented(int revision) {
+    if (revision <= _presentedActivationSuccessRevision) {
+      return false;
+    }
+    _presentedActivationSuccessRevision = revision;
+    return true;
+  }
+
+  static Future<void> _syncSpiritualNotificationAccessForTier({
+    required bool isPremiumUser,
+  }) async {
+    if (isPremiumUser) return;
+
+    final currentTimes =
+        LocalPreferencesService.spiritualNotificationTimes.value;
+    if (currentTimes.length <= 1) return;
+
+    await LocalPreferencesService.setSpiritualNotificationTimes(
+      [currentTimes.first],
+    );
+    if (LocalPreferencesService.spiritualNotificationsEnabled.value) {
+      await AdhanNotificationService.syncSpiritualNotifications();
+    }
   }
 
   static Future<void> _refreshFromStore() async {

@@ -18,18 +18,29 @@ import 'data/ayah_notes_service.dart';
 import 'data/widget_payload_service.dart';
 import 'l10n/app_strings.dart';
 import 'features/home/home_screen.dart';
+import 'features/home/today_screen.dart';
 import 'theme/app_theme.dart';
+import 'widgets/app_cta_button.dart';
 
 /// Global route observer for lifecycle-aware screens.
 final RouteObserver<ModalRoute<void>> routeObserver =
     RouteObserver<ModalRoute<void>>();
 
+void _startupLog(String message) {
+  assert(() {
+    debugPrint('[Startup] $message');
+    return true;
+  }());
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  _startupLog('main started');
   await LocalPreferencesService.init();
-  await PremiumService.init();
-  await AdService.initialize();
+  await LocalPreferencesService.incrementAppOpenCount();
+  _startupLog('local preferences initialized');
   runApp(const NurAIApp());
+  _startupLog('runApp called');
 }
 
 /// Root widget for NurAI app.
@@ -94,6 +105,9 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
   bool _isStarting = false;
   bool _showHome = false;
   bool _showHomeWhenReady = false;
+  bool _launchedFromNotification = false;
+  TodayScreenIntent? _pendingTodayIntent;
+  bool _pendingOpenCompanionFlow = false;
   Object? _loadError;
 
   @override
@@ -129,11 +143,52 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
   }
 
   void _handleNotificationTapLaunch() {
+    final payload = AdhanNotificationService.lastNotificationTapPayload.value;
+    final type = AdhanNotificationService.notificationPayloadType(payload);
+    final todayIntent = switch (type) {
+      AdhanNotificationService.morningReminderType =>
+        TodayScreenIntent.morningReflection,
+      AdhanNotificationService.eveningReminderType =>
+        TodayScreenIntent.eveningReflection,
+      AdhanNotificationService.spiritualMorningType =>
+        TodayScreenIntent.morningReflection,
+      AdhanNotificationService.spiritualMiddayType =>
+        TodayScreenIntent.reminder,
+      AdhanNotificationService.spiritualNightType =>
+        TodayScreenIntent.beforeSleep,
+      _ => null,
+    };
+    final shouldOpenCompanion =
+        type == AdhanNotificationService.nightCompanionReminderType;
+    if (todayIntent != null) {
+      if (!mounted) return;
+      setState(() {
+        _launchedFromNotification = true;
+        _pendingTodayIntent = todayIntent;
+        if (_isAppReady) {
+          _showHome = true;
+        } else {
+          _showHomeWhenReady = true;
+        }
+      });
+      return;
+    }
+    if (shouldOpenCompanion) {
+      if (!mounted) return;
+      setState(() {
+        _launchedFromNotification = true;
+        _pendingOpenCompanionFlow = true;
+        if (_isAppReady) {
+          _showHome = true;
+        } else {
+          _showHomeWhenReady = true;
+        }
+      });
+      return;
+    }
     if (!SeasonalConfig.isRamadanSeason) {
       return;
     }
-    final payload = AdhanNotificationService.lastNotificationTapPayload.value;
-    final type = AdhanNotificationService.notificationPayloadType(payload);
     if (type != AdhanNotificationService.iftarWarmupStartLiveActivityType &&
         type != 'iftar_live_activity_warmup' &&
         type != 'iftar_alarm_fired') {
@@ -141,6 +196,7 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
     }
     if (!mounted) return;
     setState(() {
+      _launchedFromNotification = true;
       if (_isAppReady) {
         _showHome = true;
       } else {
@@ -156,6 +212,10 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
         LocalPreferencesService.adhanEnabled.value) {
       AdhanNotificationService.rescheduleForToday();
     }
+    if (state == AppLifecycleState.resumed && _isAppReady) {
+      AdhanNotificationService.syncSpiritualNotifications();
+      AdhanNotificationService.syncNightCompanionReminder();
+    }
     if (SeasonalConfig.isRamadanSeason &&
         state == AppLifecycleState.resumed &&
         _isAppReady) {
@@ -168,6 +228,7 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
   }
 
   Future<void> _loadAppData() async {
+    _startupLog('app loader start');
     await Future.wait([
       QuranData.instance.load(),
       ReadingProgressService.init(),
@@ -177,12 +238,18 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
       DailyContentService.init(),
       AyahNotesService.init(),
       LocalPreferencesService.init(),
+      AdService.initialize(),
       PremiumService.init(),
       UserProfileService.init(),
       AdhanNotificationService.init(),
       IftarLiveActivityService.init(),
     ]);
+    _startupLog('core services initialized');
+    await AdhanNotificationService.syncSpiritualNotifications();
+    await AdhanNotificationService.syncNightCompanionReminder();
+    await AdhanNotificationService.syncReadingReminder();
     await PrayerLocationService.hydrateCurrentLocationIfPermitted();
+    _startupLog('prayer location hydration completed');
     // Re-schedule prayer notifications on every app launch.
     if (LocalPreferencesService.adhanEnabled.value) {
       AdhanNotificationService.rescheduleForToday();
@@ -192,6 +259,7 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
       await IftarLiveActivityService.maybeStartOrUpdate();
     }
     await WidgetPayloadService.writeNextPrayerPayload();
+    _startupLog('app loader completed');
   }
 
   Future<void> _handleStartTap() async {
@@ -217,7 +285,11 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
       return const _ErrorScreen();
     }
     if (_showHome) {
-      return const HomeScreen();
+      return HomeScreen(
+        initialTodayIntent: _pendingTodayIntent,
+        openCompanionFlowOnLaunch: _pendingOpenCompanionFlow,
+        launchedFromNotification: _launchedFromNotification,
+      );
     }
     return _FirstScreen(
       isStarting: _isStarting,
@@ -295,25 +367,14 @@ class _FirstScreen extends StatelessWidget {
                   ),
                   Align(
                     alignment: Alignment.bottomCenter,
-                    child: SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        onPressed: isStarting ? null : onTapStart,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryAccent,
-                          foregroundColor: Colors.white,
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: const StadiumBorder(),
-                        ),
-                        child: Text(
-                          S.get('continue'),
-                          style: const TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
+                    child: AppCtaButton(
+                      label: S.get('continue'),
+                      fullWidth: true,
+                      onPressed: isStarting ? null : onTapStart,
+                      textStyle: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
                   ),

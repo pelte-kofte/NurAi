@@ -9,10 +9,15 @@ import 'package:timezone/timezone.dart' as tz;
 import '../core/config/seasonal_config.dart';
 import '../l10n/app_strings.dart';
 import '../models/prayer_location.dart';
+import '../models/reading_context.dart';
 import 'adhan_times_service.dart';
+import 'collective_reading_service.dart';
+import 'daily_ayah_service.dart';
 import 'daily_content_service.dart';
 import 'local_preferences_service.dart';
 import 'prayer_location_service.dart';
+import 'quran_data.dart';
+import 'reading_progress_service.dart';
 import 'widget_payload_service.dart';
 
 @pragma('vm:entry-point')
@@ -83,6 +88,17 @@ class AdhanNotificationService {
   static const _prayerChannelNameAlarm = 'Prayer Times Alarm';
   static const _iftarChannelIdAlarm = 'iftar_alarm_v3';
   static const _iftarChannelNameAlarm = 'Iftar Alarm';
+  static const _spiritualChannelId = 'spiritual_daily_content';
+  static const _spiritualChannelName = 'Spiritual Daily Content';
+  static const _nightRitualChannelId = 'night_companion_ritual';
+  static const _nightRitualChannelName = 'Night Companion Ritual';
+  static const _readingReminderChannelId = 'reading_continuation';
+  static const _readingReminderChannelName = 'Reading Continuation';
+  static const String spiritualMorningType = 'spiritual_morning';
+  static const String spiritualMiddayType = 'spiritual_midday';
+  static const String spiritualNightType = 'spiritual_night';
+  static const String nightCompanionReminderType = 'night_companion_ritual';
+  static const String readingReminderType = 'reading_continuation';
   static const _azanSound = RawResourceAndroidNotificationSound('azan');
   // On iOS, custom notification sounds must use the bundled file name
   // including its extension. Prefer a PCM/LPCM CAF comfortably under 30s.
@@ -91,6 +107,8 @@ class AdhanNotificationService {
   static const _legacyIftarWarmupPayload = 'iftar_live_activity_warmup';
   static const String iftarWarmupStartLiveActivityType =
       'iftar_warmup_start_live_activity';
+  static const String morningReminderType = 'daily_morning_reflection';
+  static const String eveningReminderType = 'daily_evening_reflection';
   static const _iftarAlarmPayload = 'iftar_alarm_fired';
   static const _iftarPostCleanupPayload = 'iftar_post_cleanup';
   static final lastNotificationTapPayload = ValueNotifier<String?>(null);
@@ -98,6 +116,9 @@ class AdhanNotificationService {
   static bool? _lastIosAlertPermissionEnabled;
   static bool? _lastIosBadgePermissionEnabled;
   static bool? _lastIosSoundPermissionEnabled;
+  static bool _spiritualListenersAttached = false;
+  static bool _nightCompanionListenersAttached = false;
+  static bool _readingReminderListenersAttached = false;
 
   static void setNotificationTapHandler(
     Future<void> Function(String? payload)? handler,
@@ -192,6 +213,10 @@ class AdhanNotificationService {
         launchDetails?.notificationResponse?.payload,
       );
     }
+
+    _attachSpiritualPreferenceListeners();
+    _attachNightCompanionPreferenceListeners();
+    _attachReadingReminderPreferenceListeners();
 
     _startDailyMaintenance();
   }
@@ -302,6 +327,8 @@ class AdhanNotificationService {
     if (kIsWeb) return;
     if (!LocalPreferencesService.adhanEnabled.value) return;
 
+    await scheduleDailyReminderNotifications();
+
     final selection = LocalPreferencesService.prayerLocation.value;
     if (!selection.hasCoordinates) return;
 
@@ -387,6 +414,112 @@ class AdhanNotificationService {
       _log(
         'prayer_schedule_ios_custom_sound id=$id prayer=$prayerName scheduledAt=$hhmm soundFile=$_iosAzanSoundFile',
       );
+    }
+  }
+
+  static Future<void> scheduleDailyReminderNotifications() async {
+    if (kIsWeb) return;
+    if (!LocalPreferencesService.adhanEnabled.value) return;
+    await _cancelScheduledDailyReminderNotifications();
+
+    final now = DateTime.now();
+    for (var dayOffset = 0; dayOffset < 7; dayOffset++) {
+      final date = DateTime(now.year, now.month, now.day + dayOffset);
+      await _schedule(
+        id: _dailyReminderNotificationIdFor(date, isMorning: true),
+        title: S.get('daily_morning_reminder_title'),
+        body: _dailyReminderBodyForDate(date, isMorning: true),
+        dateTime: DateTime(date.year, date.month, date.day, 8),
+        withSound: false,
+        payload: jsonEncode(<String, String>{'type': morningReminderType}),
+      );
+      await _schedule(
+        id: _dailyReminderNotificationIdFor(date, isMorning: false),
+        title: S.get('daily_evening_reminder_title'),
+        body: _dailyReminderBodyForDate(date, isMorning: false),
+        dateTime: DateTime(date.year, date.month, date.day, 21),
+        withSound: false,
+        payload: jsonEncode(<String, String>{'type': eveningReminderType}),
+      );
+    }
+  }
+
+  static Future<void> syncNightCompanionReminder() async {
+    if (kIsWeb) return;
+    await cancelNightCompanionReminder();
+    if (!LocalPreferencesService.nightCompanionReminderEnabled.value) return;
+
+    final selectedTime =
+        LocalPreferencesService.nightCompanionReminderTime.value;
+    final now = DateTime.now();
+    for (var dayOffset = 0; dayOffset < 7; dayOffset++) {
+      final date = DateTime(now.year, now.month, now.day + dayOffset);
+      await _schedule(
+        id: _nightCompanionNotificationIdFor(date),
+        title: S.get('night_ritual_notification_title'),
+        body: _nightCompanionBodyForDate(date),
+        dateTime: DateTime(
+          date.year,
+          date.month,
+          date.day,
+          selectedTime.hour,
+          selectedTime.minute,
+        ),
+        withSound: false,
+        payload:
+            jsonEncode(<String, String>{'type': nightCompanionReminderType}),
+        androidChannelId: _nightRitualChannelId,
+        androidChannelName: _nightRitualChannelName,
+      );
+    }
+  }
+
+  static Future<void> cancelNightCompanionReminder() async {
+    if (kIsWeb) return;
+    final now = DateTime.now();
+    for (var dayOffset = -1; dayOffset < 10; dayOffset++) {
+      final date = DateTime(now.year, now.month, now.day + dayOffset);
+      await _plugin.cancel(_nightCompanionNotificationIdFor(date));
+    }
+  }
+
+  static Future<void> syncReadingReminder() async {
+    if (kIsWeb) return;
+    await cancelReadingReminder();
+    if (!LocalPreferencesService.readingReminderEnabled.value) return;
+
+    final content = _activeReadingReminderContent();
+    if (content == null) return;
+
+    final selectedTime = LocalPreferencesService.readingReminderTime.value;
+    final now = DateTime.now();
+    for (var dayOffset = 0; dayOffset < 7; dayOffset++) {
+      final date = DateTime(now.year, now.month, now.day + dayOffset);
+      await _schedule(
+        id: _readingReminderNotificationIdFor(date),
+        title: content.$1,
+        body: _readingReminderBodyForDate(date, fallback: content.$2),
+        dateTime: DateTime(
+          date.year,
+          date.month,
+          date.day,
+          selectedTime.hour,
+          selectedTime.minute,
+        ),
+        withSound: false,
+        payload: jsonEncode(<String, String>{'type': readingReminderType}),
+        androidChannelId: _readingReminderChannelId,
+        androidChannelName: _readingReminderChannelName,
+      );
+    }
+  }
+
+  static Future<void> cancelReadingReminder() async {
+    if (kIsWeb) return;
+    final now = DateTime.now();
+    for (var dayOffset = -1; dayOffset < 10; dayOffset++) {
+      final date = DateTime(now.year, now.month, now.day + dayOffset);
+      await _plugin.cancel(_readingReminderNotificationIdFor(date));
     }
   }
 
@@ -484,6 +617,52 @@ class AdhanNotificationService {
     await _plugin.cancelAll();
   }
 
+  static Future<void> syncSpiritualNotifications() async {
+    if (kIsWeb) return;
+    await cancelScheduledSpiritualNotifications();
+    if (!LocalPreferencesService.spiritualNotificationsEnabled.value) return;
+
+    final selectedTimes =
+        LocalPreferencesService.spiritualNotificationTimes.value;
+    if (selectedTimes.isEmpty) return;
+
+    final now = DateTime.now();
+    for (var dayOffset = 0; dayOffset < 7; dayOffset++) {
+      final date = DateTime(now.year, now.month, now.day + dayOffset);
+      for (final slot in selectedTimes) {
+        final scheduledAt = _spiritualScheduledDateTime(date, slot);
+        if (!scheduledAt.isAfter(now)) continue;
+        final content = await _buildSpiritualNotificationContent(
+          date: date,
+          slot: slot,
+        );
+        await _schedule(
+          id: _spiritualNotificationIdFor(date, slot),
+          title: content.title,
+          body: content.body,
+          dateTime: scheduledAt,
+          withSound: false,
+          androidChannelId: _spiritualChannelId,
+          androidChannelName: _spiritualChannelName,
+          payload: jsonEncode(<String, String>{
+            'type': _spiritualPayloadType(slot),
+          }),
+        );
+      }
+    }
+  }
+
+  static Future<void> cancelScheduledSpiritualNotifications() async {
+    if (kIsWeb) return;
+    final now = DateTime.now();
+    for (var dayOffset = -1; dayOffset < 10; dayOffset++) {
+      final date = DateTime(now.year, now.month, now.day + dayOffset);
+      for (final slot in SpiritualNotificationTime.values) {
+        await _plugin.cancel(_spiritualNotificationIdFor(date, slot));
+      }
+    }
+  }
+
   static Future<void> _schedule({
     required int id,
     required String title,
@@ -547,7 +726,10 @@ class AdhanNotificationService {
           : AndroidNotificationDetails(
               resolvedAndroidChannelId,
               resolvedAndroidChannelName,
-              channelDescription: 'Prayer time reminders',
+              channelDescription:
+                  resolvedAndroidChannelId == _spiritualChannelId
+                      ? 'Daily spiritual content reminders'
+                      : 'Prayer time reminders',
               importance: resolvedImportance,
               priority: Priority.defaultPriority,
             ),
@@ -575,6 +757,18 @@ class AdhanNotificationService {
     );
   }
 
+  static Future<void> _cancelScheduledDailyReminderNotifications() async {
+    final now = DateTime.now();
+    for (var dayOffset = -1; dayOffset < 10; dayOffset++) {
+      final date = DateTime(now.year, now.month, now.day + dayOffset);
+      await _plugin
+          .cancel(_dailyReminderNotificationIdFor(date, isMorning: true));
+      await _plugin.cancel(
+        _dailyReminderNotificationIdFor(date, isMorning: false),
+      );
+    }
+  }
+
   static tz.Location _resolveLocation(String? timezoneName) {
     if (timezoneName == null || timezoneName.isEmpty) {
       return tz.local;
@@ -600,8 +794,176 @@ class AdhanNotificationService {
       if (LocalPreferencesService.adhanEnabled.value) {
         await rescheduleForToday();
       }
+      if (LocalPreferencesService.spiritualNotificationsEnabled.value) {
+        await syncSpiritualNotifications();
+      }
+      if (LocalPreferencesService.nightCompanionReminderEnabled.value) {
+        await syncNightCompanionReminder();
+      }
+      if (LocalPreferencesService.readingReminderEnabled.value) {
+        await syncReadingReminder();
+      }
       _startDailyMaintenance();
     });
+  }
+
+  static void _attachSpiritualPreferenceListeners() {
+    if (_spiritualListenersAttached) return;
+    _spiritualListenersAttached = true;
+
+    void sync() {
+      unawaited(syncSpiritualNotifications());
+    }
+
+    LocalPreferencesService.spiritualNotificationsEnabled.addListener(sync);
+    LocalPreferencesService.spiritualNotificationTimes.addListener(sync);
+    LocalPreferencesService.language.addListener(sync);
+  }
+
+  static void _attachNightCompanionPreferenceListeners() {
+    if (_nightCompanionListenersAttached) return;
+    _nightCompanionListenersAttached = true;
+
+    void sync() {
+      unawaited(syncNightCompanionReminder());
+    }
+
+    LocalPreferencesService.nightCompanionReminderEnabled.addListener(sync);
+    LocalPreferencesService.nightCompanionReminderTime.addListener(sync);
+    LocalPreferencesService.language.addListener(sync);
+  }
+
+  static void _attachReadingReminderPreferenceListeners() {
+    if (_readingReminderListenersAttached) return;
+    _readingReminderListenersAttached = true;
+
+    void sync() {
+      unawaited(syncReadingReminder());
+    }
+
+    LocalPreferencesService.readingReminderEnabled.addListener(sync);
+    LocalPreferencesService.readingReminderTime.addListener(sync);
+    LocalPreferencesService.language.addListener(sync);
+  }
+
+  static (String, String)? _activeReadingReminderContent() {
+    final selectedJuz = CollectiveReadingService.getSelectedJuz();
+    final hasActiveJuz = selectedJuz != null &&
+        ReadingProgressService.hasContextProgress(
+            ReadingContext.juz(selectedJuz)) &&
+        !CollectiveReadingService.isCompleted(selectedJuz);
+    if (hasActiveJuz) {
+      return (
+        S.get('reading_reminder_title'),
+        S.get('reading_reminder_body_juz'),
+      );
+    }
+
+    if (ReadingProgressService.hasContextProgress(
+        const ReadingContext.hatim())) {
+      return (
+        S.get('reading_reminder_title'),
+        S.get('reading_reminder_body_hatim'),
+      );
+    }
+
+    return null;
+  }
+
+  static String _dailyReminderBodyForDate(
+    DateTime date, {
+    required bool isMorning,
+  }) {
+    return _rotatingMessageForDate(
+      date: date,
+      keys: isMorning
+          ? const [
+              'daily_reminder_variant_1',
+              'daily_reminder_variant_2',
+              'daily_reminder_variant_3',
+            ]
+          : const [
+              'daily_reminder_variant_2',
+              'daily_reminder_variant_3',
+              'daily_reminder_variant_1',
+            ],
+      seed: isMorning ? 'daily_morning' : 'daily_evening',
+    );
+  }
+
+  static String _nightCompanionBodyForDate(DateTime date) {
+    return _rotatingMessageForDate(
+      date: date,
+      keys: const [
+        'night_ritual_notification_body',
+        'night_ritual_variant_1',
+        'night_ritual_variant_2',
+      ],
+      seed: 'night_companion',
+    );
+  }
+
+  static String _readingReminderBodyForDate(
+    DateTime date, {
+    required String fallback,
+  }) {
+    return _rotatingMessageForDate(
+      date: date,
+      keys: const [
+        'reading_reminder_variant_1',
+        'reading_reminder_variant_2',
+        'reading_reminder_variant_3',
+      ],
+      seed: 'reading_reminder',
+      fallback: fallback,
+    );
+  }
+
+  static String _rotatingMessageForDate({
+    required DateTime date,
+    required List<String> keys,
+    required String seed,
+    String? fallback,
+  }) {
+    if (keys.isEmpty) return fallback ?? '';
+    final languageCode = LocalPreferencesService.language.value.toLowerCase();
+    final currentKey = _dateKey(date);
+    var index =
+        DailyContentService.stableHash('$seed|$languageCode|$currentKey') %
+            keys.length;
+
+    if (keys.length > 1) {
+      final previousDate = date.subtract(const Duration(days: 1));
+      final previousKey = _dateKey(previousDate);
+      final previousIndex =
+          DailyContentService.stableHash('$seed|$languageCode|$previousKey') %
+              keys.length;
+      if (previousIndex == index) {
+        index = (index + 1) % keys.length;
+      }
+    }
+
+    final message = S.get(keys[index]);
+    if (message == keys[index] && fallback != null) return fallback;
+    return message;
+  }
+
+  static int _dailyReminderNotificationIdFor(
+    DateTime date, {
+    required bool isMorning,
+  }) {
+    final ymd = date.year * 10000 + date.month * 100 + date.day;
+    return ymd * 10 + (isMorning ? 6 : 7);
+  }
+
+  static int _nightCompanionNotificationIdFor(DateTime date) {
+    final ymd = date.year * 10000 + date.month * 100 + date.day;
+    return ymd * 10 + 8;
+  }
+
+  static int _readingReminderNotificationIdFor(DateTime date) {
+    final ymd = date.year * 10000 + date.month * 100 + date.day;
+    return ymd * 10 + 9;
   }
 
   static Future<void> _setTimezoneFromDeviceOrFallback() async {
@@ -658,6 +1020,129 @@ class AdhanNotificationService {
       null => 8,
     };
     return (ymd * 10 + suffix);
+  }
+
+  static int _spiritualNotificationIdFor(
+    DateTime date,
+    SpiritualNotificationTime slot,
+  ) {
+    final ymd = date.year * 10000 + date.month * 100 + date.day;
+    final suffix = switch (slot) {
+      SpiritualNotificationTime.morning => 31,
+      SpiritualNotificationTime.midday => 32,
+      SpiritualNotificationTime.night => 33,
+    };
+    return ymd * 100 + suffix;
+  }
+
+  static DateTime _spiritualScheduledDateTime(
+    DateTime date,
+    SpiritualNotificationTime slot,
+  ) {
+    final (hour, minute) = switch (slot) {
+      SpiritualNotificationTime.morning => (8, 0),
+      SpiritualNotificationTime.midday => (13, 0),
+      SpiritualNotificationTime.night => (22, 30),
+    };
+    final base = DateTime(date.year, date.month, date.day, hour, minute);
+    final offsetMinutes =
+        (DailyContentService.stableHash('${_dateKey(date)}|${slot.name}') %
+                21) -
+            10;
+    return base.add(Duration(minutes: offsetMinutes));
+  }
+
+  static String _spiritualPayloadType(SpiritualNotificationTime slot) {
+    return switch (slot) {
+      SpiritualNotificationTime.morning => spiritualMorningType,
+      SpiritualNotificationTime.midday => spiritualMiddayType,
+      SpiritualNotificationTime.night => spiritualNightType,
+    };
+  }
+
+  static Future<_SpiritualNotificationContent>
+      _buildSpiritualNotificationContent({
+    required DateTime date,
+    required SpiritualNotificationTime slot,
+  }) async {
+    final locale = Locale(LocalPreferencesService.language.value);
+    final isTurkish = locale.languageCode.toLowerCase() == 'tr';
+
+    switch (slot) {
+      case SpiritualNotificationTime.morning:
+        final ayah = DailyAyahService.getAyahWithContextForDate(
+          date,
+          QuranData.instance.ayahs,
+          QuranData.instance.getSurahName,
+        );
+        final readable = await DailyAyahService.getAyahReadableText(
+          surah: ayah.surahNumber,
+          ayah: ayah.ayahNumber,
+          locale: locale,
+        );
+        final reflection = isTurkish
+            ? 'Bu ayeti bugunun niyeti gibi tasiyabilirsin.'
+            : 'Carry this verse gently with you today.';
+        return _SpiritualNotificationContent(
+          title: isTurkish ? 'Sabaha bir ayet' : 'A verse for this morning',
+          body: _joinNotificationParts([
+            readable.isNotEmpty ? readable : ayah.turkishReadable,
+            reflection,
+          ]),
+        );
+      case SpiritualNotificationTime.midday:
+        final reminder =
+            await DailyContentService.getGentleReminderForDate(date, locale);
+        return _SpiritualNotificationContent(
+          title: isTurkish ? 'Niyetini tazele' : 'Return to your intention',
+          body: reminder.trim().isNotEmpty
+              ? reminder.trim()
+              : (isTurkish
+                  ? 'Bugunun icinde kisa bir durak ver.'
+                  : 'Pause for a brief spiritual reset today.'),
+        );
+      case SpiritualNotificationTime.night:
+        final useQuote = DailyContentService.stableHash(
+                  '${_dateKey(date)}|night_content',
+                ) %
+                2 ==
+            0;
+        if (useQuote) {
+          final quote = await DailyContentService.getQuoteForDate(date, locale);
+          return _SpiritualNotificationContent(
+            title: isTurkish ? 'Geceye bir dusunce' : 'A quiet thought tonight',
+            body: _joinNotificationParts([
+              quote.text,
+              if ((quote.source ?? '').trim().isNotEmpty) quote.source!.trim(),
+            ]),
+          );
+        }
+        final hadith = DailyContentService.getHadithForDate(date);
+        final body = hadith?.text.trim();
+        return _SpiritualNotificationContent(
+          title:
+              isTurkish ? 'Geceye bir hatirlatma' : 'A reflection for tonight',
+          body: _joinNotificationParts([
+            if (body != null && body.isNotEmpty) body,
+            if ((hadith?.source ?? '').trim().isNotEmpty)
+              hadith!.source!.trim(),
+          ]),
+        );
+    }
+  }
+
+  static String _joinNotificationParts(List<String> parts) {
+    return parts
+        .map((item) => item.trim())
+        .where((item) => item.isNotEmpty)
+        .join('\n');
+  }
+
+  static String _dateKey(DateTime date) {
+    final y = date.year.toString().padLeft(4, '0');
+    final m = date.month.toString().padLeft(2, '0');
+    final d = date.day.toString().padLeft(2, '0');
+    return '$y-$m-$d';
   }
 
   static void handleNotificationResponsePayload(String? payload) {
@@ -752,4 +1237,14 @@ class AdhanNotificationService {
       debugPrint('[AdhanNotifications] $message');
     }
   }
+}
+
+class _SpiritualNotificationContent {
+  const _SpiritualNotificationContent({
+    required this.title,
+    required this.body,
+  });
+
+  final String title;
+  final String body;
 }

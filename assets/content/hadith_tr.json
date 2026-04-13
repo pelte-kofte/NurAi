@@ -1,12 +1,202 @@
 [
   {
-    "id": "hadith_tr_1",
-    "text": "Kolaylaştırın, zorlaştırmayın. Müjdeleyin, nefret ettirmeyin.",
-    "source": "Buhari, İlim 11"
+    "id": 1,
+    "text": "Din nasihattır/samimiyettir.",
+    "source": "Müslim, İmân, 95."
   },
   {
-    "id": "hadith_tr_2",
-    "text": "İnsanların en hayırlısı, insanlara faydası dokunandır.",
-    "source": "Taberani, el-Mu'cemu'l-Evsat"
+    "id": 2,
+    "text": "İslâm, güzel ahlâktır.",
+    "source": "Kenzü’l-Ummâl, 3/17, Hadis No: 5225."
+  },
+  {
+    "id": 3,
+    "text": "İnsanlara merhamet etmeyene Allah merhamet etmez.",
+    "source": "Müslim, Fedâil, 66; Tirmizî, Birr, 16."
+  },
+  {
+    "id": 4,
+    "text": "Kolaylaştırınız, güçleştirmeyiniz, müjdeleyiniz, nefret ettirmeyiniz.",
+    "source": "Buhârî, İlm, 12; Müslim, Cihâd, 6."
+  },
+  {
+    "id": 5,
+    "text": "İnsanların Peygamberlerden öğrenegeldikleri sözlerden biri de: ‘Utanmadıktan sonra dilediğini yap!’ sözüdür.",
+    "source": "Buhârî, Enbiyâ, 54; Ebû Dâvûd, Edeb, 6."
+  },
+  {
+    "id": 6,
+    "text": "Hayra vesile olan, hayrı yapan gibidir.",
+    "source": "Tirmizî, İlm, 14."
+  },
+  {
+    "id": 7,
+    "text": "Mümin, bir delikten iki defa sokulmaz.",
+    "source": "Buhârî, Edeb, 83; Müslim, Zühd, 63."
+  },
+  {
+    "id": 8,
+    "text": "Nerede olursan ol Allah’a karşı gelmekten sakın; yaptığın kötülüğün arkasından bir iyilik yap ki bu onu yok etsin. İnsanlara karşı güzel ahlakın gereğine göre davran.",
+    "source": "Tirmizî, Birr, 55."
+  },
+  {
+    "id": 9,
+    "text": "Allah, sizden birinizin yaptığı işi, ameli ve görevi sağlam ve iyi yapmasından hoşnut olur.",
+    "source": "Taberânî, el-Mu’cemü’l-Evsat, 1/275; Beyhakî, Şu’abü’l-Îmân, 4/334."
+  },
+  {
+    "id": 10,
+    "text": "İman, yetmiş küsur derecedir. En üstünü ‘Lâ ilâhe illallah’ sözüdür, en düşük derecesi de rahatsız edici bir şeyi yoldan kaldırmaktır. Haya da imandandır.",
+    "source": "Buhârî, Îmân, 3; Müslim, Îmân, 57, 58."
+  },
+  {
+    "id": 11,
+    "text": "Kim kötü ve çirkin bir iş görürse onu eliyle düzeltsin; eğer buna gücü yetmiyorsa diliyle düzeltsin; buna da gücü yetmezse, kalben karşı koysun. Bu da imanın en zayıf derecesidir.",
+    "source": "Müslim, Îmân, 78; Ebû Dâvûd, Salât, 248."
+  },
+  {
+    "id": 12,
+    "text": "İki göz vardır ki, cehennem ateşi onlara dokunmaz: Allah korkusundan ağlayan göz, bir de gecesini Allah yolunda nöbet tutarak geçiren göz.",
+    "source": "Tirmizî, Fedâilü’l-Cihâd, 12."
+  },
+  {
+    "id": 13,
+    "text": "Zarar vermek ve zarara zararla karşılık vermek yoktur.",
+    "source": "İbn Mâce, Ahkâm, 17; Muvatta’, Akdıye, 31."
+  },
+  {
+    "id": 14,
+    "text": "Hiçbiriniz kendisi için istediğini mümin kardeşi için istemedikçe gerçek iman etmiş olamaz.",
+    "source": "Buhârî, Îmân, 7; Müslim, Îmân, 71."
+  },
+  {
+    "id": 15,
+    "text": "Müslüman müslümanın kardeşidir. Ona zulmetmez, onu düşmanına teslim etmez. Kim mümin kardeşinin bir ihtiyacını giderirse Allah da onun bir ihtiyacını giderir. Kim müslümanı bir sıkıntıdan kurtarırsa Allah da onu kıyamet günü sıkıntılarından birinden kurtarır. Kim bir müslümanın kusurunu örterse, Allah da Kıyamet günü onun kusurunu örter.",
+    "source": "Buhârî, Mezâlim, 3; Müslim, Birr, 58."
+  },
+  {
+    "id": 16,
+    "text": "İman etmedikçe cennete giremezsiniz, birbirinizi sevmedikçe de gerçek anlamda iman etmiş olamazsınız.",
+    "source": "Müslim, Îmân, 93; Tirmizî, Sıfâtu’l-Kıyâme, 56."
+  },
+  {
+    "id": 17,
+    "text": "Müslüman, insanların elinden ve dilinden emin olduğu kimsedir.",
+    "source": "Tirmizî, Îmân, 12; Nesâî, Îmân, 8."
+  },
+  {
+    "id": 18,
+    "text": "Birbirinize buğuz etmeyin, birbirinize haset etmeyin, birbirinize arka çevirmeyin; ey Allah’ın kulları, kardeş olun. Bir müslümana, üç günden fazla kardeşi ile dargın durması helal olmaz.",
+    "source": "Buhârî, Edeb, 57, 58."
+  },
+  {
+    "id": 19,
+    "text": "Hiç şüphe yok ki doğruluk iyiliğe götürür. İyilik de cennete götürür. Kişi doğru söyleye söyleye Allah katında sıddîk diye yazılır. Yalancılık kötüye götürür. Kötülük de cehenneme götürür. Kişi yalan söyleye söyleye Allah katında kezzâb diye yazılır.",
+    "source": "Buhârî, Edeb, 69; Müslim, Birr, 103, 104."
+  },
+  {
+    "id": 20,
+    "text": "Mümin kardeşinle münakaşa etme, onun hoşuna gitmeyecek şakalar yapma ve ona yerine getirmeyeceğin bir söz verme.",
+    "source": "Tirmizî, Birr, 58."
+  },
+  {
+    "id": 21,
+    "text": "Mümin kardeşine tebessüm etmen sadakadır. İyiliği emredip kötülükten sakındırman sadakadır. Yolunu kaybeden kimseye yol göstermen sadakadır. Yoldan taş, diken, kemik gibi şeyleri kaldırıp atman da senin için sadakadır.",
+    "source": "Tirmizî, Birr, 36."
+  },
+  {
+    "id": 22,
+    "text": "Allah sizin ne dış görünüşünüze ne de mallarınıza bakar. Ama O sizin kalplerinize ve işlerinize bakar.",
+    "source": "Müslim, Birr, 33; İbn Mâce, Zühd, 9; Ahmed b. Hanbel, 2/285, 539."
+  },
+  {
+    "id": 23,
+    "text": "Allah’ın rızası, anne ve babanın rızasındadır. Allah’ın öfkesi de anne babanın öfkesindedir.",
+    "source": "Tirmizî, Birr, 3."
+  },
+  {
+    "id": 24,
+    "text": "Üç dua vardır ki, bunlar şüphesiz kabul edilir: mazlumun duası, yolcunun duası ve babanın evladına duası.",
+    "source": "İbn Mâce, Dua, 11."
+  },
+  {
+    "id": 25,
+    "text": "Hiçbir baba, çocuğuna güzel terbiyeden daha üstün bir hediye veremez.",
+    "source": "Tirmizî, Birr, 33."
+  },
+  {
+    "id": 26,
+    "text": "Sizin en hayırlılarınız, hanımlarına karşı en iyi davrananlarınızdır.",
+    "source": "Tirmizî, Radâ’, 11; İbn Mâce, Nikâh, 50."
+  },
+  {
+    "id": 27,
+    "text": "Küçüklerimize merhamet etmeyen, büyüklerimize saygı göstermeyen bizden değildir.",
+    "source": "Tirmizî, Birr, 15; Ebû Dâvûd, Edeb, 66."
+  },
+  {
+    "id": 28,
+    "text": "Gerek kendisine gerekse başkasına ait herhangi bir yetimi görüp gözetmeyi üzerine alan kimse ile ben cennette işte böyle yanyanayız.",
+    "source": "Buhârî, Talâk, 25; Edeb, 24; Müslim, Zühd, 42."
+  },
+  {
+    "id": 29,
+    "text": "İnsanı helâk eden şu yedi şeyden kaçının: Allah’a şirk koşmak, sihir, Allah’ın haram kıldığı cana kıymak, faiz yemek, yetim malı yemek, savaştan kaçmak, suçsuz ve namuslu mümin kadınlara iftirada bulunmak.",
+    "source": "Buhârî, Vasâyâ, 23; Tıbb, 48; Müslim, Îmân, 144."
+  },
+  {
+    "id": 30,
+    "text": "Allah’a ve ahiret gününe imân eden kimse komşusuna eziyet etmesin. Allah’a ve ahiret gününe imân eden misafirine ikramda bulunsun. Allah’a ve ahiret gününe imân eden kimse ya hayır söylesin veya sussun.",
+    "source": "Buhârî, Edeb, 31, 85; Müslim, Îmân, 74, 75."
+  },
+  {
+    "id": 31,
+    "text": "Cebrâil bana komşu hakkında o kadar çok tavsiyede bulundu ki, ben komşuyu komşuya mirasçı kılacak zannettim.",
+    "source": "Buhârî, Edeb, 28; Müslim, Birr, 140, 141."
+  },
+  {
+    "id": 32,
+    "text": "Dul ve fakirlere yardım eden kimse, Allah yolunda cihad eden veya gündüzleri nafile oruç tutup gecelerini nafile ibadetle geçiren kimse gibidir.",
+    "source": "Buhârî, Nafakât, 1; Müslim, Zühd, 41; Tirmizî, Birr, 44; Nesâî, Zekât, 78."
+  },
+  {
+    "id": 33,
+    "text": "Her insan hata eder. Hata işleyenlerin en hayırlıları tevbe edenlerdir.",
+    "source": "Tirmizî, Kıyâme, 49; İbn Mâce, Zühd, 30."
+  },
+  {
+    "id": 34,
+    "text": "Müminin başka hiç kimsede bulunmayan ilginç bir hali vardır; onun her işi hayırdır. Eğer bir nimete kavuşursa şükreder ve bu onun için hayır olur. Eğer bir musibete uğrarsa sabreder ve bu da onun için hayır olur.",
+    "source": "Müslim, Zühd, 64; Dârimî, Rikâk, 61."
+  },
+  {
+    "id": 35,
+    "text": "Bizi aldatan bizden değildir.",
+    "source": "Müslim, Îmân, 164."
+  },
+  {
+    "id": 36,
+    "text": "Söz taşıyanlar cennete giremezler.",
+    "source": "Müslim, Îmân, 168; Tirmizî, Birr, 79."
+  },
+  {
+    "id": 37,
+    "text": "İşçiye ücretini alnının teri kurumadan veriniz.",
+    "source": "İbn Mâce, Ruhûn, 4."
+  },
+  {
+    "id": 38,
+    "text": "Bir müslümanın diktiği ağaçtan veya ektiği ekinden insan, hayvan ve kuşların yedikleri şeyler, o müslüman için birer sadakadır.",
+    "source": "Buhârî, Edeb, 27; Müslim, Müsâkât, 7, 10."
+  },
+  {
+    "id": 39,
+    "text": "İnsanda bir organ vardır. Eğer o sağlıklı ise bütün vücut sağlıklı olur; eğer o bozulursa bütün vücut bozulur. Dikkat edin! O, kalptir.",
+    "source": "Buhârî, Îmân, 39; Müslim, Müsâkât, 107."
+  },
+  {
+    "id": 40,
+    "text": "Rabbinize karşı gelmekten sakının, beş vakit namazınızı kılın, Ramazan orucunuzu tutun, mallarınızın zekâtını verin, yöneticilerinize itaat edin. Böylelikle Rabbinizin cennetine girersiniz.",
+    "source": "Tirmizî, Cum’a, 80."
   }
 ]

@@ -61,12 +61,19 @@ class DailyContentService {
   static List<DailyContentItem> _words = const [];
   static final Map<String, List<DailyQuoteItem>> _quotesCacheByLang = {};
 
-  static DailyContentItem? get todayHadith => _pickDeterministic(
-        _hadith,
+  static DailyContentItem? get todayHadith => _pickRotatingHadith(
         DateTime.now(),
       );
 
   static DailyContentItem? get todayWord => _pickRotatingWord(DateTime.now());
+
+  static DailyContentItem? getHadithForDate(DateTime date) {
+    return _pickRotatingHadith(date);
+  }
+
+  static DailyContentItem? getWordForDate(DateTime date) {
+    return _pickRotatingWord(date);
+  }
 
   static HomeDailyContentType homeContentTypeForDate(DateTime date) {
     switch (date.weekday) {
@@ -270,6 +277,17 @@ class DailyContentService {
     );
   }
 
+  static DailyContentItem? _pickRotatingHadith(DateTime date) {
+    final normalized = _normalizeLanguageCode(
+      LocalPreferencesService.language.value,
+    );
+    return _pickRotatingFromList(
+      _hadith,
+      date,
+      rotationKey: _rotationKey('hadith', normalized),
+    );
+  }
+
   static DailyContentItem? _pickRotatingFromList(
     List<DailyContentItem> items,
     DateTime date, {
@@ -281,15 +299,6 @@ class DailyContentService {
       rotationKey: rotationKey,
       poolLength: items.length,
     );
-    return items[index];
-  }
-
-  static DailyContentItem? _pickDeterministic(
-    List<DailyContentItem> items,
-    DateTime date,
-  ) {
-    if (items.isEmpty) return null;
-    final index = reminderIndexForDate(date, items.length);
     return items[index];
   }
 
@@ -344,9 +353,11 @@ class DailyContentService {
   static String _rotationKey(String type, String locale) => '${type}_$locale';
 
   static _HomeDailyRotationState _readRotationState(String rotationKey) {
-    final raw = LocalPreferencesService.getHomeDailyRotationStateRaw(
-      rotationKey,
-    );
+    final raw = switch (rotationKey) {
+      'hadith_tr' => LocalPreferencesService.getHadithRotationStateRaw('tr'),
+      'hadith_en' => LocalPreferencesService.getHadithRotationStateRaw('en'),
+      _ => LocalPreferencesService.getHomeDailyRotationStateRaw(rotationKey),
+    };
     if (raw == null || raw.trim().isEmpty) {
       return const _HomeDailyRotationState();
     }
@@ -367,10 +378,21 @@ class DailyContentService {
     String rotationKey,
     _HomeDailyRotationState state,
   ) {
-    return LocalPreferencesService.setHomeDailyRotationStateRaw(
-      rotationKey,
-      jsonEncode(state.toJson()),
-    );
+    final encodedState = jsonEncode(state.toJson());
+    return switch (rotationKey) {
+      'hadith_tr' => LocalPreferencesService.setHadithRotationStateRaw(
+          'tr',
+          encodedState,
+        ),
+      'hadith_en' => LocalPreferencesService.setHadithRotationStateRaw(
+          'en',
+          encodedState,
+        ),
+      _ => LocalPreferencesService.setHomeDailyRotationStateRaw(
+          rotationKey,
+          encodedState,
+        ),
+    };
   }
 
   @visibleForTesting

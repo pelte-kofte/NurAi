@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -6,36 +7,116 @@ import '../../data/daily_content_service.dart';
 import '../../data/bookmark_service.dart';
 import '../../data/quran_data.dart';
 import '../../data/quran_turkish_meal_service.dart';
+import '../../data/spiritual_progress_service.dart';
 import '../../data/today_card_favorites_service.dart';
 import '../../services/share_card_service.dart';
 import '../../l10n/app_strings.dart';
+import '../../theme/app_theme.dart';
+import '../../widgets/premium_experience_widgets.dart';
 
 enum _TodayCardMenuAction {
   share,
   favorite,
 }
 
+enum TodayScreenIntent {
+  calmer,
+  reminder,
+  beforeSleep,
+  morningReflection,
+  eveningReflection,
+}
+
 class TodayScreen extends StatefulWidget {
-  const TodayScreen({super.key});
+  const TodayScreen({super.key, this.intent});
+
+  final TodayScreenIntent? intent;
 
   @override
   State<TodayScreen> createState() => _TodayScreenState();
 }
 
 class _TodayScreenState extends State<TodayScreen> {
+  static const _reflectionCompletionDelay = Duration(seconds: 6);
   List<TodayCardFavorite> _favorites = const [];
   bool _showFavorites = false;
+  Timer? _reflectionCompletionTimer;
+  bool _didCompleteReflection = false;
 
   @override
   void initState() {
     super.initState();
     _loadFavorites();
+    _startReflectionCompletionTimerIfNeeded();
+  }
+
+  @override
+  void dispose() {
+    _reflectionCompletionTimer?.cancel();
+    super.dispose();
   }
 
   Future<void> _loadFavorites() async {
     final favorites = await TodayCardFavoritesService.getFavorites();
     if (!mounted) return;
     setState(() => _favorites = favorites);
+  }
+
+  bool get _isReflectionIntent =>
+      widget.intent == TodayScreenIntent.morningReflection ||
+      widget.intent == TodayScreenIntent.eveningReflection;
+
+  void _startReflectionCompletionTimerIfNeeded() {
+    if (!_isReflectionIntent || _didCompleteReflection) return;
+    _reflectionCompletionTimer?.cancel();
+    _reflectionCompletionTimer = Timer(_reflectionCompletionDelay, () {
+      if (!mounted || _showFavorites || _didCompleteReflection) return;
+      unawaited(_completeReflectionIfNeeded());
+    });
+  }
+
+  Future<void> _completeReflectionIfNeeded() async {
+    if (!_isReflectionIntent || _didCompleteReflection) return;
+    _didCompleteReflection = true;
+    final period = widget.intent == TodayScreenIntent.morningReflection
+        ? ReflectionPeriod.morning
+        : ReflectionPeriod.evening;
+    final result = await SpiritualProgressService.completeReflection(period);
+    if (!mounted || !result.completedNow) return;
+
+    final messageIndex =
+        await SpiritualProgressService.nextReflectionMessageIndex(period);
+    if (!mounted) return;
+    final message = _reflectionCompletionMessage(period, messageIndex);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+  }
+
+  String _reflectionCompletionMessage(
+    ReflectionPeriod period,
+    int messageIndex,
+  ) {
+    final suffix = messageIndex + 1;
+    return switch (period) {
+      ReflectionPeriod.morning =>
+        S.get('reflection_morning_completed_message_$suffix'),
+      ReflectionPeriod.evening =>
+        S.get('reflection_evening_completed_message_$suffix'),
+    };
   }
 
   @override
@@ -47,7 +128,7 @@ class _TodayScreenState extends State<TodayScreen> {
     );
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           S.get('today_screen_title'),
@@ -64,6 +145,10 @@ class _TodayScreenState extends State<TodayScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (widget.intent != null && !_showFavorites) ...[
+              _TodayIntentCard(intent: widget.intent!),
+              const SizedBox(height: 16),
+            ],
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -72,11 +157,47 @@ class _TodayScreenState extends State<TodayScreen> {
                   label: Text(S.get('ramadan_suggestions_tab_today')),
                   selected: !_showFavorites,
                   onSelected: (_) => setState(() => _showFavorites = false),
+                  showCheckmark: false,
+                  selectedColor:
+                      AppColors.emphasisAccent.withValues(alpha: 0.16),
+                  backgroundColor: colorScheme.surface,
+                  side: BorderSide(
+                    color: !_showFavorites
+                        ? AppColors.emphasisAccent.withValues(alpha: 0.42)
+                        : colorScheme.outline,
+                  ),
+                  labelStyle: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    fontWeight:
+                        !_showFavorites ? FontWeight.w600 : FontWeight.w500,
+                    color: !_showFavorites
+                        ? AppColors.emphasisAccent
+                        : colorScheme.onSurface.withValues(alpha: 0.72),
+                  ),
                 ),
                 ChoiceChip(
                   label: Text(S.get('ramadan_suggestions_tab_favorites')),
                   selected: _showFavorites,
                   onSelected: (_) => setState(() => _showFavorites = true),
+                  showCheckmark: false,
+                  selectedColor:
+                      AppColors.emphasisAccent.withValues(alpha: 0.16),
+                  backgroundColor: colorScheme.surface,
+                  side: BorderSide(
+                    color: _showFavorites
+                        ? AppColors.emphasisAccent.withValues(alpha: 0.42)
+                        : colorScheme.outline,
+                  ),
+                  labelStyle: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    fontWeight:
+                        _showFavorites ? FontWeight.w600 : FontWeight.w500,
+                    color: _showFavorites
+                        ? AppColors.emphasisAccent
+                        : colorScheme.onSurface.withValues(alpha: 0.72),
+                  ),
                 ),
               ],
             ),
@@ -92,144 +213,191 @@ class _TodayScreenState extends State<TodayScreen> {
   }
 
   Widget _buildTodayCards(BuildContext context, DailyAyah dailyAyah) {
+    final sections = switch (widget.intent) {
+      TodayScreenIntent.calmer => <Widget>[
+          _buildQuoteSection(context),
+          _buildDailyAyahSection(context, dailyAyah),
+          _buildHadithSection(context),
+          _buildReminderSection(context),
+        ],
+      TodayScreenIntent.morningReflection => <Widget>[
+          _buildDailyAyahSection(context, dailyAyah),
+          _buildReminderSection(context),
+        ],
+      TodayScreenIntent.eveningReflection => <Widget>[
+          _buildQuoteSection(context),
+          _buildReminderSection(context),
+        ],
+      TodayScreenIntent.beforeSleep => <Widget>[
+          _buildQuoteSection(context),
+          _buildReminderSection(context),
+        ],
+      TodayScreenIntent.reminder => <Widget>[
+          _buildReminderSection(context),
+          _buildHadithSection(context),
+        ],
+      null => <Widget>[
+          _buildDailyAyahSection(context, dailyAyah),
+          _buildHadithSection(context),
+          _buildReminderSection(context),
+          _buildQuoteSection(context),
+        ],
+    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        FutureBuilder<String>(
-          future: DailyAyahService.getAyahReadableText(
-            surah: dailyAyah.surahNumber,
-            ayah: dailyAyah.ayahNumber,
-            locale: Localizations.localeOf(context),
-          ),
-          builder: (context, snapshot) {
-            final localeCode =
-                Localizations.localeOf(context).languageCode.toLowerCase();
-            final resolvedReadableText = snapshot.data?.trim();
-            final hasReadableText =
-                resolvedReadableText != null && resolvedReadableText.isNotEmpty;
-            final readableText = hasReadableText
-                ? resolvedReadableText
-                : (localeCode == 'tr'
-                    ? dailyAyah.turkishReadable
-                    : (snapshot.connectionState == ConnectionState.done
-                        ? S.get('meal_not_available')
-                        : S.get('prayer_times_loading')));
-            return _buildVerseCard(
-              context,
-              dailyAyah,
-              readableText: readableText,
-              onShare: hasReadableText || localeCode == 'tr'
-                  ? () => _shareAyahCard(
-                        context,
-                        dailyAyah: dailyAyah,
-                        readableText: readableText,
-                      )
-                  : null,
-              onFavorite: hasReadableText || localeCode == 'tr'
-                  ? () => _saveAyahFavorite(
-                        context,
-                        dailyAyah: dailyAyah,
-                        readableText: readableText,
-                      )
-                  : null,
-            );
-          },
-        ),
-        const SizedBox(height: 14),
-        ValueListenableBuilder<int>(
-          valueListenable: DailyContentService.revision,
-          builder: (context, _, __) {
-            final hadith = DailyContentService.todayHadith;
-            final hasHadith = hadith?.text.trim().isNotEmpty ?? false;
-            return _buildContentCard(
-              context: context,
-              title: S.get('daily_hadith_title'),
-              body: hadith?.text ?? S.get('daily_hadith_empty'),
-              source: hadith?.source,
-              onShare: hasHadith
-                  ? () => _shareDailyTextCard(
-                        context,
-                        title: S.get('daily_hadith_title'),
-                        body: hadith!.text,
-                        source: hadith.source,
-                      )
-                  : null,
-              onFavorite: hasHadith
-                  ? () => _saveTextFavorite(
-                        context,
-                        title: S.get('daily_hadith_title'),
-                        body: hadith!.text,
-                        source: hadith.source,
-                        type: TodayCardFavoriteType.hadith,
-                      )
-                  : null,
-            );
-          },
-        ),
-        const SizedBox(height: 14),
-        ValueListenableBuilder<int>(
-          valueListenable: DailyContentService.revision,
-          builder: (context, _, __) {
-            final reminder = DailyContentService.todayWord;
-            final hasReminder = reminder?.text.trim().isNotEmpty ?? false;
-            return _buildContentCard(
-              context: context,
-              title: S.get('daily_word_title'),
-              body: reminder?.text ?? S.get('daily_word_empty'),
-              onShare: hasReminder
-                  ? () => _shareDailyTextCard(
-                        context,
-                        title: S.get('daily_word_title'),
-                        body: reminder!.text,
-                      )
-                  : null,
-              onFavorite: hasReminder
-                  ? () => _saveTextFavorite(
-                        context,
-                        title: S.get('daily_word_title'),
-                        body: reminder!.text,
-                        type: TodayCardFavoriteType.reminder,
-                      )
-                  : null,
-            );
-          },
-        ),
-        const SizedBox(height: 14),
-        FutureBuilder<DailyQuoteItem>(
-          future: DailyContentService.getQuoteForDate(
-            DateTime.now(),
-            Localizations.localeOf(context),
-          ),
-          builder: (context, snapshot) {
-            final quote = snapshot.data;
-            final hasQuote = quote?.text.trim().isNotEmpty ?? false;
-            return _buildContentCard(
-              context: context,
-              title: S.get('daily_quote_title'),
-              body: quote?.text ?? '',
-              source: quote?.source,
-              showQuoteOrnaments: true,
-              onShare: hasQuote
-                  ? () => _shareDailyTextCard(
-                        context,
-                        title: S.get('daily_quote_title'),
-                        body: quote?.text ?? '',
-                        source: quote?.source,
-                      )
-                  : null,
-              onFavorite: hasQuote
-                  ? () => _saveTextFavorite(
-                        context,
-                        title: S.get('daily_quote_title'),
-                        body: quote?.text ?? '',
-                        source: quote?.source,
-                        type: TodayCardFavoriteType.quote,
-                      )
-                  : null,
-            );
-          },
-        ),
+      children: _withSpacing(sections),
+    );
+  }
+
+  List<Widget> _withSpacing(List<Widget> children) {
+    return [
+      for (var i = 0; i < children.length; i++) ...[
+        if (i > 0) const SizedBox(height: 14),
+        children[i],
       ],
+    ];
+  }
+
+  Widget _buildDailyAyahSection(BuildContext context, DailyAyah dailyAyah) {
+    return FutureBuilder<String>(
+      future: DailyAyahService.getAyahReadableText(
+        surah: dailyAyah.surahNumber,
+        ayah: dailyAyah.ayahNumber,
+        locale: Localizations.localeOf(context),
+      ),
+      builder: (context, snapshot) {
+        final localeCode =
+            Localizations.localeOf(context).languageCode.toLowerCase();
+        final resolvedReadableText = snapshot.data?.trim();
+        final hasReadableText =
+            resolvedReadableText != null && resolvedReadableText.isNotEmpty;
+        final readableText = hasReadableText
+            ? resolvedReadableText
+            : (localeCode == 'tr'
+                ? dailyAyah.turkishReadable
+                : (snapshot.connectionState == ConnectionState.done
+                    ? S.get('meal_not_available')
+                    : S.get('prayer_times_loading')));
+        return _buildVerseCard(
+          context,
+          dailyAyah,
+          readableText: readableText,
+          onShare: hasReadableText || localeCode == 'tr'
+              ? () => _shareAyahCard(
+                    context,
+                    dailyAyah: dailyAyah,
+                    readableText: readableText,
+                  )
+              : null,
+          onFavorite: hasReadableText || localeCode == 'tr'
+              ? () => _saveAyahFavorite(
+                    context,
+                    dailyAyah: dailyAyah,
+                    readableText: readableText,
+                  )
+              : null,
+        );
+      },
+    );
+  }
+
+  Widget _buildHadithSection(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: DailyContentService.revision,
+      builder: (context, _, __) {
+        final hadith = DailyContentService.todayHadith;
+        final hasHadith = hadith?.text.trim().isNotEmpty ?? false;
+        return _buildContentCard(
+          context: context,
+          title: S.get('daily_hadith_title'),
+          body: hadith?.text ?? S.get('daily_hadith_empty'),
+          source: hadith?.source,
+          onShare: hasHadith
+              ? () => _shareDailyTextCard(
+                    context,
+                    title: S.get('daily_hadith_title'),
+                    body: hadith!.text,
+                    source: hadith.source,
+                  )
+              : null,
+          onFavorite: hasHadith
+              ? () => _saveTextFavorite(
+                    context,
+                    title: S.get('daily_hadith_title'),
+                    body: hadith!.text,
+                    source: hadith.source,
+                    type: TodayCardFavoriteType.hadith,
+                  )
+              : null,
+        );
+      },
+    );
+  }
+
+  Widget _buildReminderSection(BuildContext context) {
+    return ValueListenableBuilder<int>(
+      valueListenable: DailyContentService.revision,
+      builder: (context, _, __) {
+        final reminder = DailyContentService.todayWord;
+        final hasReminder = reminder?.text.trim().isNotEmpty ?? false;
+        return _buildContentCard(
+          context: context,
+          title: S.get('daily_word_title'),
+          body: reminder?.text ?? S.get('daily_word_empty'),
+          onShare: hasReminder
+              ? () => _shareDailyTextCard(
+                    context,
+                    title: S.get('daily_word_title'),
+                    body: reminder!.text,
+                  )
+              : null,
+          onFavorite: hasReminder
+              ? () => _saveTextFavorite(
+                    context,
+                    title: S.get('daily_word_title'),
+                    body: reminder!.text,
+                    type: TodayCardFavoriteType.reminder,
+                  )
+              : null,
+        );
+      },
+    );
+  }
+
+  Widget _buildQuoteSection(BuildContext context) {
+    return FutureBuilder<DailyQuoteItem>(
+      future: DailyContentService.getQuoteForDate(
+        DateTime.now(),
+        Localizations.localeOf(context),
+      ),
+      builder: (context, snapshot) {
+        final quote = snapshot.data;
+        final hasQuote = quote?.text.trim().isNotEmpty ?? false;
+        return _buildContentCard(
+          context: context,
+          title: S.get('daily_quote_title'),
+          body: quote?.text ?? '',
+          source: quote?.source,
+          showQuoteOrnaments: true,
+          onShare: hasQuote
+              ? () => _shareDailyTextCard(
+                    context,
+                    title: S.get('daily_quote_title'),
+                    body: quote?.text ?? '',
+                    source: quote?.source,
+                  )
+              : null,
+          onFavorite: hasQuote
+              ? () => _saveTextFavorite(
+                    context,
+                    title: S.get('daily_quote_title'),
+                    body: quote?.text ?? '',
+                    source: quote?.source,
+                    type: TodayCardFavoriteType.quote,
+                  )
+              : null,
+        );
+      },
     );
   }
 
@@ -246,8 +414,15 @@ class _TodayScreenState extends State<TodayScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: colorScheme.outline),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -452,11 +627,18 @@ class _TodayScreenState extends State<TodayScreen> {
       width: double.infinity,
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: colorScheme.outline),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(10.5),
+        borderRadius: BorderRadius.circular(13.5),
         child: Stack(
           clipBehavior: Clip.hardEdge,
           children: [
@@ -465,13 +647,13 @@ class _TodayScreenState extends State<TodayScreen> {
                 left: -24,
                 bottom: -28,
                 child: Opacity(
-                  opacity: 0.1,
+                  opacity: 0.06,
                   child: Transform.rotate(
                     angle: -0.12,
                     child: Image.asset(
                       'assets/splash/splash.png',
-                      width: 96,
-                      height: 96,
+                      width: 90,
+                      height: 90,
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -481,7 +663,7 @@ class _TodayScreenState extends State<TodayScreen> {
                 right: -24,
                 bottom: -28,
                 child: Opacity(
-                  opacity: 0.1,
+                  opacity: 0.06,
                   child: Transform(
                     alignment: Alignment.center,
                     transform: Matrix4.identity()
@@ -489,8 +671,8 @@ class _TodayScreenState extends State<TodayScreen> {
                       ..rotateZ(0.12),
                     child: Image.asset(
                       'assets/splash/splash.png',
-                      width: 96,
-                      height: 96,
+                      width: 90,
+                      height: 90,
                       fit: BoxFit.cover,
                     ),
                   ),
@@ -571,8 +753,15 @@ class _TodayScreenState extends State<TodayScreen> {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: colorScheme.outline),
+          boxShadow: [
+            BoxShadow(
+              color: colorScheme.shadow.withValues(alpha: 0.04),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
+            ),
+          ],
         ),
         child: Text(
           S.get('today_favorites_empty'),
@@ -608,8 +797,15 @@ class _TodayScreenState extends State<TodayScreen> {
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: colorScheme.outline),
+        boxShadow: [
+          BoxShadow(
+            color: colorScheme.shadow.withValues(alpha: 0.04),
+            blurRadius: 18,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -975,5 +1171,99 @@ class _TodayScreenState extends State<TodayScreen> {
       if (!context.mounted) return;
       _showShareError(context);
     }
+  }
+}
+
+class _TodayIntentCard extends StatelessWidget {
+  const _TodayIntentCard({required this.intent});
+
+  final TodayScreenIntent intent;
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final secondaryTextColor = Theme.of(context).textTheme.bodyMedium?.color ??
+        colorScheme.onSurface.withValues(alpha: 0.72);
+    final config = switch (intent) {
+      TodayScreenIntent.calmer => (
+          icon: Icons.self_improvement_rounded,
+          title: S.get('today_intent_calmer_title'),
+          body: S.get('today_intent_calmer_body'),
+        ),
+      TodayScreenIntent.reminder => (
+          icon: Icons.wb_sunny_outlined,
+          title: S.get('today_intent_reminder_title'),
+          body: S.get('today_intent_reminder_body'),
+        ),
+      TodayScreenIntent.morningReflection => (
+          icon: Icons.wb_twilight_outlined,
+          title: S.get('today_intent_morning_reflection_title'),
+          body: S.get('today_intent_morning_reflection_body'),
+        ),
+      TodayScreenIntent.eveningReflection => (
+          icon: Icons.bedtime_outlined,
+          title: S.get('today_intent_evening_reflection_title'),
+          body: S.get('today_intent_evening_reflection_body'),
+        ),
+      TodayScreenIntent.beforeSleep => (
+          icon: Icons.nightlight_round,
+          title: S.get('today_intent_sleep_title'),
+          body: S.get('today_intent_sleep_body'),
+        ),
+    };
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+      decoration: BoxDecoration(
+        color: colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: colorScheme.outlineVariant),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(config.icon, size: 18, color: colorScheme.primary),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                RecommendationPill(label: S.get('today_choose_fit_label')),
+                const SizedBox(height: 10),
+                Text(
+                  config.title,
+                  style: TextStyle(
+                    fontFamily: 'Merriweather',
+                    fontSize: 15,
+                    fontWeight: FontWeight.w400,
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  config.body,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w400,
+                    color: secondaryTextColor,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

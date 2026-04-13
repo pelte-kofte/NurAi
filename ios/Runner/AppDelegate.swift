@@ -38,97 +38,101 @@ import WidgetKit
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    debugLog("[AppDelegate] didFinishLaunching start")
     registerBackgroundTasks()
     GeneratedPluginRegistrant.register(with: self)
     UNUserNotificationCenter.current().delegate = self
-    if let controller = window?.rootViewController as? FlutterViewController {
-      let channel = FlutterMethodChannel(
-        name: channelName,
-        binaryMessenger: controller.binaryMessenger
-      )
-      channel.setMethodCallHandler { [weak self] call, result in
-        guard let self = self else {
-          result(
-            FlutterError(
-              code: "unavailable",
-              message: "AppDelegate unavailable",
-              details: nil
-            )
+    guard let registrar = registrar(forPlugin: channelName) else {
+      debugLog("[AppDelegate] registrar unavailable for \(channelName)")
+      return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    }
+    let channel = FlutterMethodChannel(
+      name: channelName,
+      binaryMessenger: registrar.messenger()
+    )
+    channel.setMethodCallHandler { [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) in
+      guard let self = self else {
+        result(
+          FlutterError(
+            code: "unavailable",
+            message: "AppDelegate unavailable",
+            details: nil
           )
+        )
+        return
+      }
+      switch call.method {
+      case self.methodSetPayload:
+        guard
+          let args = call.arguments as? [String: Any],
+          let payload = args["payload"] as? String
+        else {
+          result(FlutterError(code: "invalid_args", message: "Missing payload", details: nil))
           return
         }
-        switch call.method {
-        case self.methodSetPayload:
-          guard
-            let args = call.arguments as? [String: Any],
-            let payload = args["payload"] as? String
-          else {
-            result(FlutterError(code: "invalid_args", message: "Missing payload", details: nil))
-            return
-          }
-          self.writePayload(payload, key: self.payloadKey)
-          self.refreshWidgets()
-          result(nil)
+        self.writePayload(payload, key: self.payloadKey)
+        self.refreshWidgets()
+        result(nil)
 
-        case self.methodSetDailyContentPayload:
-          guard
-            let args = call.arguments as? [String: Any],
-            let payload = args["payload"] as? String
-          else {
-            result(FlutterError(code: "invalid_args", message: "Missing payload", details: nil))
-            return
-          }
-          self.writePayload(payload, key: self.dailyContentPayloadKey)
-          self.refreshWidgets()
-          result(nil)
-
-        case self.methodRefreshWidgets:
-          self.refreshWidgets()
-          result(nil)
-
-        case self.methodIsIftarLiveActivitySupported:
-          if #available(iOS 16.1, *) {
-            result(ActivityAuthorizationInfo().areActivitiesEnabled)
-          } else {
-            result(false)
-          }
-
-        case self.methodStartIftarLiveActivity:
-          guard let args = call.arguments as? [String: Any] else {
-            result(FlutterError(code: "invalid_args", message: "Missing payload", details: nil))
-            return
-          }
-          self.startIftarLiveActivity(with: args, result: result)
-
-        case self.methodUpdateIftarLiveActivity:
-          guard let args = call.arguments as? [String: Any] else {
-            result(FlutterError(code: "invalid_args", message: "Missing payload", details: nil))
-            return
-          }
-          self.updateIftarLiveActivity(with: args, result: result)
-
-        case self.methodEndIftarLiveActivity:
-          self.endIftarLiveActivity(result: result)
-
-        case self.methodEndAllIftarActivities:
-          self.endAllIftarActivities(result: result)
-
-        case self.methodScheduleIftarBackgroundTasks:
-          guard let args = call.arguments as? [String: Any] else {
-            result(FlutterError(code: "invalid_args", message: "Missing payload", details: nil))
-            return
-          }
-          self.scheduleIftarBackgroundTasks(with: args, result: result)
-
-        case self.methodCancelIftarBackgroundTasks:
-          self.cancelIftarBackgroundTasks(result: result)
-
-        default:
-          result(FlutterMethodNotImplemented)
+      case self.methodSetDailyContentPayload:
+        guard
+          let args = call.arguments as? [String: Any],
+          let payload = args["payload"] as? String
+        else {
+          result(FlutterError(code: "invalid_args", message: "Missing payload", details: nil))
+          return
         }
+        self.writePayload(payload, key: self.dailyContentPayloadKey)
+        self.refreshWidgets()
+        result(nil)
+
+      case self.methodRefreshWidgets:
+        self.refreshWidgets()
+        result(nil)
+
+      case self.methodIsIftarLiveActivitySupported:
+        if #available(iOS 16.1, *) {
+          result(ActivityAuthorizationInfo().areActivitiesEnabled)
+        } else {
+          result(false)
+        }
+
+      case self.methodStartIftarLiveActivity:
+        guard let args = call.arguments as? [String: Any] else {
+          result(FlutterError(code: "invalid_args", message: "Missing payload", details: nil))
+          return
+        }
+        self.startIftarLiveActivity(with: args, result: result)
+
+      case self.methodUpdateIftarLiveActivity:
+        guard let args = call.arguments as? [String: Any] else {
+          result(FlutterError(code: "invalid_args", message: "Missing payload", details: nil))
+          return
+        }
+        self.updateIftarLiveActivity(with: args, result: result)
+
+      case self.methodEndIftarLiveActivity:
+        self.endIftarLiveActivity(result: result)
+
+      case self.methodEndAllIftarActivities:
+        self.endAllIftarActivities(result: result)
+
+      case self.methodScheduleIftarBackgroundTasks:
+        guard let args = call.arguments as? [String: Any] else {
+          result(FlutterError(code: "invalid_args", message: "Missing payload", details: nil))
+          return
+        }
+        self.scheduleIftarBackgroundTasks(with: args, result: result)
+
+      case self.methodCancelIftarBackgroundTasks:
+        self.cancelIftarBackgroundTasks(result: result)
+
+      default:
+        result(FlutterMethodNotImplemented)
       }
     }
     housekeepingIftarActivitiesIfNeeded()
+    debugLog("[AppDelegate] didFinishLaunching ready")
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -151,6 +155,7 @@ import WidgetKit
   }
 
   private func writePayload(_ payload: String, key: String) {
+    debugLog("[AppDelegate] write_payload key=\(key) length=\(payload.count)")
     if let sharedDefaults = resolveSharedDefaults() {
       sharedDefaults.set(payload, forKey: key)
       sharedDefaults.synchronize()
@@ -172,6 +177,7 @@ import WidgetKit
 
   private func refreshWidgets() {
     if #available(iOS 14.0, *) {
+      debugLog("[AppDelegate] refresh_widgets trigger=manual_reload")
       WidgetCenter.shared.reloadAllTimelines()
       WidgetCenter.shared.reloadTimelines(ofKind: nextPrayerWidgetKind)
       WidgetCenter.shared.reloadTimelines(ofKind: dailyContentWidgetKind)

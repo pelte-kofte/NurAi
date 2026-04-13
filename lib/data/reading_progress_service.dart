@@ -108,6 +108,14 @@ class ReadingProgressService {
     return _prefs?.containsKey(ctx.surahKey) ?? false;
   }
 
+  static Future<void> resetHatimProgress() async {
+    await clearContextProgress(const ReadingContext.hatim());
+  }
+
+  static Future<void> resetJuzProgress(int juzNumber) async {
+    await clearContextProgress(ReadingContext.juz(juzNumber));
+  }
+
   // ── Legacy compat (used by older callers during transition) ──
 
   /// @deprecated Use saveGlobalLastRead + saveContextProgress instead.

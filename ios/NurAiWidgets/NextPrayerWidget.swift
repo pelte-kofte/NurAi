@@ -9,6 +9,12 @@ private let staleDataRefreshInterval: TimeInterval = 5 * 60
 private let disabledRefreshInterval: TimeInterval = 3 * 60 * 60
 private let lockScreenPeriodicRefreshInterval: TimeInterval = 12 * 60
 
+private func debugLog(_ message: String) {
+  #if DEBUG
+    print(message)
+  #endif
+}
+
 private func localized(_ key: String, fallback: String, languageCode: String? = nil) -> String {
   if
     let languageCode,
@@ -72,13 +78,30 @@ struct NextPrayerProvider: TimelineProvider {
       if nextRefresh <= now {
         nextRefresh = now.addingTimeInterval(staleDataRefreshInterval)
       }
+      debugLog(
+        "[NextPrayerWidget] timeline_next_prayer now=\(now.timeIntervalSince1970) "
+          + "prayer=\(nextPrayer.name) nextPrayer=\(nextPrayer.date.timeIntervalSince1970) "
+          + "boundaryRefresh=\(boundaryRefresh.timeIntervalSince1970)"
+      )
     } else {
       nextRefresh = now.addingTimeInterval(staleDataRefreshInterval)
+      debugLog(
+        "[NextPrayerWidget] timeline_no_resolved_prayer now=\(now.timeIntervalSince1970) "
+          + "hasPayload=\(payload != nil) hasUpcoming=\(!((payload?.upcomingPrayers ?? []).isEmpty))"
+      )
     }
+
+    let midnightRefresh = nextMidnight(after: now, payload: payload)
+    nextRefresh = min(nextRefresh, midnightRefresh)
 
     // Lock Screen families can lag; force a lightweight periodic check.
     let periodicRefresh = now.addingTimeInterval(lockScreenPeriodicRefreshInterval)
     nextRefresh = min(nextRefresh, periodicRefresh)
+
+    debugLog(
+      "[NextPrayerWidget] timeline_ready now=\(now.timeIntervalSince1970) "
+        + "nextRefresh=\(nextRefresh.timeIntervalSince1970) midnightRefresh=\(midnightRefresh.timeIntervalSince1970)"
+    )
 
     completion(Timeline(entries: [entry], policy: .after(nextRefresh)))
   }
@@ -89,9 +112,16 @@ struct NextPrayerProvider: TimelineProvider {
       let raw = defaults.string(forKey: payloadKey),
       let data = raw.data(using: .utf8)
     else {
+      debugLog("[NextPrayerWidget] load_payload missing_shared_data")
       return nil
     }
-    return try? JSONDecoder().decode(NextPrayerPayload.self, from: data)
+    let payload = try? JSONDecoder().decode(NextPrayerPayload.self, from: data)
+    debugLog(
+      "[NextPrayerWidget] load_payload generatedAt=\(payload?.generatedAtEpochMs ?? -1) "
+        + "nextPrayerEpochMs=\(payload?.nextPrayerTimeEpochMs ?? -1) "
+        + "upcomingCount=\(payload?.upcomingPrayers?.count ?? 0)"
+    )
+    return payload
   }
 
   private func resolveSharedDefaults() -> UserDefaults? {
@@ -109,6 +139,22 @@ struct NextPrayerProvider: TimelineProvider {
       }
     }
     return nil
+  }
+
+  private func nextMidnight(after now: Date, payload: NextPrayerPayload?) -> Date {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = widgetTimeZone(from: payload)
+    let startOfToday = calendar.startOfDay(for: now)
+    let midnight = calendar.date(byAdding: .day, value: 1, to: startOfToday)
+      ?? now.addingTimeInterval(6 * 60 * 60)
+    return midnight.addingTimeInterval(rolloverDriftSeconds)
+  }
+
+  private func widgetTimeZone(from payload: NextPrayerPayload?) -> TimeZone {
+    if let identifier = payload?.timeZone, let zone = TimeZone(identifier: identifier) {
+      return zone
+    }
+    return .current
   }
 }
 
@@ -653,6 +699,10 @@ private func resolveNextPrayer(payload: NextPrayerPayload?, now: Date) -> Resolv
 
   let sortedUpcoming = fromUpcoming.sorted { $0.date < $1.date }
   if let next = sortedUpcoming.first(where: { $0.date > threshold }) {
+    debugLog(
+      "[NextPrayerWidget] resolve_next_prayer source=upcoming now=\(now.timeIntervalSince1970) "
+        + "selected=\(next.name) selectedEpoch=\(next.date.timeIntervalSince1970)"
+    )
     return next
   }
 
@@ -663,10 +713,18 @@ private func resolveNextPrayer(payload: NextPrayerPayload?, now: Date) -> Resolv
   {
     let legacyDate = Date(timeIntervalSince1970: TimeInterval(legacyEpochMs) / 1000.0)
     if legacyDate > threshold {
+      debugLog(
+        "[NextPrayerWidget] resolve_next_prayer source=legacy now=\(now.timeIntervalSince1970) "
+          + "selected=\(name) selectedEpoch=\(legacyDate.timeIntervalSince1970)"
+      )
       return ResolvedPrayer(name: name, date: legacyDate)
     }
   }
 
+  debugLog(
+    "[NextPrayerWidget] resolve_next_prayer none now=\(now.timeIntervalSince1970) "
+      + "generatedAt=\(payload.generatedAtEpochMs ?? -1) upcomingCount=\(payload.upcomingPrayers?.count ?? 0)"
+  )
   return nil
 }
 

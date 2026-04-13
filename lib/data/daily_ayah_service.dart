@@ -48,13 +48,17 @@ class DailyAyahService {
   /// Returns today's ayah from the provided list.
   /// During Ramadan, prefers ayahs from themed surahs.
   static Ayah getTodayAyah(List<Ayah> allAyahs) {
+    return getAyahForDate(DateTime.now(), allAyahs);
+  }
+
+  static Ayah getAyahForDate(DateTime date, List<Ayah> allAyahs) {
     if (allAyahs.isEmpty) {
       throw StateError('Cannot select daily ayah from empty list');
     }
 
-    final dayIndex = _getDayIndex();
+    final dayIndex = _getDayIndex(date);
 
-    if (_isRamadan()) {
+    if (_isRamadan(date)) {
       final ramadanAyahs = allAyahs
           .where((a) => _ramadanPreferredSurahs.contains(a.surah))
           .toList();
@@ -74,7 +78,15 @@ class DailyAyahService {
     List<Ayah> allAyahs,
     String Function(int surahNumber) getSurahName,
   ) {
-    final ayah = getTodayAyah(allAyahs);
+    return getAyahWithContextForDate(DateTime.now(), allAyahs, getSurahName);
+  }
+
+  static DailyAyah getAyahWithContextForDate(
+    DateTime date,
+    List<Ayah> allAyahs,
+    String Function(int surahNumber) getSurahName,
+  ) {
+    final ayah = getAyahForDate(date, allAyahs);
     final surahName = getSurahName(ayah.surah);
     return DailyAyah(ayah: ayah, surahName: surahName);
   }
@@ -94,8 +106,7 @@ class DailyAyahService {
   }
 
   /// Converts current date to a stable day index.
-  static int _getDayIndex() {
-    final today = DateTime.now();
+  static int _getDayIndex(DateTime today) {
     final epoch = DateTime(2024, 1, 1);
     return today.difference(epoch).inDays;
   }
@@ -110,9 +121,8 @@ class DailyAyahService {
 
   /// Checks if current date falls within Ramadan.
   /// Uses approximate Gregorian dates (updated yearly).
-  static bool _isRamadan() {
+  static bool _isRamadan(DateTime now) {
     if (!SeasonalConfig.isRamadanSeason) return false;
-    final now = DateTime.now();
 
     // Ramadan 2025: approx March 1 - March 30
     // Ramadan 2026: approx February 18 - March 19
@@ -130,7 +140,7 @@ class DailyAyahService {
   }
 
   /// Exposes Ramadan status for UI hints (if needed).
-  static bool get isRamadanActive => _isRamadan();
+  static bool get isRamadanActive => _isRamadan(DateTime.now());
 
   static String? _getTurkishAyahText({
     required int surah,

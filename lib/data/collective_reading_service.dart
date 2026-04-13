@@ -47,7 +47,8 @@ class JuzRange {
 class CollectiveReadingService {
   static const _selectedJuzKey = 'collective_selected_juz';
   static const _readAyahsKey = 'collective_read_ayahs';
-  static const _completedKey = 'collective_completed';
+  static const _completedJuzsKey = 'collective_completed_juzs';
+  static const _legacyCompletedKey = 'collective_completed';
 
   static SharedPreferences? _prefs;
   static List<JuzRange> _juzRanges = [];
@@ -55,7 +56,25 @@ class CollectiveReadingService {
   /// Initialize the service. Must be called before use.
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
+    await _migrateLegacyCompletionIfNeeded();
     await _loadJuzRanges();
+  }
+
+  static Future<void> _migrateLegacyCompletionIfNeeded() async {
+    final legacyCompleted = _prefs?.getBool(_legacyCompletedKey) ?? false;
+    final selectedJuz = _prefs?.getInt(_selectedJuzKey);
+    if (!legacyCompleted || selectedJuz == null) {
+      await _prefs?.remove(_legacyCompletedKey);
+      return;
+    }
+
+    final completed = getCompletedJuzs().toSet();
+    completed.add(selectedJuz);
+    await _prefs?.setStringList(
+      _completedJuzsKey,
+      completed.map((juz) => '$juz').toList(growable: false),
+    );
+    await _prefs?.remove(_legacyCompletedKey);
   }
 
   static Future<void> _loadJuzRanges() async {
@@ -77,21 +96,31 @@ class CollectiveReadingService {
   /// Select a juz for collective reading intention.
   static Future<void> selectJuz(int juzNumber) async {
     await _prefs?.setInt(_selectedJuzKey, juzNumber);
-    // Clear previous read ayahs and completion status
+    // Clear previous read ayahs for the newly selected active juz.
     await _prefs?.remove(_readAyahsKey);
-    await _prefs?.remove(_completedKey);
   }
 
   /// Clear the current juz selection.
   static Future<void> clearSelection() async {
     await _prefs?.remove(_selectedJuzKey);
     await _prefs?.remove(_readAyahsKey);
-    await _prefs?.remove(_completedKey);
   }
 
   /// Check if there's an active juz selection.
   static bool hasActiveSelection() {
     return getSelectedJuz() != null && !isCompleted();
+  }
+
+  static List<int> getCompletedJuzs() {
+    final raw = _prefs?.getStringList(_completedJuzsKey) ?? const [];
+    final values = raw
+        .map(int.tryParse)
+        .whereType<int>()
+        .where((value) => value >= 1 && value <= 30)
+        .toSet()
+        .toList()
+      ..sort();
+    return values;
   }
 
   /// Get the JuzRange for the selected juz.
@@ -134,13 +163,42 @@ class CollectiveReadingService {
 
   /// Mark the current juz as manually completed.
   static Future<void> markCompleted() async {
-    if (getSelectedJuz() != null) {
-      await _prefs?.setBool(_completedKey, true);
+    final selectedJuz = getSelectedJuz();
+    if (selectedJuz == null) return;
+
+    final completed = getCompletedJuzs().toSet();
+    completed.add(selectedJuz);
+    await _prefs?.setStringList(
+      _completedJuzsKey,
+      completed.map((juz) => '$juz').toList(growable: false),
+    );
+  }
+
+  static Future<void> undoCompleted([int? juzNumber]) async {
+    final targetJuz = juzNumber ?? getSelectedJuz();
+    if (targetJuz == null) return;
+
+    final completed = getCompletedJuzs().toSet()..remove(targetJuz);
+    await _prefs?.setStringList(
+      _completedJuzsKey,
+      completed.map((juz) => '$juz').toList(growable: false),
+    );
+  }
+
+  static Future<void> resetSelectedJuzProgress([int? juzNumber]) async {
+    final targetJuz = juzNumber ?? getSelectedJuz();
+    if (targetJuz == null) return;
+
+    await undoCompleted(targetJuz);
+    if (getSelectedJuz() == targetJuz) {
+      await _prefs?.remove(_readAyahsKey);
     }
   }
 
   /// Check if the current juz has been marked as completed.
-  static bool isCompleted() {
-    return _prefs?.getBool(_completedKey) ?? false;
+  static bool isCompleted([int? juzNumber]) {
+    final targetJuz = juzNumber ?? getSelectedJuz();
+    if (targetJuz == null) return false;
+    return getCompletedJuzs().contains(targetJuz);
   }
 }

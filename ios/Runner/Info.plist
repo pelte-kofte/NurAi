@@ -54,6 +54,8 @@
 		</array>
 		<key>NSLocationWhenInUseUsageDescription</key>
 		<string>Location is used on-device to calculate qibla direction and prayer times.</string>
+		<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+		<string>Duada uses your location to show accurate prayer times for your current area and keep the next prayer information up to date.</string>
 		<key>CADisableMinimumFrameDurationOnPhone</key>
 		<true/>
 		<key>BGTaskSchedulerPermittedIdentifiers</key>

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data/asmaul_husna_service.dart';
 import '../../l10n/app_strings.dart';
+import '../../theme/app_theme.dart';
 
 class TasbihScreen extends StatefulWidget {
   const TasbihScreen({super.key});
@@ -12,7 +13,8 @@ class TasbihScreen extends StatefulWidget {
   State<TasbihScreen> createState() => _TasbihScreenState();
 }
 
-class _TasbihScreenState extends State<TasbihScreen> {
+class _TasbihScreenState extends State<TasbihScreen>
+    with TickerProviderStateMixin {
   static const String _keyDhikr = 'tasbih_dhikr_key';
   static const String _keyCustomDhikr = 'tasbih_custom_dhikr';
   static const String _keyGoal = 'tasbih_goal_value';
@@ -39,11 +41,30 @@ class _TasbihScreenState extends State<TasbihScreen> {
   int _goal = 33;
   int _currentCount = 0;
   bool _loading = true;
+  late final AnimationController _tapPulseController;
+  late final AnimationController _completionGlowController;
+  bool _didShowCompletionMessage = false;
 
   @override
   void initState() {
     super.initState();
+    _tapPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 220),
+      reverseDuration: const Duration(milliseconds: 320),
+    );
+    _completionGlowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    );
     _loadState();
+  }
+
+  @override
+  void dispose() {
+    _tapPulseController.dispose();
+    _completionGlowController.dispose();
+    super.dispose();
   }
 
   List<_DhikrOption> get _dhikrOptions => [
@@ -121,17 +142,29 @@ class _TasbihScreenState extends State<TasbihScreen> {
         .label;
   }
 
-  String? get _currentDhikrSupportingText {
-    final asma = _isAsmaMemorizationMode ? _activeAsma : _selectedAsma;
-    if (!_isAsmaSelected || asma == null) return null;
-    if (_isAsmaMemorizationMode) return asma.nameArabic;
-    return '${asma.nameArabic} • ${asma.localizedName(_languageCode)}';
-  }
-
   String? get _currentDhikrMeaningText {
     final asma = _isAsmaMemorizationMode ? _activeAsma : null;
     if (asma == null) return null;
     return asma.localizedMeaning(_languageCode);
+  }
+
+  String? get _currentArabicText {
+    if (_isAsmaSelected) {
+      final asma = _isAsmaMemorizationMode ? _activeAsma : _selectedAsma;
+      return asma?.nameArabic;
+    }
+    return null;
+  }
+
+  String? get _transliterationText {
+    if (_isAsmaSelected) {
+      final asma = _isAsmaMemorizationMode ? _activeAsma : _selectedAsma;
+      if (asma == null) return null;
+      return _isAsmaMemorizationMode
+          ? asma.localizedName(_languageCode)
+          : asma.localizedDhikr(_languageCode);
+    }
+    return _currentDhikrLabel;
   }
 
   String? get _nextAsmaPreview {
@@ -162,9 +195,8 @@ class _TasbihScreenState extends State<TasbihScreen> {
     final asmaMode = _AsmaTasbihModeParser.fromStorage(savedAsmaMode);
     final normalizedGoal = _normalizeGoal(
       value: goal <= 0 ? 33 : goal,
-      isAsmaMemorizationMode:
-          selectedDhikr == _asmaDhikrKey &&
-              asmaMode == _AsmaTasbihMode.memorization,
+      isAsmaMemorizationMode: selectedDhikr == _asmaDhikrKey &&
+          asmaMode == _AsmaTasbihMode.memorization,
       asmaCount: asmaNames.length,
     );
 
@@ -200,6 +232,11 @@ class _TasbihScreenState extends State<TasbihScreen> {
   Future<void> _increment() async {
     if (_currentCount >= _effectiveGoal) return;
     final nextCount = (_currentCount + 1).clamp(0, _effectiveGoal);
+    _tapPulseController.forward(from: 0).then((_) {
+      if (mounted) {
+        _tapPulseController.reverse();
+      }
+    });
     if (nextCount == _effectiveGoal) {
       HapticFeedback.mediumImpact();
     } else {
@@ -207,11 +244,45 @@ class _TasbihScreenState extends State<TasbihScreen> {
     }
     setState(() => _currentCount = nextCount);
     await _saveState();
+    if (nextCount == _effectiveGoal) {
+      _completionGlowController.forward(from: 0);
+      _showCompletionMessage();
+    }
   }
 
   Future<void> _reset() async {
-    setState(() => _currentCount = 0);
+    _completionGlowController.stop();
+    _completionGlowController.value = 0;
+    setState(() {
+      _currentCount = 0;
+      _didShowCompletionMessage = false;
+    });
     await _saveState();
+  }
+
+  void _showCompletionMessage() {
+    if (_didShowCompletionMessage || !mounted) return;
+    _didShowCompletionMessage = true;
+    final localeCode = Localizations.localeOf(context).languageCode;
+    final message = localeCode == 'tr'
+        ? 'Tamamlandi. Bir an durup nefesini hisset.'
+        : 'Completed. Take a quiet breath before moving on.';
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            message,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 13,
+              fontWeight: FontWeight.w400,
+            ),
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
   }
 
   Future<void> _onDhikrChanged(String? key) async {
@@ -440,6 +511,13 @@ class _TasbihScreenState extends State<TasbihScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
+    final completed = _currentCount >= _effectiveGoal;
+    final remaining = (_effectiveGoal - _currentCount).clamp(0, _effectiveGoal);
+
+    if (!completed && _didShowCompletionMessage) {
+      _didShowCompletionMessage = false;
+    }
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -461,51 +539,510 @@ class _TasbihScreenState extends State<TasbihScreen> {
               child: CircularProgressIndicator(color: colorScheme.primary),
             )
           : Padding(
-              padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+              padding: const EdgeInsets.fromLTRB(22, 12, 22, 24),
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildSelectors(),
-                  const SizedBox(height: 16),
-                  _buildCounterCard(),
-                  const SizedBox(height: 14),
-                  _buildTapArea(),
-                  const SizedBox(height: 12),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: _reset,
-                      icon: const Icon(Icons.refresh_rounded),
-                      label: Text(S.get('tasbih_reset')),
+                  _buildFocusHeader(completed: completed),
+                  const SizedBox(height: 18),
+                  Expanded(
+                    child: _buildCountingSanctuary(
+                      completed: completed,
+                      remaining: remaining,
                     ),
                   ),
+                  const SizedBox(height: 16),
+                  _buildUtilityBar(),
                 ],
               ),
             ),
     );
   }
 
+  Widget _buildFocusHeader({required bool completed}) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withValues(alpha: 0.94),
+            completed
+                ? AppColors.emphasisAccent.withValues(alpha: 0.08)
+                : const Color(0xFFF5EEE5),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(
+          color: completed
+              ? AppColors.emphasisAccent.withValues(alpha: 0.24)
+              : const Color(0xFFE7DED2),
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0B8F7E6E),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          if (_currentArabicText != null) ...[
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              child: Text(
+                _currentArabicText!,
+                key: ValueKey<String>('arabic:${_currentArabicText!}'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'Amiri',
+                  fontSize: 38,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF26211D),
+                  height: 1.2,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            child: Text(
+              _transliterationText ?? _currentDhikrLabel,
+              key: ValueKey<String>(
+                'translit:${_transliterationText ?? _currentDhikrLabel}',
+              ),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily:
+                    _currentArabicText == null ? 'Merriweather' : 'Inter',
+                fontSize: _currentArabicText == null ? 24 : 15,
+                fontWeight: _currentArabicText == null
+                    ? FontWeight.w400
+                    : FontWeight.w600,
+                color: completed
+                    ? AppColors.emphasisAccent
+                    : const Color(0xFF645A53),
+                height: 1.35,
+              ),
+            ),
+          ),
+          if (_currentDhikrMeaningText != null) ...[
+            const SizedBox(height: 8),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 220),
+              child: Text(
+                _currentDhikrMeaningText!,
+                key: ValueKey<String>('meaning:${_currentDhikrMeaningText!}'),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: Color(0xFF8A7F75),
+                  height: 1.5,
+                ),
+              ),
+            ),
+          ],
+          if (_isAsmaMemorizationMode &&
+              !completed &&
+              _nextAsmaPreview != null) ...[
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.62),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Text(
+                '${S.get('tasbih_next_name')}: $_nextAsmaPreview',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                  color: Color(0xFF70655D),
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCountingSanctuary({
+    required bool completed,
+    required int remaining,
+  }) {
+    final progress = _effectiveGoal <= 0
+        ? 0.0
+        : (_currentCount / _effectiveGoal).clamp(0.0, 1.0);
+
+    return GestureDetector(
+      onTap: _increment,
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([
+          _tapPulseController,
+          _completionGlowController,
+        ]),
+        builder: (context, _) {
+          final scale = 1 - (_tapPulseController.value * 0.018);
+          return Transform.scale(
+            scale: scale,
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.9),
+                    completed
+                        ? AppColors.turquoiseAccent.withValues(alpha: 0.18)
+                        : const Color(0xFFF5EFE7),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(34),
+                border: Border.all(
+                  color: completed
+                      ? AppColors.emphasisAccent.withValues(alpha: 0.28)
+                      : const Color(0xFFE8DED2),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: completed
+                        ? AppColors.turquoiseAccentStrong
+                            .withValues(alpha: 0.18)
+                        : const Color(0x0A8F7E6E),
+                    blurRadius: completed ? 34 : 20,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned(
+                    top: 28,
+                    right: 26,
+                    child: IgnorePointer(
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              completed
+                                  ? AppColors.emphasisAccent.withValues(
+                                      alpha: 0.24,
+                                    )
+                                  : AppColors.turquoiseAccent.withValues(
+                                      alpha: 0.18,
+                                    ),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Center(
+                        child: Container(
+                          width: 314,
+                          height: 314,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                completed
+                                    ? AppColors.emphasisAccent.withValues(
+                                        alpha: 0.10 +
+                                            (_completionGlowController.value *
+                                                0.10),
+                                      )
+                                    : AppColors.indigoAccent.withValues(
+                                        alpha: 0.025 +
+                                            (_tapPulseController.value * 0.035),
+                                      ),
+                                Colors.transparent,
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 24,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 290,
+                          height: 290,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              TweenAnimationBuilder<double>(
+                                tween: Tween<double>(begin: 0, end: progress),
+                                duration: const Duration(milliseconds: 520),
+                                curve: Curves.easeOutQuart,
+                                builder: (context, value, _) {
+                                  return SizedBox(
+                                    width: 262,
+                                    height: 262,
+                                    child: CircularProgressIndicator(
+                                      value: value,
+                                      strokeWidth: 8.5,
+                                      backgroundColor: const Color(0xFFEDE5DB),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        completed
+                                            ? AppColors.turquoiseAccentStrong
+                                            : AppColors.indigoAccent.withValues(
+                                                alpha: 0.92,
+                                              ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              Container(
+                                width: 228,
+                                height: 228,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white.withValues(alpha: 0.94),
+                                      completed
+                                          ? AppColors.turquoiseAccent
+                                              .withValues(
+                                              alpha: 0.24,
+                                            )
+                                          : const Color(0xFFF2EBE2),
+                                    ],
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: completed
+                                          ? AppColors.turquoiseAccentStrong
+                                              .withValues(alpha: 0.16)
+                                          : const Color(0x0A9D9488),
+                                      blurRadius: completed ? 28 : 20,
+                                      offset: const Offset(0, 10),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 22),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    AnimatedSwitcher(
+                                      duration:
+                                          const Duration(milliseconds: 180),
+                                      transitionBuilder: (child, animation) {
+                                        return FadeTransition(
+                                          opacity: animation,
+                                          child: ScaleTransition(
+                                            scale: Tween<double>(
+                                              begin: 0.94,
+                                              end: 1,
+                                            ).animate(animation),
+                                            child: child,
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        '$_currentCount',
+                                        key: ValueKey<int>(_currentCount),
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: completed ? 82 : 78,
+                                          fontWeight: FontWeight.w700,
+                                          color: completed
+                                              ? const Color(0xFF203432)
+                                              : const Color(0xFF1F1A17),
+                                          letterSpacing: -2.2,
+                                          height: 1,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      '$_currentCount / $_effectiveGoal',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: completed
+                                            ? AppColors.turquoiseAccentStrong
+                                                .withValues(alpha: 0.9)
+                                            : const Color(0xFF6B625A),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      completed
+                                          ? (_isAsmaMemorizationMode
+                                              ? S.get('tasbih_completed')
+                                              : S.get('tasbih_target_reached'))
+                                          : '$remaining',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: completed ? 13 : 28,
+                                        fontWeight: completed
+                                            ? FontWeight.w600
+                                            : FontWeight.w500,
+                                        color: completed
+                                            ? AppColors.emphasisAccent
+                                            : const Color(0xFF877D73),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          completed
+                              ? (_isAsmaMemorizationMode
+                                  ? S.get('tasbih_completed')
+                                  : S.get('tasbih_target_reached'))
+                              : (_isAsmaMemorizationMode
+                                  ? S.get('tasbih_tap_for_next_name')
+                                  : S.get('tasbih_tap_to_count')),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: completed
+                                ? AppColors.turquoiseAccentStrong
+                                    .withValues(alpha: 0.92)
+                                : const Color(0xFF5E564F),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildUtilityBar() {
+    return Row(
+      children: [
+        Expanded(
+          child: _SecondaryActionButton(
+            icon: Icons.refresh_rounded,
+            label: S.get('tasbih_reset'),
+            onTap: _reset,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: _SecondaryActionButton(
+            icon: Icons.tune_rounded,
+            label: S.get('tasbih_dhikr'),
+            onTap: _openSettingsSheet,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _openSettingsSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      showDragHandle: true,
+      isScrollControlled: true,
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              8,
+              20,
+              24 + MediaQuery.of(context).viewInsets.bottom,
+            ),
+            child: SingleChildScrollView(
+              child: _buildSelectors(),
+            ),
+          ),
+        );
+      },
+    );
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
   Widget _buildSelectors() {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: colorScheme.outline),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withValues(alpha: 0.94),
+            const Color(0xFFF5EEE6),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFE7DED2)),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          Text(
+            S.get('tasbih_dhikr'),
+            style: const TextStyle(
+              fontFamily: 'Merriweather',
+              fontSize: 19,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFF2B2622),
+            ),
+          ),
+          const SizedBox(height: 14),
           Row(
             children: [
               Expanded(
                 child: Text(
                   S.get('tasbih_dhikr'),
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 13,
-                    color: colorScheme.onSurfaceVariant,
+                    color: Color(0xFF7A7068),
                   ),
                 ),
               ),
@@ -530,91 +1067,86 @@ class _TasbihScreenState extends State<TasbihScreen> {
             ],
           ),
           if (_isAsmaSelected && _asmaNames.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            const SizedBox(height: 12),
+            Text(
+              S.get('tasbih_asma_mode'),
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                color: Color(0xFF7A7068),
+              ),
+            ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
               children: [
-                Text(
-                  S.get('tasbih_asma_mode'),
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    color: colorScheme.onSurfaceVariant,
-                  ),
+                _buildAsmaModeChip(
+                  mode: _AsmaTasbihMode.single,
+                  label: S.get('tasbih_asma_mode_single'),
                 ),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    _buildAsmaModeChip(
-                      mode: _AsmaTasbihMode.single,
-                      label: S.get('tasbih_asma_mode_single'),
-                    ),
-                    _buildAsmaModeChip(
-                      mode: _AsmaTasbihMode.memorization,
-                      label: S.get('tasbih_asma_mode_memorization'),
-                    ),
-                  ],
+                _buildAsmaModeChip(
+                  mode: _AsmaTasbihMode.memorization,
+                  label: S.get('tasbih_asma_mode_memorization'),
                 ),
-                if (!_isAsmaMemorizationMode) ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          S.get('tasbih_asma_name'),
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 13,
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ),
-                      Flexible(
-                        child: _buildDropdownField<String>(
-                          value: _selectedAsma?.id ?? _asmaNames.first.id,
-                          items: _asmaNames
-                              .map(
-                                (e) => DropdownMenuItem<String>(
-                                  value: e.id,
-                                  child: Text(
-                                    '${e.nameArabic} • ${e.localizedName(_languageCode)}',
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontFamily: 'Inter',
-                                      color: colorScheme.onSurface,
-                                    ),
-                                  ),
-                                ),
-                              )
-                              .toList(),
-                          onChanged: _onAsmaChanged,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: _goToNextAsma,
-                        tooltip: S.get('tasbih_next_name'),
-                        icon: const Icon(Icons.arrow_forward_rounded),
-                      ),
-                    ],
-                  ),
-                ],
               ],
             ),
+            if (!_isAsmaMemorizationMode) ...[
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      S.get('tasbih_asma_name'),
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        color: Color(0xFF7A7068),
+                      ),
+                    ),
+                  ),
+                  Flexible(
+                    child: _buildDropdownField<String>(
+                      value: _selectedAsma?.id ?? _asmaNames.first.id,
+                      items: _asmaNames
+                          .map(
+                            (e) => DropdownMenuItem<String>(
+                              value: e.id,
+                              child: Text(
+                                '${e.nameArabic} • ${e.localizedName(_languageCode)}',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  fontFamily: 'Inter',
+                                  color: colorScheme.onSurface,
+                                ),
+                              ),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: _onAsmaChanged,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: _goToNextAsma,
+                    tooltip: S.get('tasbih_next_name'),
+                    icon: const Icon(Icons.arrow_forward_rounded),
+                  ),
+                ],
+              ),
+            ],
           ],
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Row(
             children: [
               Expanded(
                 child: Text(
                   S.get('tasbih_goal'),
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 13,
-                    color: colorScheme.onSurfaceVariant,
+                    color: Color(0xFF7A7068),
                   ),
                 ),
               ),
@@ -639,164 +1171,6 @@ class _TasbihScreenState extends State<TasbihScreen> {
             ],
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildCounterCard() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: colorScheme.outline),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          AnimatedSwitcher(
-            duration: const Duration(milliseconds: 220),
-            child: Text(
-              _currentDhikrLabel,
-              key: ValueKey<String>(_currentDhikrLabel),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Merriweather',
-                fontSize: 20,
-                color: colorScheme.onSurface,
-              ),
-            ),
-          ),
-          if (_currentDhikrSupportingText != null) ...[
-            const SizedBox(height: 8),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 220),
-              child: Text(
-                _currentDhikrSupportingText!,
-                key: ValueKey<String>(_currentDhikrSupportingText!),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: _isAsmaMemorizationMode ? 'Amiri' : 'Inter',
-                  fontSize: _isAsmaMemorizationMode ? 28 : 14,
-                  fontWeight: _isAsmaMemorizationMode
-                      ? FontWeight.w700
-                      : FontWeight.w500,
-                  color: _isAsmaMemorizationMode
-                      ? colorScheme.onSurface
-                      : colorScheme.onSurfaceVariant,
-                  height: _isAsmaMemorizationMode ? 1.3 : null,
-                ),
-              ),
-            ),
-          ],
-          if (_currentDhikrMeaningText != null) ...[
-            const SizedBox(height: 10),
-            AnimatedSwitcher(
-              duration: const Duration(milliseconds: 220),
-              child: Text(
-                _currentDhikrMeaningText!,
-                key: ValueKey<String>(_currentDhikrMeaningText!),
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  color: colorScheme.onSurfaceVariant,
-                  height: 1.5,
-                ),
-              ),
-            ),
-          ],
-          const SizedBox(height: 10),
-          Text(
-            '$_currentCount / $_effectiveGoal',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 34,
-              fontWeight: FontWeight.w600,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          if (_currentCount >= _effectiveGoal) ...[
-            const SizedBox(height: 8),
-            Text(
-              _isAsmaMemorizationMode
-                  ? S.get('tasbih_completed')
-                  : S.get('tasbih_target_reached'),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: colorScheme.primary,
-              ),
-            ),
-          ],
-          if (_isAsmaMemorizationMode &&
-              _currentCount < _effectiveGoal &&
-              _nextAsmaPreview != null) ...[
-            const SizedBox(height: 10),
-            Text(
-              S.get('tasbih_next_name'),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: colorScheme.secondary,
-                letterSpacing: 0.6,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _nextAsmaPreview!,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTapArea() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return Expanded(
-      child: GestureDetector(
-        onTap: _increment,
-        behavior: HitTestBehavior.opaque,
-        child: Container(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: colorScheme.outline),
-          ),
-          child: Center(
-            child: Text(
-              _currentCount >= _effectiveGoal
-                  ? (_isAsmaMemorizationMode
-                      ? S.get('tasbih_completed')
-                      : S.get('tasbih_target_reached'))
-                  : (_isAsmaMemorizationMode
-                      ? S.get('tasbih_tap_for_next_name')
-                      : S.get('tasbih_tap_to_count')),
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 18,
-                fontWeight: FontWeight.w500,
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -848,9 +1222,17 @@ class _TasbihScreenState extends State<TasbihScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12),
       decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: colorScheme.outline),
+        color: (_asmaMode == _AsmaTasbihMode.memorization ||
+                _selectedDhikrKey == _asmaDhikrKey)
+            ? AppColors.emphasisAccent.withValues(alpha: 0.08)
+            : Colors.white.withValues(alpha: 0.7),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: (_asmaMode == _AsmaTasbihMode.memorization ||
+                  _selectedDhikrKey == _asmaDhikrKey)
+              ? AppColors.emphasisAccent.withValues(alpha: 0.18)
+              : const Color(0xFFE4DBD0),
+        ),
       ),
       child: DropdownButton<T>(
         value: value,
@@ -876,6 +1258,72 @@ class _TasbihScreenState extends State<TasbihScreen> {
       label: Text(label),
       selected: _asmaMode == mode,
       onSelected: (_) => _onAsmaModeChanged(mode),
+      showCheckmark: false,
+      selectedColor: AppColors.emphasisAccent.withValues(alpha: 0.16),
+      side: BorderSide(
+        color: _asmaMode == mode
+            ? AppColors.emphasisAccent.withValues(alpha: 0.24)
+            : Theme.of(context).colorScheme.outline,
+      ),
+      labelStyle: TextStyle(
+        fontFamily: 'Inter',
+        fontSize: 13,
+        fontWeight: _asmaMode == mode ? FontWeight.w600 : FontWeight.w500,
+        color: _asmaMode == mode
+            ? AppColors.emphasisAccent
+            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72),
+      ),
+    );
+  }
+}
+
+class _SecondaryActionButton extends StatelessWidget {
+  const _SecondaryActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Ink(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white.withValues(alpha: 0.84),
+              const Color(0xFFF4EDE4),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFE4DBD0)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 18, color: const Color(0xFF675D55)),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Color(0xFF413A35),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

@@ -139,6 +139,7 @@ class _PopoverContentState extends State<_PopoverContent> {
     if (_isUpdatingAdhan) return;
     setState(() => _isUpdatingAdhan = true);
     if (!value) {
+      await LocalPreferencesService.setEzanAlarmSoundEnabled(false);
       await AdhanNotificationService.disable();
       if (!mounted) return;
       setState(() {
@@ -148,6 +149,7 @@ class _PopoverContentState extends State<_PopoverContent> {
       return;
     }
 
+    await LocalPreferencesService.setEzanAlarmSoundEnabled(true);
     final result = await AdhanNotificationService.enable();
     if (!mounted) return;
     switch (result) {
@@ -157,6 +159,7 @@ class _PopoverContentState extends State<_PopoverContent> {
         });
         break;
       case AdhanEnableResult.notificationPermissionDenied:
+        await LocalPreferencesService.setEzanAlarmSoundEnabled(false);
         await _showPermissionSheet(
           title: S.get('prayer_notif_permission_title'),
           body: S.get('prayer_notif_permission_body'),
@@ -170,6 +173,7 @@ class _PopoverContentState extends State<_PopoverContent> {
       case AdhanEnableResult.locationPermissionDeniedForever:
       case AdhanEnableResult.locationFailed:
       case AdhanEnableResult.locationMissing:
+        await LocalPreferencesService.setEzanAlarmSoundEnabled(false);
         await _showPermissionSheet(
           title: S.get('prayer_location_needed_title'),
           body: S.get('prayer_location_needed_body'),
@@ -183,6 +187,7 @@ class _PopoverContentState extends State<_PopoverContent> {
         );
         break;
       case AdhanEnableResult.unavailableOnWeb:
+        await LocalPreferencesService.setEzanAlarmSoundEnabled(false);
         setState(() {
           _statusText = S.get('location_unavailable_web');
         });
@@ -191,22 +196,6 @@ class _PopoverContentState extends State<_PopoverContent> {
     if (!mounted) return;
     setState(() {
       _isUpdatingAdhan = false;
-    });
-  }
-
-  Future<void> _onToggleEzanAlarmSound(bool value) async {
-    await LocalPreferencesService.setEzanAlarmSoundEnabled(value);
-    if (LocalPreferencesService.adhanEnabled.value) {
-      await AdhanNotificationService.rescheduleForToday();
-      if (!mounted) return;
-      setState(() {
-        _statusText = S.get('prayer_notif_scheduled');
-      });
-      return;
-    }
-    if (!mounted) return;
-    setState(() {
-      _statusText = null;
     });
   }
 
@@ -452,46 +441,6 @@ class _PopoverContentState extends State<_PopoverContent> {
                   ),
                 ],
               ),
-            ),
-          ),
-          Container(
-            height: 1,
-            margin: const EdgeInsets.symmetric(vertical: 6),
-            color: colorScheme.outline,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 6),
-            child: ValueListenableBuilder<bool>(
-              valueListenable: LocalPreferencesService.ezanAlarmSoundEnabled,
-              builder: (context, withSound, _) {
-                final notificationsEnabled =
-                    LocalPreferencesService.adhanEnabled.value;
-                return Opacity(
-                  opacity: notificationsEnabled ? 1 : 0.5,
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          S.get('ezan_alarm_sound'),
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 14,
-                            fontWeight: FontWeight.w400,
-                            color: colorScheme.onSurface,
-                          ),
-                        ),
-                      ),
-                      CupertinoSwitch(
-                        value: withSound,
-                        onChanged: notificationsEnabled
-                            ? _onToggleEzanAlarmSound
-                            : null,
-                        activeTrackColor: colorScheme.primary,
-                      ),
-                    ],
-                  ),
-                );
-              },
             ),
           ),
           if (_statusText != null) ...[

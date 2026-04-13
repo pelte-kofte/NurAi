@@ -1,17 +1,14 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 
-import 'asmaul_husna_service.dart';
-import 'daily_ayah_service.dart';
 import 'daily_content_service.dart';
 import '../l10n/app_strings.dart';
 import '../models/prayer_location.dart';
 import 'adhan_times_service.dart';
 import 'local_preferences_service.dart';
-import 'quran_data.dart';
+import 'next_prayer_service.dart';
 
 class WidgetPayloadService {
   WidgetPayloadService._();
@@ -21,6 +18,12 @@ class WidgetPayloadService {
   static const String _methodSetDailyContentPayload = 'setDailyContentPayload';
   static const String _methodRefreshWidgets = 'refreshWidgets';
   static const MethodChannel _channel = MethodChannel(_channelName);
+
+  static void _log(String message) {
+    if (kDebugMode) {
+      debugPrint('[WidgetPayload] $message');
+    }
+  }
 
   static Future<void> writeNextPrayerPayload({bool refresh = true}) async {
     final now = DateTime.now();
@@ -32,6 +35,12 @@ class WidgetPayloadService {
 
     if (kIsWeb) return;
     try {
+      _log(
+        'write_next_prayer_payload generatedAt=${now.millisecondsSinceEpoch} '
+        'nextPrayerName=${payload['nextPrayerName'] ?? 'none'} '
+        'nextPrayerEpochMs=${payload['nextPrayerTimeEpochMs'] ?? 'none'} '
+        'upcomingCount=${(payload['upcomingPrayers'] as List<dynamic>? ?? const []).length}',
+      );
       await _channel.invokeMethod<void>(
         _methodSetPayload,
         <String, dynamic>{'payload': payloadJson},
@@ -64,6 +73,7 @@ class WidgetPayloadService {
   static Map<String, dynamic> _buildPayload(DateTime now) {
     final widgetEnabled = LocalPreferencesService.nextPrayerWidgetEnabled.value;
     if (!widgetEnabled) {
+      _log('build_payload widget_disabled');
       return <String, dynamic>{
         'generatedAtEpochMs': now.millisecondsSinceEpoch,
         'lang': LocalPreferencesService.language.value,
@@ -76,6 +86,7 @@ class WidgetPayloadService {
     final locationLabel = _locationLabel(location);
 
     if (!location.hasCoordinates) {
+      _log('build_payload missing_location');
       return <String, dynamic>{
         'generatedAtEpochMs': now.millisecondsSinceEpoch,
         'lang': LocalPreferencesService.language.value,
@@ -88,6 +99,12 @@ class WidgetPayloadService {
     final upcoming = _buildUpcomingPrayers(now, location);
     final next =
         upcoming.isNotEmpty ? upcoming.first : _findNextPrayer(now, location);
+    _log(
+      'build_payload rollover_check now=${now.millisecondsSinceEpoch} '
+      'nextPrayerKey=${next.key} '
+      'nextPrayerEpochMs=${next.time.millisecondsSinceEpoch} '
+      'upcomingEpochs=${upcoming.map((entry) => entry.time.millisecondsSinceEpoch).join(",")}',
+    );
     return <String, dynamic>{
       'generatedAtEpochMs': now.millisecondsSinceEpoch,
       'lang': LocalPreferencesService.language.value,
@@ -110,41 +127,18 @@ class WidgetPayloadService {
   static Future<Map<String, dynamic>> _buildDailyContentPayload(
     DateTime now,
   ) async {
-    final dailyAyah = DailyAyahService.getTodayAyahWithContext(
-      QuranData.instance.ayahs,
-      QuranData.instance.getSurahName,
-    );
     final hadith = DailyContentService.todayHadith;
     final languageCode = LocalPreferencesService.language.value;
-    final asma = await AsmaulHusnaService.getDailyNameForDate(
-      now,
-      Locale(languageCode),
-    );
     final dateString = _dateString(now);
-    final readableText = await DailyAyahService.getAyahReadableText(
-      surah: dailyAyah.surahNumber,
-      ayah: dailyAyah.ayahNumber,
-      locale: Locale(languageCode),
-    );
 
     return <String, dynamic>{
       'schema': 1,
       'lang': languageCode,
       'date': dateString,
-      'verse': <String, dynamic>{
-        'title': S.get('daily_ayah'),
-        'text':
-            readableText.isNotEmpty ? readableText : dailyAyah.turkishReadable,
-        'ref': dailyAyah.reference,
-      },
       'hadith': <String, dynamic>{
         'title': S.get('daily_hadith_title'),
         'text': hadith?.text ?? S.get('daily_hadith_empty'),
         'ref': hadith?.source ?? '',
-      },
-      'asma': <String, dynamic>{
-        'name': '${asma.nameArabic} - ${asma.localizedName(languageCode)}',
-        'meaning': asma.localizedMeaning(languageCode),
       },
       'updatedAt': now.millisecondsSinceEpoch,
     };
@@ -158,28 +152,30 @@ class WidgetPayloadService {
   }
 
   static _PrayerEntry _findNextPrayer(DateTime now, PrayerLocation location) {
+    final countryHint = _countryFromPrayerLocation(location);
     final today = AdhanTimesService.computeTimes(
       now,
       location,
-      countryHint: _countryFromPrayerLocation(location),
+      countryHint: countryHint,
     );
-    final todaysEntries = <_PrayerEntry>[
-      _PrayerEntry('fajr', S.get('fajr'), today.fajr),
-      _PrayerEntry('dhuhr', S.get('dhuhr'), today.dhuhr),
-      _PrayerEntry('asr', S.get('asr'), today.asr),
-      _PrayerEntry('maghrib', S.get('maghrib'), today.maghrib),
-      _PrayerEntry('isha', S.get('isha'), today.isha),
-    ];
-    for (final entry in todaysEntries) {
-      if (entry.time.isAfter(now)) return entry;
-    }
-
-    final tomorrowDate = now.add(const Duration(days: 1));
     final tomorrow = AdhanTimesService.computeTimes(
-      tomorrowDate,
+      now.add(const Duration(days: 1)),
       location,
-      countryHint: _countryFromPrayerLocation(location),
+      countryHint: countryHint,
     );
+    final resolved = NextPrayerService.findNextPrayer(
+      now: now,
+      todayTimes: today,
+      tomorrowTimes: tomorrow,
+      logger: _log,
+    );
+    if (resolved != null) {
+      return _PrayerEntry(
+        resolved.key,
+        _labelForPrayerKey(resolved.key),
+        resolved.time,
+      );
+    }
     return _PrayerEntry('fajr', S.get('fajr'), tomorrow.fajr);
   }
 
@@ -199,24 +195,20 @@ class WidgetPayloadService {
         if (entry.time.isAfter(nowWithDrift)) entry,
     ];
 
-    if (tomorrowEntries.isNotEmpty) {
-      final tomorrowFajr = tomorrowEntries.first;
-      final hasTomorrowFajr = upcoming.any(
-        (entry) =>
-            entry.key == tomorrowFajr.key && entry.time == tomorrowFajr.time,
+    for (final entry in tomorrowEntries) {
+      final alreadyIncluded = upcoming.any(
+        (existing) => existing.key == entry.key && existing.time == entry.time,
       );
-      if (!hasTomorrowFajr) {
-        upcoming.add(tomorrowFajr);
-      }
-    }
-
-    if (upcoming.length < 3) {
-      for (final entry in tomorrowEntries.skip(1)) {
+      if (!alreadyIncluded) {
         upcoming.add(entry);
-        if (upcoming.length >= 3) break;
       }
     }
 
+    _log(
+      'build_upcoming_prayers now=${now.millisecondsSinceEpoch} '
+      'todayRemaining=${todayEntries.where((entry) => entry.time.isAfter(nowWithDrift)).length} '
+      'tomorrowIncluded=${tomorrowEntries.length}',
+    );
     return upcoming;
   }
 
@@ -253,6 +245,17 @@ class WidgetPayloadService {
     final parts = raw.split(',');
     if (parts.length < 2) return null;
     return parts.last.trim();
+  }
+
+  static String _labelForPrayerKey(String key) {
+    return switch (key) {
+      'fajr' => S.get('fajr'),
+      'dhuhr' => S.get('dhuhr'),
+      'asr' => S.get('asr'),
+      'maghrib' => S.get('maghrib'),
+      'isha' => S.get('isha'),
+      _ => key,
+    };
   }
 }
 

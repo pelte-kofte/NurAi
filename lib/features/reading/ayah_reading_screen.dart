@@ -1,13 +1,17 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
 import 'dart:async';
+import '../../data/adhan_notification_service.dart';
 import '../../data/quran_data.dart';
 import '../../data/reading_progress_service.dart';
 import '../../data/bookmark_service.dart';
 import '../../data/ayah_notes_service.dart';
 import '../../data/collective_reading_service.dart';
 import '../../data/quran_translation_service.dart';
+import '../../data/spiritual_progress_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../models/ayah.dart';
 import '../../models/reading_context.dart';
@@ -37,9 +41,12 @@ class AyahReadingScreen extends StatefulWidget {
 }
 
 class _AyahReadingScreenState extends State<AyahReadingScreen> {
+  static const _validatedReadingDelay = Duration(seconds: 12);
+  static const _meaningfulAyahInteractionCount = 3;
   final ItemScrollController _itemScrollController = ItemScrollController();
   late final List<Ayah> _ayahs;
   late final bool _isJuzMode;
+  late final DateTime _sessionStartedAt;
   late int _currentLastReadSurah;
   late int _currentLastReadAyah;
   int? _scrollToSurah;
@@ -51,7 +58,11 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   int? _resumeHighlightAyah;
   bool _showResumeHighlight = false;
   Timer? _resumeHighlightTimer;
+  Timer? _validatedReadingTimer;
   _SecondaryTextMode? _secondaryTextMode;
+  Ayah? _pendingValidatedAyah;
+  bool _hasRecordedValidatedSession = false;
+  final Set<String> _engagedAyahKeys = <String>{};
 
   @override
   void didChangeDependencies() {
@@ -67,6 +78,7 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   @override
   void initState() {
     super.initState();
+    _sessionStartedAt = DateTime.now();
     _isJuzMode = widget.readingContext.type == ReadingContextType.juz;
 
     if (_isJuzMode) {
@@ -79,6 +91,13 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
       _scrollToTarget();
       _maybeOpenInitialNoteEditor();
     });
+  }
+
+  @override
+  void dispose() {
+    _resumeHighlightTimer?.cancel();
+    _validatedReadingTimer?.cancel();
+    super.dispose();
   }
 
   void _initJuzMode() {
@@ -194,6 +213,77 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
       ayah.ayahNumber,
     );
     CollectiveReadingService.recordAyahRead(ayah.surah, ayah.ayahNumber);
+    AdhanNotificationService.syncReadingReminder();
+    _engagedAyahKeys.add('${ayah.surah}:${ayah.ayahNumber}');
+    _queueValidatedReadingSession(ayah);
+  }
+
+  void _queueValidatedReadingSession(Ayah ayah) {
+    _pendingValidatedAyah = ayah;
+    if (_hasRecordedValidatedSession) return;
+
+    if (_engagedAyahKeys.length >= _meaningfulAyahInteractionCount) {
+      unawaited(_completeValidatedReadingSession());
+      return;
+    }
+
+    final elapsed = DateTime.now().difference(_sessionStartedAt);
+    if (elapsed >= _validatedReadingDelay) {
+      unawaited(_completeValidatedReadingSession());
+      return;
+    }
+
+    _validatedReadingTimer?.cancel();
+    _validatedReadingTimer = Timer(_validatedReadingDelay - elapsed, () {
+      if (!mounted ||
+          _hasRecordedValidatedSession ||
+          _pendingValidatedAyah == null) {
+        return;
+      }
+      unawaited(_completeValidatedReadingSession());
+    });
+  }
+
+  Future<void> _completeValidatedReadingSession() async {
+    if (_hasRecordedValidatedSession) return;
+    final ayah = _pendingValidatedAyah;
+    if (ayah == null) return;
+
+    _hasRecordedValidatedSession = true;
+    final result = await SpiritualProgressService.recordRead(
+      ayah.surah,
+      ayah.ayahNumber,
+    );
+    if (!mounted) return;
+    _showValidatedReadingFeedback(result);
+  }
+
+  void _showValidatedReadingFeedback(SpiritualReadResult result) {
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+
+    var message = S.get('spiritual_reading_complete_message');
+    if (result.streakContinued) {
+      message =
+          '$message · ${S.get('spiritual_streak_continues_suffix').replaceAll('{count}', '${result.state.streakCount}')}';
+    } else if (result.dailyGoalCompletedNow) {
+      message = '$message · ${S.get('spiritual_daily_status_done')}';
+    }
+
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(
+          message,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 13,
+            fontWeight: FontWeight.w400,
+          ),
+        ),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   bool _isAyahWithinJuzRange(Ayah ayah) {
@@ -270,12 +360,6 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
   }
 
   @override
-  void dispose() {
-    _resumeHighlightTimer?.cancel();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -345,56 +429,95 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
           ],
         ],
       ),
-      body: Column(
+      body: Stack(
         children: [
-          _buildSecondaryModeSelector(),
-          Expanded(
-            child: ScrollablePositionedList.builder(
-              itemScrollController: _itemScrollController,
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-              itemCount: _ayahs.length + (_isJuzMode ? 1 : 0),
-              itemBuilder: (context, index) {
-                // Subtle header for juz mode
-                if (_isJuzMode && index == 0) {
-                  return Padding(
-                    padding: const EdgeInsets.only(bottom: 24),
-                    child: Text(
-                      S
-                          .get(
-                            'reading_juz_companion_subtitle',
-                          )
-                          .replaceFirst(
-                              '{juz}', '${widget.readingContext.juzNumber}'),
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w400,
-                        color: mutedTextColor,
-                        height: 1.4,
-                      ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0.18,
+                child: Transform.scale(
+                  scale: 1.08,
+                  child: ImageFiltered(
+                    imageFilter: ui.ImageFilter.blur(sigmaX: 1.6, sigmaY: 1.6),
+                    child: Image.asset(
+                      'assets/images/mosque_bg_2.png',
+                      fit: BoxFit.cover,
+                      alignment: Alignment.center,
                     ),
-                  );
-                }
-
-                final ayahIndex = _isJuzMode ? index - 1 : index;
-                final ayah = _ayahs[ayahIndex];
-                final languageCode =
-                    Localizations.localeOf(context).languageCode.toLowerCase();
-                final secondaryMode =
-                    _secondaryTextMode ?? _SecondaryTextMode.transliteration;
-                return _AyahBlock(
-                  ayah: ayah,
-                  surahName: _localizedSurahName(ayah.surah),
-                  secondaryTextMode: secondaryMode,
-                  languageCode: languageCode,
-                  isLastRead: _isLastRead(ayah),
-                  isResumeHighlight: _isResumeHighlight(ayah),
-                  isWithinJuzRange: _isAyahWithinJuzRange(ayah),
-                  onTap: () => _onAyahTap(ayah),
-                );
-              },
+                  ),
+                ),
+              ),
             ),
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      theme.scaffoldBackgroundColor.withValues(alpha: 0.08),
+                      theme.scaffoldBackgroundColor.withValues(alpha: 0.16),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Column(
+            children: [
+              _buildSecondaryModeSelector(),
+              Expanded(
+                child: ScrollablePositionedList.builder(
+                  itemScrollController: _itemScrollController,
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                  itemCount: _ayahs.length + (_isJuzMode ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    // Subtle header for juz mode
+                    if (_isJuzMode && index == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 24),
+                        child: Text(
+                          S
+                              .get(
+                                'reading_juz_companion_subtitle',
+                              )
+                              .replaceFirst('{juz}',
+                                  '${widget.readingContext.juzNumber}'),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: mutedTextColor,
+                            height: 1.4,
+                          ),
+                        ),
+                      );
+                    }
+
+                    final ayahIndex = _isJuzMode ? index - 1 : index;
+                    final ayah = _ayahs[ayahIndex];
+                    final languageCode = Localizations.localeOf(context)
+                        .languageCode
+                        .toLowerCase();
+                    final secondaryMode = _secondaryTextMode ??
+                        _SecondaryTextMode.transliteration;
+                    return _AyahBlock(
+                      ayah: ayah,
+                      surahName: _localizedSurahName(ayah.surah),
+                      secondaryTextMode: secondaryMode,
+                      languageCode: languageCode,
+                      isLastRead: _isLastRead(ayah),
+                      isResumeHighlight: _isResumeHighlight(ayah),
+                      isWithinJuzRange: _isAyahWithinJuzRange(ayah),
+                      onTap: () => _onAyahTap(ayah),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -551,6 +674,7 @@ class _AyahBlockState extends State<_AyahBlock> {
     final secondaryTextColor = theme.textTheme.bodyMedium?.color ??
         colorScheme.onSurface.withValues(alpha: 0.72);
     final readAccent = colorScheme.primary;
+    final isHighlighted = widget.isResumeHighlight || widget.isLastRead;
     final arabicColor = widget.isWithinJuzRange
         ? colorScheme.onSurface.withValues(alpha: 0.92)
         : colorScheme.onSurface;
@@ -565,23 +689,49 @@ class _AyahBlockState extends State<_AyahBlock> {
         padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         decoration: BoxDecoration(
           color: widget.isResumeHighlight
-              ? readAccent.withValues(alpha: 0.16)
+              ? readAccent.withValues(alpha: 0.22)
               : (widget.isLastRead
-                  ? readAccent.withValues(alpha: 0.10)
+                  ? readAccent.withValues(alpha: 0.15)
                   : Colors.transparent),
           borderRadius: BorderRadius.circular(8),
-          border: widget.isResumeHighlight
+          border: isHighlighted
               ? Border.all(
-                  color: readAccent.withValues(alpha: 0.42),
-                  width: 1,
+                  color: readAccent.withValues(
+                    alpha: widget.isResumeHighlight ? 0.52 : 0.34,
+                  ),
+                  width: widget.isResumeHighlight ? 1.2 : 1,
                 )
+              : null,
+          boxShadow: isHighlighted
+              ? [
+                  BoxShadow(
+                    color: readAccent.withValues(
+                      alpha: widget.isResumeHighlight ? 0.12 : 0.08,
+                    ),
+                    blurRadius: widget.isResumeHighlight ? 18 : 14,
+                    spreadRadius: 0.5,
+                    offset: const Offset(0, 6),
+                  ),
+                ]
               : null,
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            if (isHighlighted)
+              Container(
+                width: 3,
+                margin: const EdgeInsets.only(right: 10, top: 4),
+                decoration: BoxDecoration(
+                  color: readAccent.withValues(
+                    alpha: widget.isResumeHighlight ? 0.95 : 0.78,
+                  ),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+              )
+            else
             // Subtle left dot for Juz range indicator (ambient, not instructional)
-            if (widget.isWithinJuzRange && !widget.isLastRead)
+            if (widget.isWithinJuzRange)
               Padding(
                 padding: const EdgeInsets.only(top: 14, right: 6),
                 child: DecoratedBox(
@@ -606,6 +756,13 @@ class _AyahBlockState extends State<_AyahBlock> {
                           decoration: BoxDecoration(
                             color: readAccent,
                             shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: readAccent.withValues(alpha: 0.22),
+                                blurRadius: 10,
+                                spreadRadius: 1,
+                              ),
+                            ],
                           ),
                           child: const SizedBox(width: 6, height: 6),
                         ),
@@ -656,7 +813,9 @@ class _AyahBlockState extends State<_AyahBlock> {
                                 ? Icons.sticky_note_2_rounded
                                 : Icons.sticky_note_2_outlined,
                             size: 20,
-                            color: _hasNote ? colorScheme.primary : secondaryTextColor,
+                            color: _hasNote
+                                ? colorScheme.primary
+                                : secondaryTextColor,
                           ),
                         ),
                       ),

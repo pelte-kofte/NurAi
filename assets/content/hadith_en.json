@@ -1,12 +1,202 @@
 [
   {
-    "id": "hadith_en_1",
-    "text": "Make things easy and do not make them difficult. Give glad tidings and do not drive people away.",
-    "source": "Sahih al-Bukhari, Book of Knowledge"
+    "id": 1,
+    "text": "The Muslim is the one from whose tongue and hand the people are safe.",
+    "source": "Tirmidhi, Iman, 12; Nasai, Iman, 8."
   },
   {
-    "id": "hadith_en_2",
-    "text": "The best of people are those most beneficial to people.",
-    "source": "al-Mu'jam al-Awsat"
+    "id": 2,
+    "text": "Do not hate one another, do not envy one another, and do not turn your backs on one another. O servants of Allah, be brothers. It is not lawful for a Muslim to stay angry with his brother for more than three days.",
+    "source": "Bukhari, Adab, 57, 58."
+  },
+  {
+    "id": 3,
+    "text": "Truthfulness leads to righteousness, and righteousness leads to Paradise. A person keeps telling the truth until they are recorded with Allah as truthful. Lying leads to wickedness, and wickedness leads to Hell. A person keeps telling lies until they are recorded with Allah as a liar.",
+    "source": "Bukhari, Adab, 69; Muslim, Birr, 103, 104."
+  },
+  {
+    "id": 4,
+    "text": "Do not argue with your brother, do not make jokes with him that he dislikes, and do not make him a promise that you will not keep.",
+    "source": "Tirmidhi, Birr, 58."
+  },
+  {
+    "id": 5,
+    "text": "Smiling in the face of your brother is charity. Enjoining good and forbidding evil is charity. Giving directions to a person who is lost is charity. Removing stones, thorns, or bones from the road is charity for you.",
+    "source": "Tirmidhi, Birr, 36."
+  },
+  {
+    "id": 6,
+    "text": "Actions are but by intentions, and every man shall have only that which he intended.",
+    "source": "Bukhari, Bad'ul-Wahi, 1; Muslim, Imara, 155."
+  },
+  {
+    "id": 7,
+    "text": "None of you truly believes until he loves for his brother what he loves for himself.",
+    "source": "Bukhari, Iman, 7; Muslim, Iman, 71."
+  },
+  {
+    "id": 8,
+    "text": "He who believes in Allah and the Last Day should either speak good or remain silent.",
+    "source": "Bukhari, Adab, 31; Muslim, Iman, 74."
+  },
+  {
+    "id": 9,
+    "text": "The best among you are those who have the best manners and character.",
+    "source": "Bukhari, Adab, 38; Muslim, Fadail, 68."
+  },
+  {
+    "id": 10,
+    "text": "Allah does not look at your appearances or your wealth, but He looks at your hearts and your actions.",
+    "source": "Muslim, Birr, 34."
+  },
+  {
+    "id": 11,
+    "text": "A person is with those whom he loves.",
+    "source": "Bukhari, Adab, 96; Muslim, Birr, 165."
+  },
+  {
+    "id": 12,
+    "text": "Whoever follows a path in pursuit of knowledge, Allah will make easy for him a path to Paradise.",
+    "source": "Muslim, Dhikr, 38; Tirmidhi, Ilm, 19."
+  },
+  {
+    "id": 13,
+    "text": "The most beloved of deeds to Allah are those that are most consistent, even if they are small.",
+    "source": "Bukhari, Iman, 32; Muslim, Musafirin, 218."
+  },
+  {
+    "id": 14,
+    "text": "Make things easy and do not make them difficult; give glad tidings and do not drive people away.",
+    "source": "Bukhari, Ilm, 11; Muslim, Jihad, 6."
+  },
+  {
+    "id": 15,
+    "text": "He who does not show mercy to our young and does not recognize the rights of our elders is not one of us.",
+    "source": "Tirmidhi, Birr, 15; Abu Dawud, Adab, 58."
+  },
+  {
+    "id": 16,
+    "text": "Seven types of people will be shaded by Allah under His shade on the Day when there is no shade except His, including a person whose heart is attached to the mosques.",
+    "source": "Bukhari, Adhan, 36; Muslim, Zakat, 91."
+  },
+  {
+    "id": 17,
+    "text": "The upper hand is better than the lower hand.",
+    "source": "Bukhari, Zakat, 18; Muslim, Zakat, 94."
+  },
+  {
+    "id": 18,
+    "text": "Every religion has a character, and the character of Islam is modesty.",
+    "source": "Ibn Majah, Zuhd, 17; Muwatta, Husn al-Khuluq, 9."
+  },
+  {
+    "id": 19,
+    "text": "Wealth is not having many possessions; rather, true wealth is the richness of the soul.",
+    "source": "Bukhari, Riqaq, 15; Muslim, Zakat, 120."
+  },
+  {
+    "id": 20,
+    "text": "A believer is not stung from the same hole twice.",
+    "source": "Bukhari, Adab, 83; Muslim, Zuhd, 63."
+  },
+  {
+    "id": 21,
+    "text": "The world is a prison for the believer and a paradise for the disbeliever.",
+    "source": "Muslim, Zuhd, 1; Tirmidhi, Zuhd, 16."
+  },
+  {
+    "id": 22,
+    "text": "He is not a believer who eats his fill while his neighbor next to him goes hungry.",
+    "source": "Hakim, al-Mustadrak, II, 15; al-Adab al-Mufrad, 112."
+  },
+  {
+    "id": 23,
+    "text": "The signs of a hypocrite are three: when he speaks, he lies; when he promises, he breaks it; and when he is trusted, he betrays.",
+    "source": "Bukhari, Iman, 24; Muslim, Iman, 107."
+  },
+  {
+    "id": 24,
+    "text": "Cleanliness is half of faith.",
+    "source": "Muslim, Taharah, 1; Tirmidhi, Da'awat, 86."
+  },
+  {
+    "id": 25,
+    "text": "The most perfect of believers in faith are those who are best in character.",
+    "source": "Tirmidhi, Rida, 11; Abu Dawud, Sunnah, 15."
+  },
+  {
+    "id": 26,
+    "text": "Be in this world as if you were a stranger or a traveler.",
+    "source": "Bukhari, Riqaq, 3; Tirmidhi, Zuhd, 25."
+  },
+  {
+    "id": 27,
+    "text": "A strong person is not the one who can wrestle; the strong person is the one who controls himself when angry.",
+    "source": "Bukhari, Adab, 76; Muslim, Birr, 107."
+  },
+  {
+    "id": 28,
+    "text": "The one who points the way to good is like the one who does it.",
+    "source": "Tirmidhi, Ilm, 14."
+  },
+  {
+    "id": 29,
+    "text": "Allah is Kind and He loves kindness in all matters.",
+    "source": "Bukhari, Adab, 35; Muslim, Birr, 77."
+  },
+  {
+    "id": 30,
+    "text": "Paradise lies under the feet of mothers.",
+    "source": "Nasai, Jihad, 6."
+  },
+  {
+    "id": 31,
+    "text": "The best of you is the one who is best to his family.",
+    "source": "Tirmidhi, Manaqib, 63; Ibn Majah, Nikah, 50."
+  },
+  {
+    "id": 32,
+    "text": "Part of the excellence of a person's Islam is his leaving alone that which does not concern him.",
+    "source": "Tirmidhi, Zuhd, 11; Ibn Majah, Fitan, 12."
+  },
+  {
+    "id": 33,
+    "text": "Do not belittle any good deed, even meeting your brother with a cheerful face.",
+    "source": "Muslim, Birr, 144."
+  },
+  {
+    "id": 34,
+    "text": "The merciful will be shown mercy by the Most Merciful. Be merciful to those on the earth and the One in the heavens will have mercy upon you.",
+    "source": "Tirmidhi, Birr, 16; Abu Dawud, Adab, 58."
+  },
+  {
+    "id": 35,
+    "text": "Avoid the seven great destructive sins: associating partners with Allah, magic, killing a soul, and the rest of the major destructive sins mentioned by the Prophet.",
+    "source": "Bukhari, Wasaya, 23; Muslim, Iman, 145."
+  },
+  {
+    "id": 36,
+    "text": "Pay the worker his wages before his sweat dries.",
+    "source": "Ibn Majah, Ruhun, 4."
+  },
+  {
+    "id": 37,
+    "text": "Religion is sincerity.",
+    "source": "Muslim, Iman, 95; Abu Dawud, Adab, 59."
+  },
+  {
+    "id": 38,
+    "text": "Fear Allah wherever you are, and follow up a bad deed with a good deed and it will wipe it out.",
+    "source": "Tirmidhi, Birr, 55."
+  },
+  {
+    "id": 39,
+    "text": "He who cheats us is not one of us.",
+    "source": "Muslim, Iman, 164; Tirmidhi, Buyu', 72."
+  },
+  {
+    "id": 40,
+    "text": "Righteousness is good character, and sin is that which wavers in your heart and which you do not want people to know about.",
+    "source": "Muslim, Birr, 14."
   }
 ]

@@ -2,27 +2,36 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // --- Background ---
-  static const Color scaffoldBg = Color(0xFFFBF6F2);
-  static const Color cardBg = Color(0xFFFDF9F6);
-  static const Color cardBgMuted = Color(0xFFF9F4EF);
-  static const Color cardBorder = Color(0xFFEDE6E1);
+  static const Color scaffoldBg = Color(0xFFFBFAF5);
+  static const Color cardBg = Color(0xFFFFFFFF);
+  static const Color cardBgMuted = Color(0xFFF5F1E8);
+  static const Color cardBgSoft = Color(0xFFF7F4EC);
+  static const Color cardBorder = Color(0xFFE7E1D6);
 
   // --- Accents ---
-  static const Color turquoiseAccent = Color(0xFF7BAEAC); // Primary
-  static const Color indigoAccent = Color(0xFF5E609E);    // Secondary
-  static const Color earthAccent = Color(0xFFB57A5A);     // Muted earth
+  static const Color turquoiseAccent = Color(0xFFC8D9DB); // Primary
+  static const Color indigoAccent = Color(0xFF7D9194); // Secondary
+  static const Color turquoiseAccentStrong = Color(0xFF6E878A); // Emphasis
+  static const Color earthAccent = Color(0xFFB7A48A); // Muted warm accent
+  static const Color ctaPrimaryStart = Color(0xFF7F9EA0);
+  static const Color ctaPrimaryEnd = Color(0xFF6C858E);
+  static const Color ctaPrimaryText = Color(0xFFFDFBF7);
+  static const Color ctaSecondaryFill = Color(0xFFEAF0F0);
+  static const Color ctaSecondaryBorder = Color(0xFFD4E0E1);
+  static const Color ctaShadow = Color(0x245E7377);
 
   // Aliases for use in ColorScheme
   static const Color primaryAccent = turquoiseAccent;
   static const Color secondaryAccent = indigoAccent;
+  static const Color emphasisAccent = turquoiseAccentStrong;
 
   // --- Text ---
-  static const Color textPrimary = Color(0xFF2B2725);
-  static const Color textSecondary = Color(0xFF7A746F);
-  static const Color textMuted = Color(0xFFA79F97);
+  static const Color textPrimary = Color(0xFF2F2F2F);
+  static const Color textSecondary = Color(0xFF6B6B6B);
+  static const Color textMuted = Color(0xFF9A9A9A);
 
   // --- Icons ---
-  static const Color iconMuted = Color(0xFF8EA8A6);
+  static const Color iconMuted = Color(0xFF9FB2B4);
 
   // --- Splash ---
   static const Color splashOverlayTop = Color(0x5C171411);
@@ -34,7 +43,7 @@ class AppTheme {
     const colorScheme = ColorScheme(
       brightness: Brightness.light,
       primary: AppColors.turquoiseAccent,
-      onPrimary: Colors.white,
+      onPrimary: AppColors.textPrimary,
       secondary: AppColors.indigoAccent,
       onSecondary: Colors.white,
       tertiary: AppColors.earthAccent,
@@ -45,11 +54,11 @@ class AppTheme {
       onSurface: AppColors.textPrimary,
       surfaceContainerHighest: AppColors.cardBgMuted,
       outline: AppColors.cardBorder,
-      shadow: Color(0x162A2420),
+      shadow: Color(0x142F2F2F),
       scrim: Colors.black,
-      inverseSurface: Color(0xFF2B2725),
-      onInverseSurface: Color(0xFFF7F2EC),
-      inversePrimary: Color(0xFFADD4D2),
+      inverseSurface: Color(0xFF2F2F2F),
+      onInverseSurface: Color(0xFFF9F6F0),
+      inversePrimary: Color(0xFFD7E6E7),
     );
 
     const textTheme = TextTheme(
@@ -94,12 +103,99 @@ class AppTheme {
       scaffoldBackgroundColor: AppColors.scaffoldBg,
       cardColor: AppColors.cardBg,
       dividerColor: AppColors.cardBorder,
+      canvasColor: AppColors.cardBg,
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: AppColors.cardBg,
+        surfaceTintColor: Colors.transparent,
+        dragHandleColor: AppColors.textMuted,
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.scaffoldBg,
         surfaceTintColor: Colors.transparent,
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: AppColors.cardBg,
+        contentTextStyle: TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+          color: AppColors.textPrimary,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.ctaPrimaryEnd,
+          foregroundColor: AppColors.ctaPrimaryText,
+          elevation: 0,
+          shadowColor: AppColors.ctaShadow,
+          minimumSize: const Size.fromHeight(50),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          textStyle: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.indigoAccent,
+          side: const BorderSide(color: AppColors.ctaSecondaryBorder),
+          minimumSize: const Size.fromHeight(48),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          textStyle: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(
+          foregroundColor: AppColors.indigoAccent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          textStyle: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: AppColors.cardBg,
+        selectedColor: AppColors.emphasisAccent.withValues(alpha: 0.18),
+        disabledColor: AppColors.cardBgSoft,
+        secondarySelectedColor:
+            AppColors.emphasisAccent.withValues(alpha: 0.18),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        labelStyle: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 13,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textSecondary,
+        ),
+        secondaryLabelStyle: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: AppColors.emphasisAccent,
+        ),
+        side: const BorderSide(color: AppColors.cardBorder),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(999),
+        ),
       ),
     );
   }
