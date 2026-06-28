@@ -1,0 +1,138 @@
+[
+  {
+    "type": "ayah",
+    "tr": {
+      "text": "Allah kuluna kâfi değil midir?",
+      "source": "Zümer, 36",
+      "reflection": "Bu sözün içinde birkaç saniye kal."
+    },
+    "en": {
+      "text": "Is Allah not sufficient for His servant?",
+      "source": "Az-Zumar, 36",
+      "reflection": "Stay with these words for a few seconds."
+    }
+  },
+  {
+    "type": "ayah",
+    "tr": {
+      "text": "Kalpler ancak Allah’ı anmakla huzur bulur.",
+      "source": "Ra’d, 28",
+      "reflection": "Kalbinin şu anki halini fark et."
+    },
+    "en": {
+      "text": "Hearts find rest in the remembrance of Allah.",
+      "source": "Ar-Ra’d, 28",
+      "reflection": "Notice the state of your heart."
+    }
+  },
+  {
+    "type": "ayah",
+    "tr": {
+      "text": "Şüphesiz zorlukla beraber bir kolaylık vardır.",
+      "source": "İnşirah, 6",
+      "reflection": "Zorluğun içindeki kolaylığı düşün."
+    },
+    "en": {
+      "text": "Indeed, with hardship comes ease.",
+      "source": "Ash-Sharh, 6",
+      "reflection": "Reflect on the ease hidden within hardship."
+    }
+  },
+  {
+    "type": "ayah",
+    "tr": {
+      "text": "Allah sabredenlerle beraberdir.",
+      "source": "Bakara, 153",
+      "reflection": "Bugün sabrettiğin bir anı hatırla."
+    },
+    "en": {
+      "text": "Allah is with the patient.",
+      "source": "Al-Baqarah, 153",
+      "reflection": "Remember a moment when you were patient today."
+    }
+  },
+  {
+    "type": "asma",
+    "arabic": "اللَّطِيف",
+    "tr": {
+      "name": "El-Latîf",
+      "meaning": "En ince lütuflarla muamele eden",
+      "reflection": "Hayatındaki küçük lütufları fark et."
+    },
+    "en": {
+      "name": "Al-Latif",
+      "meaning": "The Subtle, the Most Gentle",
+      "reflection": "Notice the quiet blessings in your life."
+    }
+  },
+  {
+    "type": "asma",
+    "arabic": "الرَّحْمٰن",
+    "tr": {
+      "name": "Er-Rahmân",
+      "meaning": "Sonsuz merhamet sahibi",
+      "reflection": "Allah’ın rahmetini hatırla."
+    },
+    "en": {
+      "name": "Ar-Rahman",
+      "meaning": "The Most Merciful",
+      "reflection": "Remember the mercy of Allah."
+    }
+  },
+  {
+    "type": "asma",
+    "arabic": "الْوَكِيل",
+    "tr": {
+      "name": "El-Vekîl",
+      "meaning": "Kendisine güvenilen",
+      "reflection": "Kontrol edemediklerini Allah’a bırak."
+    },
+    "en": {
+      "name": "Al-Wakil",
+      "meaning": "The Trustee, the Disposer of Affairs",
+      "reflection": "Leave what you cannot control to Allah."
+    }
+  },
+  {
+    "type": "dhikr",
+    "arabic": "سُبْحَانَ الله",
+    "tr": {
+      "text": "Subhanallah",
+      "meaning": "Allah her türlü eksiklikten uzaktır.",
+      "reflection": "İçinden yavaşça tekrar et."
+    },
+    "en": {
+      "text": "Subhanallah",
+      "meaning": "Glory be to Allah.",
+      "reflection": "Repeat it quietly within."
+    }
+  },
+  {
+    "type": "dhikr",
+    "arabic": "الْحَمْدُ لِلّٰه",
+    "tr": {
+      "text": "Elhamdulillah",
+      "meaning": "Hamd Allah’adır.",
+      "reflection": "Bugün şükredeceğin bir şeyi hatırla."
+    },
+    "en": {
+      "text": "Alhamdulillah",
+      "meaning": "All praise is due to Allah.",
+      "reflection": "Remember one thing you are grateful for today."
+    }
+  },
+  {
+    "type": "dhikr",
+    "arabic": "اللهُ أَكْبَر",
+    "tr": {
+      "text": "Allahu Ekber",
+      "meaning": "Allah en büyüktür.",
+      "reflection": "Bu sözü kalbinde sakinleştir."
+    },
+    "en": {
+      "text": "Allahu Akbar",
+      "meaning": "Allah is the Greatest.",
+      "reflection": "Let these words settle in your heart."
+    }
+  }
+]

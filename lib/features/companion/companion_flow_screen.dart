@@ -1,17 +1,16 @@
 import 'dart:async';
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:flutter/services.dart';
 
 import '../../data/local_preferences_service.dart';
+import '../../data/spiritual_progress_service.dart';
 import '../../l10n/app_strings.dart';
 
 enum CompanionFlowStep {
   verse,
   breathe,
   dhikr,
-  finish,
 }
 
 class CompanionFlowScreen extends StatefulWidget {
@@ -22,8 +21,9 @@ class CompanionFlowScreen extends StatefulWidget {
 }
 
 class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
-  static const _verseDelay = Duration(seconds: 5);
   static const _dhikrTarget = 33;
+  static const _breathingCalligraphyAsset =
+      'assets/images/calligraphy/allahu_akbar.svg';
   static const _verseTextKeys = <String>[
     'companion_flow_verse_text_1',
     'companion_flow_verse_text_2',
@@ -36,45 +36,30 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
     'companion_flow_verse_text_9',
     'companion_flow_verse_text_10',
   ];
-  static const _dhikrPhrases = <String>[
-    'Subhanallah',
-    'Elhamdülillah',
-    'Allahu Ekber',
+  static const _dhikrPhraseKeys = <String>[
+    'companion_flow_dhikr_phrase_1',
+    'companion_flow_dhikr_phrase_2',
+    'companion_flow_dhikr_phrase_3',
+    'companion_flow_dhikr_phrase_4',
+    'companion_flow_dhikr_phrase_5',
+    'companion_flow_dhikr_phrase_6',
   ];
 
   CompanionFlowStep _step = CompanionFlowStep.verse;
-  Timer? _verseTimer;
   int _dhikrCount = 0;
-  bool _verseStepCompleted = false;
   int _verseIndex = 0;
   int _dhikrPhraseIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _startVerseTimer();
     _loadNextVerse();
     _loadNextDhikrPhrase();
   }
 
-  @override
-  void dispose() {
-    _verseTimer?.cancel();
-    super.dispose();
-  }
-
-  void _startVerseTimer() {
-    _verseTimer?.cancel();
-    _verseStepCompleted = false;
-    _verseTimer = Timer(_verseDelay, () {
-      if (!mounted) return;
-      _completeVerseStep();
-    });
-  }
-
   Future<void> _loadNextDhikrPhrase() async {
     final nextIndex = await LocalPreferencesService.nextCompanionFlowDhikrIndex(
-      totalCount: _dhikrPhrases.length,
+      totalCount: _dhikrPhraseKeys.length,
     );
     if (!mounted) return;
     setState(() => _dhikrPhraseIndex = nextIndex);
@@ -89,26 +74,24 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
   }
 
   void _goToStep(CompanionFlowStep nextStep) {
-    _verseTimer?.cancel();
-    if (nextStep == CompanionFlowStep.finish && _step != CompanionFlowStep.finish) {
-      LocalPreferencesService.markCompanionFlowCompletedToday();
-    }
     setState(() => _step = nextStep);
   }
 
-  void _completeVerseStep() {
-    if (_step != CompanionFlowStep.verse || _verseStepCompleted) return;
-    _verseStepCompleted = true;
-    _verseTimer?.cancel();
-    _goToStep(CompanionFlowStep.breathe);
+  Future<void> _finishFlow() async {
+    await LocalPreferencesService.markCompanionFlowCompletedToday();
+    await SpiritualProgressService.completeReflection(ReflectionPeriod.evening);
+    if (!mounted) return;
+    Navigator.of(context).pop();
   }
 
   void _handleTap() {
     switch (_step) {
       case CompanionFlowStep.verse:
-        _completeVerseStep();
+        HapticFeedback.selectionClick();
+        _goToStep(CompanionFlowStep.breathe);
         return;
       case CompanionFlowStep.breathe:
+        HapticFeedback.selectionClick();
         _goToStep(CompanionFlowStep.dhikr);
         return;
       case CompanionFlowStep.dhikr:
@@ -116,54 +99,47 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
         HapticFeedback.lightImpact();
         final nextCount = _dhikrCount + 1;
         setState(() => _dhikrCount = nextCount);
-        if (nextCount >= _dhikrTarget) {
-          Future<void>.delayed(const Duration(milliseconds: 260), () {
-            if (!mounted || _step != CompanionFlowStep.dhikr) return;
-            _goToStep(CompanionFlowStep.finish);
-          });
-        }
-        return;
-      case CompanionFlowStep.finish:
-        Navigator.of(context).pop();
         return;
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final verseTextKey = _CompanionFlowScreenState._verseTextKeys[_verseIndex];
+    final verseText = S.get(_verseTextKeys[_verseIndex]);
+    final currentDhikr = S.get(_dhikrPhraseKeys[_dhikrPhraseIndex]);
+
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFFFBF6F2),
       body: Stack(
         children: [
           Positioned.fill(
             child: IgnorePointer(
-              child: Transform.scale(
-                scale: 1.08,
-                child: ImageFiltered(
-                  imageFilter: ui.ImageFilter.blur(sigmaX: 4.5, sigmaY: 4.5),
-                  child: Image.asset(
-                    'assets/images/mosque_bg.png',
-                    fit: BoxFit.cover,
-                    alignment: Alignment.center,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Opacity(
+                    opacity: 0.88,
+                    child: Image.asset(
+                      'assets/images/companion/companion_bg.png',
+                      fit: BoxFit.cover,
+                      alignment: Alignment.center,
+                      filterQuality: FilterQuality.high,
+                    ),
                   ),
-                ),
-              ),
-            ),
-          ),
-          Positioned.fill(
-            child: IgnorePointer(
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [
-                      Colors.black.withValues(alpha: 0.22),
-                      Colors.black.withValues(alpha: 0.28),
-                    ],
+                  DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.black.withValues(alpha: 0.15),
+                          Colors.white.withValues(alpha: 0.05),
+                          Colors.white.withValues(alpha: 0.10),
+                        ],
+                      ),
+                    ),
                   ),
-                ),
+                ],
               ),
             ),
           ),
@@ -172,10 +148,10 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: RadialGradient(
-                    center: const Alignment(0, -0.15),
-                    radius: 0.95,
+                    center: const Alignment(0, 0.02),
+                    radius: 0.82,
                     colors: [
-                      Colors.white.withValues(alpha: 0.02),
+                      Colors.white.withValues(alpha: 0.035),
                       Colors.transparent,
                     ],
                   ),
@@ -188,37 +164,20 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
             onTap: _handleTap,
             child: SafeArea(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 28, vertical: 24),
+                padding: const EdgeInsets.fromLTRB(28, 24, 28, 28),
                 child: Center(
                   child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 650),
-                    switchInCurve: Curves.easeOutCubic,
-                    switchOutCurve: Curves.easeInCubic,
-                    transitionBuilder: (child, animation) {
-                      final fade = CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOutCubic,
-                      );
-                      final scale = Tween<double>(
-                        begin: 0.97,
-                        end: 1,
-                      ).animate(fade);
-                      return FadeTransition(
-                        opacity: fade,
-                        child: ScaleTransition(
-                          scale: scale,
-                          child: child,
-                        ),
-                      );
-                    },
+                    duration: const Duration(milliseconds: 420),
+                    switchInCurve: Curves.easeOut,
+                    switchOutCurve: Curves.easeIn,
                     child: _CompanionStepContent(
                       key: ValueKey(_step),
                       step: _step,
-                      verseText: S.get(verseTextKey),
-                      dhikrPhraseIndex: _dhikrPhraseIndex,
+                      verseText: verseText,
                       dhikrCount: _dhikrCount,
-                      onFinishDhikr: () => _goToStep(CompanionFlowStep.finish),
+                      targetCount: _dhikrTarget,
+                      dhikrLabel: currentDhikr,
+                      onFinish: _finishFlow,
                     ),
                   ),
                 ),
@@ -236,26 +195,26 @@ class _CompanionStepContent extends StatelessWidget {
     super.key,
     required this.step,
     required this.verseText,
-    required this.dhikrPhraseIndex,
     required this.dhikrCount,
-    required this.onFinishDhikr,
+    required this.targetCount,
+    required this.dhikrLabel,
+    required this.onFinish,
   });
 
   final CompanionFlowStep step;
   final String verseText;
-  final int dhikrPhraseIndex;
   final int dhikrCount;
-  final VoidCallback onFinishDhikr;
+  final int targetCount;
+  final String dhikrLabel;
+  final VoidCallback onFinish;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final currentDhikr =
-        _CompanionFlowScreenState._dhikrPhrases[dhikrPhraseIndex];
 
     switch (step) {
       case CompanionFlowStep.verse:
-        return _CompanionVerseStep(
+        return _CompanionStepFrame(
           title: verseText,
           body: S.get('companion_flow_verse_hint'),
           colorScheme: colorScheme,
@@ -265,84 +224,19 @@ class _CompanionStepContent extends StatelessWidget {
           title: S.get('companion_flow_breathe_text'),
           body: S.get('companion_flow_breathe_hint'),
           colorScheme: colorScheme,
+          calligraphyAsset:
+              _CompanionFlowScreenState._breathingCalligraphyAsset,
         );
       case CompanionFlowStep.dhikr:
         return _CompanionDhikrStep(
-          title: S.get('companion_flow_dhikr_text'),
-          body: S
-              .get('companion_flow_dhikr_hint_dynamic')
-              .replaceAll('{dhikr}', currentDhikr),
+          title: dhikrLabel,
+          body: S.get('companion_flow_dhikr_subtitle'),
           colorScheme: colorScheme,
           dhikrCount: dhikrCount,
-          targetCount: _CompanionFlowScreenState._dhikrTarget,
-          dhikrLabel: currentDhikr,
-          onFinishDhikr: onFinishDhikr,
-        );
-      case CompanionFlowStep.finish:
-        return _CompanionStepFrame(
-          title: S.get('companion_flow_finish_title'),
-          body: S.get('companion_flow_finish_body'),
-          colorScheme: colorScheme,
-          footer: Padding(
-            padding: const EdgeInsets.only(top: 24),
-            child: ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text(S.get('companion_flow_close')),
-            ),
-          ),
+          targetCount: targetCount,
+          onFinish: onFinish,
         );
     }
-  }
-}
-
-class _CompanionVerseStep extends StatefulWidget {
-  const _CompanionVerseStep({
-    required this.title,
-    required this.body,
-    required this.colorScheme,
-  });
-
-  final String title;
-  final String body;
-  final ColorScheme colorScheme;
-
-  @override
-  State<_CompanionVerseStep> createState() => _CompanionVerseStepState();
-}
-
-class _CompanionVerseStepState extends State<_CompanionVerseStep>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _fadeController;
-
-  @override
-  void initState() {
-    super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    )..forward();
-  }
-
-  @override
-  void dispose() {
-    _fadeController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final fade = CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOutCubic,
-    );
-    return FadeTransition(
-      opacity: fade,
-      child: _CompanionStepFrame(
-        title: widget.title,
-        body: widget.body,
-        colorScheme: widget.colorScheme,
-      ),
-    );
   }
 }
 
@@ -351,11 +245,13 @@ class _CompanionBreatheStep extends StatefulWidget {
     required this.title,
     required this.body,
     required this.colorScheme,
+    required this.calligraphyAsset,
   });
 
   final String title;
   final String body;
   final ColorScheme colorScheme;
+  final String calligraphyAsset;
 
   @override
   State<_CompanionBreatheStep> createState() => _CompanionBreatheStepState();
@@ -364,6 +260,7 @@ class _CompanionBreatheStep extends StatefulWidget {
 class _CompanionBreatheStepState extends State<_CompanionBreatheStep>
     with SingleTickerProviderStateMixin {
   late final AnimationController _breatheController;
+  bool _showCalligraphy = true;
 
   @override
   void initState() {
@@ -371,7 +268,14 @@ class _CompanionBreatheStepState extends State<_CompanionBreatheStep>
     _breatheController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 4),
-    )..repeat(reverse: true);
+    );
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      await Future<void>.delayed(const Duration(milliseconds: 120));
+      if (!mounted) return;
+      setState(() => _showCalligraphy = false);
+      _breatheController.repeat(reverse: true);
+    });
   }
 
   @override
@@ -382,15 +286,18 @@ class _CompanionBreatheStepState extends State<_CompanionBreatheStep>
 
   @override
   Widget build(BuildContext context) {
+    final curve = CurvedAnimation(
+      parent: _breatheController,
+      curve: Curves.easeInOut,
+    );
     final scale = Tween<double>(
       begin: 0.9,
       end: 1.08,
-    ).animate(
-      CurvedAnimation(
-        parent: _breatheController,
-        curve: Curves.easeInOut,
-      ),
-    );
+    ).animate(curve);
+    final calligraphyOpacity = Tween<double>(
+      begin: 0.72,
+      end: 0.96,
+    ).animate(curve);
 
     return _CompanionStepFrame(
       title: widget.title,
@@ -399,29 +306,50 @@ class _CompanionBreatheStepState extends State<_CompanionBreatheStep>
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           ScaleTransition(
             scale: scale,
             child: Container(
-              width: 132,
-              height: 132,
+              width: 138,
+              height: 138,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.white.withValues(alpha: 0.05),
+                color: const Color(0xFFF8F2E8).withValues(alpha: 0.74),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.14),
+                  color: Colors.white.withValues(alpha: 0.92),
+                  width: 2.4,
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.08),
-                    blurRadius: 32,
-                    offset: const Offset(0, 10),
+                    color: Colors.white.withValues(alpha: 0.22),
+                    blurRadius: 22,
+                    spreadRadius: 1.5,
+                  ),
+                  BoxShadow(
+                    color: const Color(0xFFDCCDBE).withValues(alpha: 0.26),
+                    blurRadius: 26,
+                    spreadRadius: 1,
                   ),
                 ],
               ),
+              child: Center(
+                child: FadeTransition(
+                  opacity: calligraphyOpacity,
+                  child: AnimatedOpacity(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeOut,
+                    opacity: _showCalligraphy ? 0.94 : 1,
+                    child: SvgPicture.asset(
+                      widget.calligraphyAsset,
+                      width: 84,
+                      height: 84,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
-          const SizedBox(height: 26),
+          const SizedBox(height: 24),
           AnimatedBuilder(
             animation: _breatheController,
             builder: (context, child) {
@@ -435,7 +363,7 @@ class _CompanionBreatheStepState extends State<_CompanionBreatheStep>
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                   letterSpacing: 0.3,
-                  color: widget.colorScheme.onSurface.withValues(alpha: 0.72),
+                  color: widget.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
               );
             },
@@ -446,15 +374,14 @@ class _CompanionBreatheStepState extends State<_CompanionBreatheStep>
   }
 }
 
-class _CompanionDhikrStep extends StatefulWidget {
+class _CompanionDhikrStep extends StatelessWidget {
   const _CompanionDhikrStep({
     required this.title,
     required this.body,
     required this.colorScheme,
     required this.dhikrCount,
     required this.targetCount,
-    required this.dhikrLabel,
-    required this.onFinishDhikr,
+    required this.onFinish,
   });
 
   final String title;
@@ -462,103 +389,42 @@ class _CompanionDhikrStep extends StatefulWidget {
   final ColorScheme colorScheme;
   final int dhikrCount;
   final int targetCount;
-  final String dhikrLabel;
-  final VoidCallback onFinishDhikr;
-
-  @override
-  State<_CompanionDhikrStep> createState() => _CompanionDhikrStepState();
-}
-
-class _CompanionDhikrStepState extends State<_CompanionDhikrStep>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _pulseController;
-  int _lastCount = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _lastCount = widget.dhikrCount;
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 180),
-      lowerBound: 0,
-      upperBound: 1,
-    );
-  }
-
-  @override
-  void didUpdateWidget(covariant _CompanionDhikrStep oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.dhikrCount != _lastCount) {
-      _lastCount = widget.dhikrCount;
-      _pulseController.forward(from: 0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
+  final VoidCallback onFinish;
 
   @override
   Widget build(BuildContext context) {
-    final scale = Tween<double>(
-      begin: 1,
-      end: 1.04,
-    ).animate(
-      CurvedAnimation(
-        parent: _pulseController,
-        curve: Curves.easeOut,
-      ),
-    );
-
+    final countLabel = '$dhikrCount/$targetCount';
     return _CompanionStepFrame(
-      title: widget.title,
-      body: widget.body,
-      colorScheme: widget.colorScheme,
+      title: title,
+      body: body,
+      colorScheme: colorScheme,
       footer: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 18),
+          const SizedBox(height: 12),
           Text(
-            widget.dhikrLabel,
-            textAlign: TextAlign.center,
+            '$dhikrCount',
+            style: TextStyle(
+              fontFamily: 'Merriweather',
+              fontSize: 72,
+              fontWeight: FontWeight.w400,
+              color: colorScheme.onSurface.withValues(alpha: 0.94),
+              height: 1,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            countLabel,
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 13,
               fontWeight: FontWeight.w500,
-              letterSpacing: 0.3,
-              color: widget.colorScheme.onSurface.withValues(alpha: 0.62),
+              color: colorScheme.onSurface.withValues(alpha: 0.56),
             ),
           ),
-          const SizedBox(height: 14),
-          ScaleTransition(
-            scale: scale,
-            child: Text(
-              '${widget.dhikrCount}',
-              style: TextStyle(
-                fontFamily: 'Merriweather',
-                fontSize: 84,
-                fontWeight: FontWeight.w400,
-                color: widget.colorScheme.onSurface.withValues(alpha: 0.96),
-                height: 1,
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            '${widget.dhikrCount}/${widget.targetCount}',
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: widget.colorScheme.onSurface.withValues(alpha: 0.62),
-            ),
-          ),
-          const SizedBox(height: 28),
+          const SizedBox(height: 22),
           TextButton(
-            onPressed: widget.onFinishDhikr,
+            onPressed: onFinish,
             child: Text(S.get('companion_flow_finish_cta')),
           ),
         ],
@@ -592,40 +458,40 @@ class _CompanionStepFrame extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Merriweather',
-              fontSize: 32,
+              fontSize: 30,
               fontWeight: FontWeight.w400,
-              color: colorScheme.onSurface.withValues(alpha: 0.995),
-              height: 1.45,
+              color: colorScheme.onSurface.withValues(alpha: 0.97),
+              height: 1.42,
               shadows: const [
                 Shadow(
-                  color: Color(0x42000000),
-                  blurRadius: 20,
-                  offset: Offset(0, 8),
+                  color: Color(0x1F000000),
+                  blurRadius: 10,
+                  offset: Offset(0, 2),
                 ),
               ],
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: 26),
           Text(
             body,
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 15,
-              fontWeight: FontWeight.w400,
-              color: colorScheme.onSurface.withValues(alpha: 0.86),
-              height: 1.8,
+              fontWeight: FontWeight.w500,
+              color: colorScheme.onSurface.withValues(alpha: 0.8),
+              height: 1.7,
               shadows: const [
                 Shadow(
-                  color: Color(0x16000000),
-                  blurRadius: 10,
+                  color: Color(0x17000000),
+                  blurRadius: 8,
                   offset: Offset(0, 1),
                 ),
               ],
             ),
           ),
           if (footer != null) ...[
-            const SizedBox(height: 44),
+            const SizedBox(height: 42),
             footer!,
           ],
         ],

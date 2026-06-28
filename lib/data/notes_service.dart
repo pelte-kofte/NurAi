@@ -1,6 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/material.dart';
 
+import 'local_data_recovery.dart';
 import 'secure_storage_service.dart';
 
 /// Simple local notes service for personal reflections.
@@ -30,8 +31,8 @@ class NotesService {
   }
 
   static Future<void> _hydrateSensitiveValues() async {
-    final secureNote = await SecureStorageService.read(_secureNoteKey);
-    final legacyNote = _prefs?.getString(_noteKey);
+    final secureNote = await SecureStorageService.readSafely(_secureNoteKey);
+    final legacyNote = LocalDataRecovery.getString(_prefs, _noteKey);
 
     if ((secureNote == null || secureNote.isEmpty) &&
         legacyNote != null &&
@@ -46,8 +47,9 @@ class NotesService {
     }
 
     final secureDailyMoodText =
-        await SecureStorageService.read(_secureDailyMoodTextKey);
-    final legacyDailyMoodText = _prefs?.getString(_dailyMoodTextKey);
+        await SecureStorageService.readSafely(_secureDailyMoodTextKey);
+    final legacyDailyMoodText =
+        LocalDataRecovery.getString(_prefs, _dailyMoodTextKey);
 
     if ((secureDailyMoodText == null || secureDailyMoodText.isEmpty) &&
         legacyDailyMoodText != null &&
@@ -86,7 +88,7 @@ class NotesService {
   }
 
   static bool isDailyMoodLockedToday() {
-    final date = _prefs?.getString(_dailyMoodDateKey);
+    final date = LocalDataRecovery.getString(_prefs, _dailyMoodDateKey);
     final text = _cachedDailyMoodText.trim();
     return date == _todayKey() && text.isNotEmpty;
   }
@@ -98,7 +100,7 @@ class NotesService {
 
   static int? getTodayReflectionId() {
     if (!isDailyMoodLockedToday()) return null;
-    return _prefs?.getInt(_dailyReflectionIdKey);
+    return LocalDataRecovery.getInt(_prefs, _dailyReflectionIdKey);
   }
 
   static Future<bool> submitDailyMood({

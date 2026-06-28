@@ -90,7 +90,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       primaryActionLabel: S.get(
                         'premium_success_action_notifications',
                       ),
-                      onPrimaryAction: _showSpiritualNotificationTimePicker,
+                      onPrimaryAction: _showDailyReminderTimePicker,
                     ),
                   ],
                 ],
@@ -127,43 +127,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
             },
           ),
           ValueListenableBuilder<bool>(
+            valueListenable: LocalPreferencesService.adhanEnabled,
+            builder: (context, enabled, _) {
+              return _buildSwitchRow(
+                title: S.get('prayer_time_notifications'),
+                description: S.get('prayer_time_notifications_subtitle'),
+                value: enabled,
+                onChanged: _onTogglePrayerTimeNotifications,
+              );
+            },
+          ),
+          ValueListenableBuilder<bool>(
             valueListenable:
                 LocalPreferencesService.spiritualNotificationsEnabled,
             builder: (context, enabled, _) {
               return _buildSwitchRow(
-                title: S.get('spiritual_notifications_title'),
+                title: S.get('daily_reminder'),
+                description: S.get('daily_reminder_subtitle'),
                 value: enabled,
-                onChanged: _onToggleSpiritualNotifications,
+                onChanged: _onToggleDailyReminder,
               );
             },
           ),
           ValueListenableBuilder<bool>(
             valueListenable:
-                LocalPreferencesService.nightCompanionReminderEnabled,
-            builder: (context, enabled, _) {
-              return _buildSwitchRow(
-                title: S.get('night_ritual_reminder'),
-                description: S.get('night_ritual_reminder_description'),
-                value: enabled,
-                onChanged: _onToggleNightCompanionReminder,
-              );
-            },
-          ),
-          ValueListenableBuilder<bool>(
-            valueListenable:
-                LocalPreferencesService.nightCompanionReminderEnabled,
+                LocalPreferencesService.spiritualNotificationsEnabled,
             builder: (context, enabled, _) {
               if (!enabled) return const SizedBox.shrink();
               return ValueListenableBuilder<TimeOfDay>(
-                valueListenable:
-                    LocalPreferencesService.nightCompanionReminderTime,
+                valueListenable: LocalPreferencesService.dailyReminderTime,
                 builder: (context, time, _) {
                   return _buildRow(
-                    title: S.get('night_ritual_reminder_time'),
+                    title: S.get('daily_reminder_time'),
                     icon: Icons.bedtime_outlined,
                     value: MaterialLocalizations.of(context)
                         .formatTimeOfDay(time, alwaysUse24HourFormat: true),
-                    onTap: _showNightCompanionReminderTimePicker,
+                    onTap: _showDailyReminderTimePicker,
                   );
                 },
               );
@@ -174,6 +173,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             builder: (context, enabled, _) {
               return _buildSwitchRow(
                 title: S.get('reading_reminder'),
+                description: S.get('reading_reminder_subtitle'),
                 value: enabled,
                 onChanged: _onToggleReadingReminder,
               );
@@ -197,91 +197,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               );
             },
           ),
-          ValueListenableBuilder<List<SpiritualNotificationTime>>(
-            valueListenable: LocalPreferencesService.spiritualNotificationTimes,
-            builder: (context, times, _) {
-              return ValueListenableBuilder<bool>(
-                valueListenable: PremiumService.isPremium,
-                builder: (context, isPremium, _) {
-                  return _buildRow(
-                    title: S.get('spiritual_notifications_times'),
-                    icon: Icons.auto_awesome_outlined,
-                    value: _spiritualNotificationTimesLabel(
-                      _visibleSpiritualNotificationTimes(
-                        times,
-                        isPremium: isPremium,
-                      ),
-                    ),
-                    onTap: _showSpiritualNotificationTimePicker,
-                  );
-                },
-              );
-            },
-          ),
-          ValueListenableBuilder<bool>(
-            valueListenable: PremiumService.isPremium,
-            builder: (context, isPremium, _) {
-              return Padding(
-                padding: const EdgeInsets.only(top: 2, bottom: 8),
-                child: Text(
-                  isPremium
-                      ? S.get('spiritual_notifications_hint_premium')
-                      : S.get('spiritual_notifications_hint_free'),
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w400,
-                    color: colorScheme.onSurface.withValues(alpha: 0.62),
-                    height: 1.35,
-                  ),
-                ),
-              );
-            },
-          ),
-          ValueListenableBuilder<bool>(
-            valueListenable: PremiumService.isPremium,
-            builder: (context, isPremium, _) {
-              if (isPremium) return const SizedBox(height: 4);
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Text(
-                  S.get('spiritual_notifications_limit_note'),
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.primary,
-                    height: 1.35,
-                  ),
-                ),
-              );
-            },
-          ),
-          if (!kIsWeb && Platform.isIOS)
-            ValueListenableBuilder<bool>(
-              valueListenable: LocalPreferencesService.nextPrayerWidgetEnabled,
-              builder: (context, enabled, _) {
-                return _buildSwitchRow(
-                  title: S.get('next_prayer_widget_toggle'),
-                  value: enabled,
-                  onChanged: _onToggleNextPrayerWidget,
-                );
-              },
-            ),
-          if (!kIsWeb && Platform.isIOS)
-            Padding(
-              padding: const EdgeInsets.only(top: 2, bottom: 8),
-              child: Text(
-                S.get('next_prayer_widget_hint'),
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w400,
-                  color: colorScheme.onSurface.withValues(alpha: 0.62),
-                  height: 1.35,
-                ),
-              ),
-            ),
           if (SeasonalConfig.isRamadanSeason && !kIsWeb && Platform.isIOS)
             ValueListenableBuilder<bool>(
               valueListenable: IftarLiveActivityService.isSupported,
@@ -845,39 +760,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() {});
   }
 
-  Future<void> _onToggleNextPrayerWidget(bool enabled) async {
-    await LocalPreferencesService.setNextPrayerWidgetEnabled(enabled);
-    await WidgetPayloadService.writeNextPrayerPayload();
+  Future<void> _onTogglePrayerTimeNotifications(bool enabled) async {
+    if (!enabled) {
+      await LocalPreferencesService.setEzanAlarmSoundEnabled(false);
+      await AdhanNotificationService.disable();
+      if (!mounted) return;
+      setState(() {});
+      return;
+    }
+
+    await LocalPreferencesService.setEzanAlarmSoundEnabled(true);
+    final result = await AdhanNotificationService.enable();
+    switch (result) {
+      case AdhanEnableResult.enabled:
+        break;
+      case AdhanEnableResult.notificationPermissionDenied:
+        await LocalPreferencesService.setEzanAlarmSoundEnabled(false);
+        if (!mounted) return;
+        await _showNotificationSoundSettingsCta();
+        break;
+      case AdhanEnableResult.locationServiceDisabled:
+      case AdhanEnableResult.locationPermissionDenied:
+      case AdhanEnableResult.locationPermissionDeniedForever:
+      case AdhanEnableResult.locationFailed:
+      case AdhanEnableResult.locationMissing:
+        await LocalPreferencesService.setEzanAlarmSoundEnabled(false);
+        if (!mounted) return;
+        await _showPrayerLocationSettingsCta();
+        break;
+      case AdhanEnableResult.unavailableOnWeb:
+        await LocalPreferencesService.setEzanAlarmSoundEnabled(false);
+        break;
+    }
+
     if (!mounted) return;
     setState(() {});
   }
 
-  Future<void> _onToggleSpiritualNotifications(bool enabled) async {
+  Future<void> _onToggleDailyReminder(bool enabled) async {
     if (!enabled) {
       await LocalPreferencesService.setSpiritualNotificationsEnabled(false);
       await AdhanNotificationService.cancelScheduledSpiritualNotifications();
-      if (!mounted) return;
-      setState(() {});
-      return;
-    }
-
-    final permissionGranted =
-        await AdhanNotificationService.requestPermissions();
-    if (!permissionGranted) {
-      if (!mounted) return;
-      await _showSpiritualNotificationPermissionCta();
-      setState(() {});
-      return;
-    }
-
-    await LocalPreferencesService.setSpiritualNotificationsEnabled(true);
-    await AdhanNotificationService.syncSpiritualNotifications();
-    if (!mounted) return;
-    setState(() {});
-  }
-
-  Future<void> _onToggleNightCompanionReminder(bool enabled) async {
-    if (!enabled) {
       await LocalPreferencesService.setNightCompanionReminderEnabled(false);
       await AdhanNotificationService.cancelNightCompanionReminder();
       if (!mounted) return;
@@ -894,15 +817,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       return;
     }
 
-    await LocalPreferencesService.setNightCompanionReminderEnabled(true);
-    await AdhanNotificationService.syncNightCompanionReminder();
+    await LocalPreferencesService.setSpiritualNotificationsEnabled(true);
+    await LocalPreferencesService.setNightCompanionReminderEnabled(false);
+    await AdhanNotificationService.cancelNightCompanionReminder();
+    await AdhanNotificationService.syncSpiritualNotifications();
     if (!mounted) return;
     setState(() {});
   }
 
-  Future<void> _showNightCompanionReminderTimePicker() async {
-    final initialTime =
-        LocalPreferencesService.nightCompanionReminderTime.value;
+  Future<void> _showDailyReminderTimePicker() async {
+    final initialTime = LocalPreferencesService.dailyReminderTime.value;
     final picked = await showTimePicker(
       context: context,
       initialTime: initialTime,
@@ -915,9 +839,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       },
     );
     if (picked == null) return;
-    await LocalPreferencesService.setNightCompanionReminderTime(picked);
-    if (LocalPreferencesService.nightCompanionReminderEnabled.value) {
-      await AdhanNotificationService.syncNightCompanionReminder();
+    await LocalPreferencesService.setDailyReminderTime(picked);
+    await AdhanNotificationService.cancelNightCompanionReminder();
+    if (LocalPreferencesService.spiritualNotificationsEnabled.value) {
+      await AdhanNotificationService.syncSpiritualNotifications();
     }
     if (!mounted) return;
     setState(() {});
@@ -965,197 +890,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (LocalPreferencesService.readingReminderEnabled.value) {
       await AdhanNotificationService.syncReadingReminder();
     }
-    if (!mounted) return;
-    setState(() {});
-  }
-
-  Future<void> _showSpiritualNotificationTimePicker() async {
-    final isPremiumUser = PremiumService.isPremium.value;
-    final initial = _visibleSpiritualNotificationTimes(
-      LocalPreferencesService.spiritualNotificationTimes.value,
-      isPremium: isPremiumUser,
-    );
-    final selected = List<SpiritualNotificationTime>.from(initial);
-
-    await showModalBottomSheet<void>(
-      context: context,
-      useSafeArea: true,
-      showDragHandle: true,
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-      ),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (ctx, setModalState) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    S.get('spiritual_notifications_times'),
-                    style: TextStyle(
-                      fontFamily: 'Merriweather',
-                      fontSize: 18,
-                      fontWeight: FontWeight.w400,
-                      color: Theme.of(ctx).colorScheme.onSurface,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    isPremiumUser
-                        ? S.get('spiritual_notifications_sheet_hint')
-                        : S.get('spiritual_notifications_sheet_hint_free'),
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13,
-                      fontWeight: FontWeight.w400,
-                      color: Theme.of(ctx)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.72),
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  if (!isPremiumUser) ...[
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color:
-                            Theme.of(ctx).colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            S.get('spiritual_notifications_limit_note'),
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 13,
-                              fontWeight: FontWeight.w700,
-                              color: Theme.of(ctx).colorScheme.onSurface,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            S.get('spiritual_notifications_limit_body'),
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: Theme.of(ctx)
-                                  .colorScheme
-                                  .onSurface
-                                  .withValues(alpha: 0.7),
-                              height: 1.4,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(ctx).pop();
-                              _openPremiumPage();
-                            },
-                            child: Text(S.get('premium_cta_upgrade')),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-                  for (final slot in SpiritualNotificationTime.values)
-                    CheckboxListTile(
-                      value: selected.contains(slot),
-                      contentPadding: EdgeInsets.zero,
-                      controlAffinity: ListTileControlAffinity.leading,
-                      title: Text(
-                        _spiritualNotificationTimeLabel(slot),
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: Theme.of(ctx).colorScheme.onSurface,
-                        ),
-                      ),
-                      subtitle: Text(
-                        _spiritualNotificationTimeClock(slot),
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: Theme.of(ctx)
-                              .colorScheme
-                              .onSurface
-                              .withValues(alpha: 0.62),
-                        ),
-                      ),
-                      secondary: !isPremiumUser &&
-                              selected.isNotEmpty &&
-                              slot != selected.first
-                          ? Text(
-                              S.get('premium_title'),
-                              style: TextStyle(
-                                fontFamily: 'Inter',
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
-                                color: Theme.of(ctx).colorScheme.primary,
-                              ),
-                            )
-                          : null,
-                      onChanged: (checked) {
-                        setModalState(() {
-                          if (checked == true) {
-                            if (!selected.contains(slot)) {
-                              if (isPremiumUser) {
-                                selected.add(slot);
-                              } else {
-                                selected
-                                  ..clear()
-                                  ..add(slot);
-                              }
-                            }
-                          } else {
-                            selected.remove(slot);
-                          }
-                        });
-                      },
-                    ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () async {
-                        final resolved = selected.isEmpty
-                            ? initial
-                            : isPremiumUser
-                                ? selected
-                                : [selected.first];
-                        await LocalPreferencesService
-                            .setSpiritualNotificationTimes(
-                          resolved,
-                        );
-                        if (LocalPreferencesService
-                            .spiritualNotificationsEnabled.value) {
-                          await AdhanNotificationService
-                              .syncSpiritualNotifications();
-                        }
-                        if (ctx.mounted) Navigator.of(ctx).pop();
-                      },
-                      child: Text(S.get('save')),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
     if (!mounted) return;
     setState(() {});
   }
@@ -1367,6 +1101,72 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Future<void> _showPrayerLocationSettingsCta() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      backgroundColor: Theme.of(context).colorScheme.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+      ),
+      builder: (ctx) {
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                S.get('prayer_location_needed_title'),
+                style: TextStyle(
+                  fontFamily: 'Merriweather',
+                  fontSize: 19,
+                  fontWeight: FontWeight.w400,
+                  color: Theme.of(ctx).colorScheme.onSurface,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                S.get('prayer_location_needed_body'),
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w400,
+                  color: Theme.of(ctx)
+                      .colorScheme
+                      .onSurface
+                      .withValues(alpha: 0.72),
+                  height: 1.4,
+                ),
+              ),
+              const SizedBox(height: 14),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: () async {
+                    await Geolocator.openAppSettings();
+                    if (ctx.mounted) Navigator.of(ctx).pop();
+                  },
+                  child: Text(S.get('prayer_notif_open_settings')),
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                width: double.infinity,
+                child: TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: Text(S.get('ok')),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _showSpiritualNotificationPermissionCta() async {
     await showModalBottomSheet<void>(
       context: context,
@@ -1431,43 +1231,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       },
     );
-  }
-
-  String _spiritualNotificationTimesLabel(
-    List<SpiritualNotificationTime> values,
-  ) {
-    if (values.isEmpty) return S.get('off');
-    return values.map(_spiritualNotificationTimeLabel).join(', ');
-  }
-
-  List<SpiritualNotificationTime> _visibleSpiritualNotificationTimes(
-    List<SpiritualNotificationTime> values, {
-    required bool isPremium,
-  }) {
-    if (isPremium) return values;
-    if (values.isEmpty) {
-      return const [SpiritualNotificationTime.morning];
-    }
-    return [values.first];
-  }
-
-  String _spiritualNotificationTimeLabel(SpiritualNotificationTime value) {
-    return switch (value) {
-      SpiritualNotificationTime.morning =>
-        S.get('spiritual_notification_time_morning'),
-      SpiritualNotificationTime.midday =>
-        S.get('spiritual_notification_time_midday'),
-      SpiritualNotificationTime.night =>
-        S.get('spiritual_notification_time_night'),
-    };
-  }
-
-  String _spiritualNotificationTimeClock(SpiritualNotificationTime value) {
-    return switch (value) {
-      SpiritualNotificationTime.morning => '08:00',
-      SpiritualNotificationTime.midday => '13:00',
-      SpiritualNotificationTime.night => '22:30',
-    };
   }
 
   Future<void> _openExternalUrl(Uri uri) async {

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart' show debugPrint, kDebugMode, kIsWeb;
+import 'package:flutter/material.dart' show TimeOfDay;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
@@ -117,8 +118,8 @@ class AdhanNotificationService {
   static bool? _lastIosBadgePermissionEnabled;
   static bool? _lastIosSoundPermissionEnabled;
   static bool _spiritualListenersAttached = false;
-  static bool _nightCompanionListenersAttached = false;
   static bool _readingReminderListenersAttached = false;
+  static Future<void> _scheduleQueue = Future<void>.value();
 
   static void setNotificationTapHandler(
     Future<void> Function(String? payload)? handler,
@@ -215,8 +216,8 @@ class AdhanNotificationService {
     }
 
     _attachSpiritualPreferenceListeners();
-    _attachNightCompanionPreferenceListeners();
     _attachReadingReminderPreferenceListeners();
+    await cancelNightCompanionReminder();
 
     _startDailyMaintenance();
   }
@@ -311,7 +312,7 @@ class AdhanNotificationService {
   static Future<void> disable() async {
     if (kIsWeb) return;
     await LocalPreferencesService.setAdhanEnabled(false);
-    await cancelAll();
+    await _enqueueScheduling(_cancelScheduledPrayerNotificationsInternal);
     await WidgetPayloadService.writeNextPrayerPayload();
   }
 
@@ -324,16 +325,21 @@ class AdhanNotificationService {
   }
 
   static Future<void> rescheduleForToday() async {
+    await _enqueueScheduling(_rescheduleForTodayInternal);
+  }
+
+  static Future<void> _rescheduleForTodayInternal() async {
     if (kIsWeb) return;
+    await _setTimezoneFromDeviceOrFallback();
     if (!LocalPreferencesService.adhanEnabled.value) return;
 
-    await scheduleDailyReminderNotifications();
+    await _scheduleDailyReminderNotificationsInternal();
 
     final selection = LocalPreferencesService.prayerLocation.value;
     if (!selection.hasCoordinates) return;
 
     final today = DateTime.now();
-    await schedulePrayerNotificationsFor(today, selection);
+    await _schedulePrayerNotificationsFor(today, selection);
     if (!SeasonalConfig.isRamadanSeason) {
       await cancelIftarLiveActivityNotificationsForDate(today);
       await cancelIftarLiveActivityNotificationsForDate(
@@ -362,7 +368,7 @@ class AdhanNotificationService {
     await WidgetPayloadService.writeNextPrayerPayload();
   }
 
-  static Future<void> schedulePrayerNotificationsFor(
+  static Future<void> _schedulePrayerNotificationsFor(
     DateTime date,
     PrayerLocation selection,
   ) async {
@@ -417,7 +423,22 @@ class AdhanNotificationService {
     }
   }
 
+  static Future<void> _cancelScheduledPrayerNotificationsInternal() async {
+    if (kIsWeb) return;
+    final now = DateTime.now();
+    for (var dayOffset = -1; dayOffset < 10; dayOffset++) {
+      final date = DateTime(now.year, now.month, now.day + dayOffset);
+      for (var i = 0; i < _prayerIndexes.length; i++) {
+        await _plugin.cancel(_notificationIdFor(date, i));
+      }
+    }
+  }
+
   static Future<void> scheduleDailyReminderNotifications() async {
+    await _enqueueScheduling(_scheduleDailyReminderNotificationsInternal);
+  }
+
+  static Future<void> _scheduleDailyReminderNotificationsInternal() async {
     if (kIsWeb) return;
     if (!LocalPreferencesService.adhanEnabled.value) return;
     await _cancelScheduledDailyReminderNotifications();
@@ -445,8 +466,13 @@ class AdhanNotificationService {
   }
 
   static Future<void> syncNightCompanionReminder() async {
+    await _enqueueScheduling(_syncNightCompanionReminderInternal);
+  }
+
+  static Future<void> _syncNightCompanionReminderInternal() async {
     if (kIsWeb) return;
-    await cancelNightCompanionReminder();
+    await _setTimezoneFromDeviceOrFallback();
+    await _cancelNightCompanionReminderInternal();
     if (!LocalPreferencesService.nightCompanionReminderEnabled.value) return;
 
     final selectedTime =
@@ -475,6 +501,10 @@ class AdhanNotificationService {
   }
 
   static Future<void> cancelNightCompanionReminder() async {
+    await _enqueueScheduling(_cancelNightCompanionReminderInternal);
+  }
+
+  static Future<void> _cancelNightCompanionReminderInternal() async {
     if (kIsWeb) return;
     final now = DateTime.now();
     for (var dayOffset = -1; dayOffset < 10; dayOffset++) {
@@ -484,8 +514,13 @@ class AdhanNotificationService {
   }
 
   static Future<void> syncReadingReminder() async {
+    await _enqueueScheduling(_syncReadingReminderInternal);
+  }
+
+  static Future<void> _syncReadingReminderInternal() async {
     if (kIsWeb) return;
-    await cancelReadingReminder();
+    await _setTimezoneFromDeviceOrFallback();
+    await _cancelReadingReminderInternal();
     if (!LocalPreferencesService.readingReminderEnabled.value) return;
 
     final content = _activeReadingReminderContent();
@@ -515,6 +550,10 @@ class AdhanNotificationService {
   }
 
   static Future<void> cancelReadingReminder() async {
+    await _enqueueScheduling(_cancelReadingReminderInternal);
+  }
+
+  static Future<void> _cancelReadingReminderInternal() async {
     if (kIsWeb) return;
     final now = DateTime.now();
     for (var dayOffset = -1; dayOffset < 10; dayOffset++) {
@@ -613,46 +652,60 @@ class AdhanNotificationService {
   }
 
   static Future<void> cancelAll() async {
-    if (kIsWeb) return;
-    await _plugin.cancelAll();
+    await _enqueueScheduling(() async {
+      if (kIsWeb) return;
+      await _plugin.cancelAll();
+    });
   }
 
   static Future<void> syncSpiritualNotifications() async {
+    await _enqueueScheduling(_syncSpiritualNotificationsInternal);
+  }
+
+  static Future<void> _syncSpiritualNotificationsInternal() async {
     if (kIsWeb) return;
-    await cancelScheduledSpiritualNotifications();
+    await _setTimezoneFromDeviceOrFallback();
+    await _cancelScheduledSpiritualNotificationsInternal();
     if (!LocalPreferencesService.spiritualNotificationsEnabled.value) return;
 
-    final selectedTimes =
-        LocalPreferencesService.spiritualNotificationTimes.value;
-    if (selectedTimes.isEmpty) return;
+    final selectedTime = LocalPreferencesService.dailyReminderTime.value;
+    final slot = _spiritualSlotForTime(selectedTime);
 
     final now = DateTime.now();
     for (var dayOffset = 0; dayOffset < 7; dayOffset++) {
       final date = DateTime(now.year, now.month, now.day + dayOffset);
-      for (final slot in selectedTimes) {
-        final scheduledAt = _spiritualScheduledDateTime(date, slot);
-        if (!scheduledAt.isAfter(now)) continue;
-        final content = await _buildSpiritualNotificationContent(
-          date: date,
-          slot: slot,
-        );
-        await _schedule(
-          id: _spiritualNotificationIdFor(date, slot),
-          title: content.title,
-          body: content.body,
-          dateTime: scheduledAt,
-          withSound: false,
-          androidChannelId: _spiritualChannelId,
-          androidChannelName: _spiritualChannelName,
-          payload: jsonEncode(<String, String>{
-            'type': _spiritualPayloadType(slot),
-          }),
-        );
-      }
+      final scheduledAt = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        selectedTime.hour,
+        selectedTime.minute,
+      );
+      if (!scheduledAt.isAfter(now)) continue;
+      final content = await _buildSpiritualNotificationContent(
+        date: date,
+        slot: slot,
+      );
+      await _schedule(
+        id: _spiritualNotificationIdFor(date, slot),
+        title: content.title,
+        body: content.body,
+        dateTime: scheduledAt,
+        withSound: false,
+        androidChannelId: _spiritualChannelId,
+        androidChannelName: _spiritualChannelName,
+        payload: jsonEncode(<String, String>{
+          'type': _spiritualPayloadType(slot),
+        }),
+      );
     }
   }
 
   static Future<void> cancelScheduledSpiritualNotifications() async {
+    await _enqueueScheduling(_cancelScheduledSpiritualNotificationsInternal);
+  }
+
+  static Future<void> _cancelScheduledSpiritualNotificationsInternal() async {
     if (kIsWeb) return;
     final now = DateTime.now();
     for (var dayOffset = -1; dayOffset < 10; dayOffset++) {
@@ -797,9 +850,6 @@ class AdhanNotificationService {
       if (LocalPreferencesService.spiritualNotificationsEnabled.value) {
         await syncSpiritualNotifications();
       }
-      if (LocalPreferencesService.nightCompanionReminderEnabled.value) {
-        await syncNightCompanionReminder();
-      }
       if (LocalPreferencesService.readingReminderEnabled.value) {
         await syncReadingReminder();
       }
@@ -816,20 +866,7 @@ class AdhanNotificationService {
     }
 
     LocalPreferencesService.spiritualNotificationsEnabled.addListener(sync);
-    LocalPreferencesService.spiritualNotificationTimes.addListener(sync);
-    LocalPreferencesService.language.addListener(sync);
-  }
-
-  static void _attachNightCompanionPreferenceListeners() {
-    if (_nightCompanionListenersAttached) return;
-    _nightCompanionListenersAttached = true;
-
-    void sync() {
-      unawaited(syncNightCompanionReminder());
-    }
-
-    LocalPreferencesService.nightCompanionReminderEnabled.addListener(sync);
-    LocalPreferencesService.nightCompanionReminderTime.addListener(sync);
+    LocalPreferencesService.dailyReminderTime.addListener(sync);
     LocalPreferencesService.language.addListener(sync);
   }
 
@@ -952,18 +989,18 @@ class AdhanNotificationService {
     DateTime date, {
     required bool isMorning,
   }) {
-    final ymd = date.year * 10000 + date.month * 100 + date.day;
-    return ymd * 10 + (isMorning ? 6 : 7);
+    return _namespacedNotificationId(
+      date,
+      isMorning ? 11 : 12,
+    );
   }
 
   static int _nightCompanionNotificationIdFor(DateTime date) {
-    final ymd = date.year * 10000 + date.month * 100 + date.day;
-    return ymd * 10 + 8;
+    return _namespacedNotificationId(date, 13);
   }
 
   static int _readingReminderNotificationIdFor(DateTime date) {
-    final ymd = date.year * 10000 + date.month * 100 + date.day;
-    return ymd * 10 + 9;
+    return _namespacedNotificationId(date, 14);
   }
 
   static Future<void> _setTimezoneFromDeviceOrFallback() async {
@@ -1008,48 +1045,55 @@ class AdhanNotificationService {
   }
 
   static int _notificationIdFor(DateTime date, int prayerIndex) {
-    final ymd = date.year * 10000 + date.month * 100 + date.day;
-    return ymd * 10 + prayerIndex;
+    return _namespacedNotificationId(date, prayerIndex + 1);
   }
 
   static int _iftarNotificationIdFor(DateTime date, {required bool? isWarmup}) {
-    final ymd = date.year * 10000 + date.month * 100 + date.day;
     final suffix = switch (isWarmup) {
-      true => 6,
-      false => 7,
-      null => 8,
+      true => 21,
+      false => 22,
+      null => 23,
     };
-    return (ymd * 10 + suffix);
+    return _namespacedNotificationId(date, suffix);
   }
 
   static int _spiritualNotificationIdFor(
     DateTime date,
     SpiritualNotificationTime slot,
   ) {
-    final ymd = date.year * 10000 + date.month * 100 + date.day;
     final suffix = switch (slot) {
       SpiritualNotificationTime.morning => 31,
       SpiritualNotificationTime.midday => 32,
       SpiritualNotificationTime.night => 33,
     };
-    return ymd * 100 + suffix;
+    return _namespacedNotificationId(date, suffix);
   }
 
-  static DateTime _spiritualScheduledDateTime(
-    DateTime date,
-    SpiritualNotificationTime slot,
-  ) {
-    final (hour, minute) = switch (slot) {
-      SpiritualNotificationTime.morning => (8, 0),
-      SpiritualNotificationTime.midday => (13, 0),
-      SpiritualNotificationTime.night => (22, 30),
-    };
-    final base = DateTime(date.year, date.month, date.day, hour, minute);
-    final offsetMinutes =
-        (DailyContentService.stableHash('${_dateKey(date)}|${slot.name}') %
-                21) -
-            10;
-    return base.add(Duration(minutes: offsetMinutes));
+  static int _namespacedNotificationId(DateTime date, int slot) {
+    final ymd = date.year * 10000 + date.month * 100 + date.day;
+    return ymd * 100 + slot;
+  }
+
+  static Future<void> _enqueueScheduling(
+    Future<void> Function() action,
+  ) async {
+    final completer = Completer<void>();
+    _scheduleQueue = _scheduleQueue.then((_) async {
+      try {
+        await action();
+        completer.complete();
+      } catch (error, stackTrace) {
+        completer.completeError(error, stackTrace);
+        rethrow;
+      }
+    }).catchError((_) {});
+    return completer.future;
+  }
+
+  static SpiritualNotificationTime _spiritualSlotForTime(TimeOfDay time) {
+    if (time.hour < 11) return SpiritualNotificationTime.morning;
+    if (time.hour < 17) return SpiritualNotificationTime.midday;
+    return SpiritualNotificationTime.night;
   }
 
   static String _spiritualPayloadType(SpiritualNotificationTime slot) {
@@ -1081,10 +1125,10 @@ class AdhanNotificationService {
           locale: locale,
         );
         final reflection = isTurkish
-            ? 'Bu ayeti bugunun niyeti gibi tasiyabilirsin.'
+            ? 'Bu ayeti bugünün niyeti gibi taşıyabilirsin.'
             : 'Carry this verse gently with you today.';
         return _SpiritualNotificationContent(
-          title: isTurkish ? 'Sabaha bir ayet' : 'A verse for this morning',
+          title: isTurkish ? 'Sabaha bir ayet' : 'A verse for the morning',
           body: _joinNotificationParts([
             readable.isNotEmpty ? readable : ayah.turkishReadable,
             reflection,
@@ -1098,7 +1142,7 @@ class AdhanNotificationService {
           body: reminder.trim().isNotEmpty
               ? reminder.trim()
               : (isTurkish
-                  ? 'Bugunun icinde kisa bir durak ver.'
+                  ? 'Bugünün içinde kısa bir durak ver.'
                   : 'Pause for a brief spiritual reset today.'),
         );
       case SpiritualNotificationTime.night:
@@ -1110,7 +1154,7 @@ class AdhanNotificationService {
         if (useQuote) {
           final quote = await DailyContentService.getQuoteForDate(date, locale);
           return _SpiritualNotificationContent(
-            title: isTurkish ? 'Geceye bir dusunce' : 'A quiet thought tonight',
+            title: isTurkish ? 'Geceye bir düşünce' : 'A quiet thought for tonight',
             body: _joinNotificationParts([
               quote.text,
               if ((quote.source ?? '').trim().isNotEmpty) quote.source!.trim(),
@@ -1121,7 +1165,7 @@ class AdhanNotificationService {
         final body = hadith?.text.trim();
         return _SpiritualNotificationContent(
           title:
-              isTurkish ? 'Geceye bir hatirlatma' : 'A reflection for tonight',
+              isTurkish ? 'Geceye bir hatırlatma' : 'A reflection for tonight',
           body: _joinNotificationParts([
             if (body != null && body.isNotEmpty) body,
             if ((hadith?.source ?? '').trim().isNotEmpty)

@@ -1,5 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import 'local_data_recovery.dart';
+
 class SecureStorageService {
   SecureStorageService._();
 
@@ -10,6 +12,24 @@ class SecureStorageService {
 
   static Future<String?> read(String key) {
     return _storage.read(key: key);
+  }
+
+  static Future<String?> readSafely(String key) async {
+    try {
+      return await _storage.read(key: key);
+    } catch (error, stackTrace) {
+      LocalDataRecovery.log('secureRead:$key', error, stackTrace);
+      try {
+        await _storage.delete(key: key);
+      } catch (deleteError, deleteStackTrace) {
+        LocalDataRecovery.log(
+          'secureDeleteAfterReadFailure:$key',
+          deleteError,
+          deleteStackTrace,
+        );
+      }
+      return null;
+    }
   }
 
   static Future<void> write(String key, String value) {

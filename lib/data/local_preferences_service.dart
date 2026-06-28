@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'local_data_recovery.dart';
 import '../models/prayer_location.dart';
 import 'secure_storage_service.dart';
 
@@ -67,6 +69,8 @@ class LocalPreferencesService {
       'pref_spiritual_notifications_enabled';
   static const _keySpiritualNotificationTimes =
       'pref_spiritual_notification_times';
+  static const _keyDailyReminderHour = 'pref_daily_reminder_hour';
+  static const _keyDailyReminderMinute = 'pref_daily_reminder_minute';
   static const _keyMinimalMode = 'pref_minimal_mode';
   static const _keyNightCompanionReminderEnabled =
       'pref_night_companion_reminder_enabled';
@@ -110,6 +114,8 @@ class LocalPreferencesService {
   static final iftarLiveActivityTipSeen = ValueNotifier<bool>(false);
   static final spiritualNotificationsEnabled = ValueNotifier<bool>(false);
   static final minimalModeEnabled = ValueNotifier<bool>(false);
+  static final dailyReminderTime =
+      ValueNotifier<TimeOfDay>(const TimeOfDay(hour: 22, minute: 30));
   static final nightCompanionReminderEnabled = ValueNotifier<bool>(false);
   static final nightCompanionReminderTime =
       ValueNotifier<TimeOfDay>(const TimeOfDay(hour: 22, minute: 30));
@@ -132,46 +138,81 @@ class LocalPreferencesService {
     _prefs ??= await SharedPreferences.getInstance();
     // Hydrate notifiers from disk
     themeMode.value = _readThemeMode();
-    adhanEnabled.value = _prefs?.getBool(_keyAdhan) ?? false;
+    adhanEnabled.value = LocalDataRecovery.getBool(_prefs, _keyAdhan);
     await _prefs?.remove(_legacyKeyHaptics);
-    final rawLanguage = _prefs?.getString(_keyLanguage) ?? 'tr';
+    final rawLanguage =
+        LocalDataRecovery.getString(_prefs, _keyLanguage, fallback: 'tr') ??
+            'tr';
     final normalizedLanguage = _normalizeReleaseLanguage(rawLanguage);
     language.value = normalizedLanguage;
     if (rawLanguage != normalizedLanguage) {
       await _prefs?.setString(_keyLanguage, normalizedLanguage);
     }
-    ezanAlarmSoundEnabled.value = _prefs?.getBool(_keyEzanAlarmSound) ?? false;
+    ezanAlarmSoundEnabled.value =
+        LocalDataRecovery.getBool(_prefs, _keyEzanAlarmSound);
     iftarLiveActivityEnabled.value =
-        _prefs?.getBool(_keyIftarLiveActivity) ?? false;
+        LocalDataRecovery.getBool(_prefs, _keyIftarLiveActivity);
     nextPrayerWidgetEnabled.value =
-        _prefs?.getBool(_keyNextPrayerWidget) ?? false;
+        LocalDataRecovery.getBool(_prefs, _keyNextPrayerWidget);
     iftarPermissionPromptShown.value =
-        _prefs?.getBool(_keyIftarPermissionPromptShown) ?? false;
+        LocalDataRecovery.getBool(_prefs, _keyIftarPermissionPromptShown);
     iftarLiveActivityTipSeen.value =
-        _prefs?.getBool(_keyIftarLiveActivityTipSeen) ?? false;
-    spiritualNotificationsEnabled.value =
-        _prefs?.getBool(_keySpiritualNotificationsEnabled) ?? false;
-    minimalModeEnabled.value = _prefs?.getBool(_keyMinimalMode) ?? false;
-    nightCompanionReminderEnabled.value =
-        _prefs?.getBool(_keyNightCompanionReminderEnabled) ?? false;
-    final reminderHour = _prefs?.getInt(_keyNightCompanionReminderHour) ?? 22;
+        LocalDataRecovery.getBool(_prefs, _keyIftarLiveActivityTipSeen);
+    var spiritualNotificationsEnabledValue =
+        LocalDataRecovery.getBool(_prefs, _keySpiritualNotificationsEnabled);
+    minimalModeEnabled.value = LocalDataRecovery.getBool(_prefs, _keyMinimalMode);
+    final legacyNightCompanionReminderEnabled =
+        LocalDataRecovery.getBool(_prefs, _keyNightCompanionReminderEnabled);
+    if (!spiritualNotificationsEnabledValue &&
+        legacyNightCompanionReminderEnabled) {
+      spiritualNotificationsEnabledValue = true;
+      await _prefs?.setBool(_keySpiritualNotificationsEnabled, true);
+    }
+    spiritualNotificationsEnabled.value = spiritualNotificationsEnabledValue;
+    nightCompanionReminderEnabled.value = false;
+    if (legacyNightCompanionReminderEnabled) {
+      await _prefs?.setBool(_keyNightCompanionReminderEnabled, false);
+    }
+    final reminderHour =
+        LocalDataRecovery.getInt(_prefs, _keyNightCompanionReminderHour) ?? 22;
     final reminderMinute =
-        _prefs?.getInt(_keyNightCompanionReminderMinute) ?? 30;
+        LocalDataRecovery.getInt(_prefs, _keyNightCompanionReminderMinute) ??
+            30;
     nightCompanionReminderTime.value = TimeOfDay(
       hour: reminderHour.clamp(0, 23),
       minute: reminderMinute.clamp(0, 59),
     );
+    final storedDailyReminderHour =
+        LocalDataRecovery.getInt(_prefs, _keyDailyReminderHour);
+    final storedDailyReminderMinute =
+        LocalDataRecovery.getInt(_prefs, _keyDailyReminderMinute);
+    final resolvedDailyReminderHour = storedDailyReminderHour ?? reminderHour;
+    final resolvedDailyReminderMinute =
+        storedDailyReminderMinute ?? reminderMinute;
+    dailyReminderTime.value = TimeOfDay(
+      hour: resolvedDailyReminderHour.clamp(0, 23),
+      minute: resolvedDailyReminderMinute.clamp(0, 59),
+    );
+    if (storedDailyReminderHour == null || storedDailyReminderMinute == null) {
+      await _prefs?.setInt(_keyDailyReminderHour, dailyReminderTime.value.hour);
+      await _prefs?.setInt(
+        _keyDailyReminderMinute,
+        dailyReminderTime.value.minute,
+      );
+    }
     readingReminderEnabled.value =
-        _prefs?.getBool(_keyReadingReminderEnabled) ?? false;
-    final readingReminderHour = _prefs?.getInt(_keyReadingReminderHour) ?? 20;
+        LocalDataRecovery.getBool(_prefs, _keyReadingReminderEnabled);
+    final readingReminderHour =
+        LocalDataRecovery.getInt(_prefs, _keyReadingReminderHour) ?? 20;
     final readingReminderMinute =
-        _prefs?.getInt(_keyReadingReminderMinute) ?? 30;
+        LocalDataRecovery.getInt(_prefs, _keyReadingReminderMinute) ?? 30;
     readingReminderTime.value = TimeOfDay(
       hour: readingReminderHour.clamp(0, 23),
       minute: readingReminderMinute.clamp(0, 59),
     );
     companionFlowCompletedToday.value =
-        _prefs?.getString(_keyCompanionFlowCompletedDate) == _todayDateKey();
+        LocalDataRecovery.getString(_prefs, _keyCompanionFlowCompletedDate) ==
+            _todayDateKey();
     spiritualNotificationTimes.value = _readSpiritualNotificationTimes();
     prayerLocation.value = await _readPrayerLocation();
   }
@@ -179,8 +220,8 @@ class LocalPreferencesService {
   // Theme
 
   static ThemeMode _readThemeMode() {
-    final raw = _prefs?.getString(_keyTheme) ??
-        _prefs?.getString(_legacyKeyTheme) ??
+    final raw = LocalDataRecovery.getString(_prefs, _keyTheme) ??
+        LocalDataRecovery.getString(_prefs, _legacyKeyTheme) ??
         'light';
     switch (raw) {
       case 'light':
@@ -265,6 +306,12 @@ class LocalPreferencesService {
     nightCompanionReminderTime.value = value;
   }
 
+  static Future<void> setDailyReminderTime(TimeOfDay value) async {
+    await _prefs?.setInt(_keyDailyReminderHour, value.hour);
+    await _prefs?.setInt(_keyDailyReminderMinute, value.minute);
+    dailyReminderTime.value = value;
+  }
+
   static Future<void> setReadingReminderEnabled(bool value) async {
     await _prefs?.setBool(_keyReadingReminderEnabled, value);
     readingReminderEnabled.value = value;
@@ -276,21 +323,32 @@ class LocalPreferencesService {
     readingReminderTime.value = value;
   }
 
-  static Future<void> markCompanionFlowCompletedToday() async {
+  static Future<void> markReflectionCompletedToday() async {
     final todayKey = _todayDateKey();
     await _prefs?.setString(_keyCompanionFlowCompletedDate, todayKey);
+    companionFlowCompletedToday.value = true;
+  }
+
+  static Future<void> refreshCompanionFlowCompletedToday() async {
+    final completedDate =
+        LocalDataRecovery.getString(_prefs, _keyCompanionFlowCompletedDate);
+    companionFlowCompletedToday.value = completedDate == _todayDateKey();
+  }
+
+  static Future<void> markCompanionFlowCompletedToday() async {
+    await markReflectionCompletedToday();
     await _prefs?.setInt(
       _keyCompanionFlowCompletionCount,
       companionFlowCompletionCount + 1,
     );
-    companionFlowCompletedToday.value = true;
   }
 
   static Future<int> nextCompanionFlowDhikrIndex({
     int totalCount = 3,
   }) async {
     final safeTotal = totalCount <= 0 ? 1 : totalCount;
-    final lastIndex = _prefs?.getInt(_keyCompanionFlowDhikrIndex) ?? -1;
+    final lastIndex =
+        LocalDataRecovery.getInt(_prefs, _keyCompanionFlowDhikrIndex) ?? -1;
     final nextIndex = (lastIndex + 1) % safeTotal;
     await _prefs?.setInt(_keyCompanionFlowDhikrIndex, nextIndex);
     return nextIndex;
@@ -300,7 +358,8 @@ class LocalPreferencesService {
     int totalCount = 10,
   }) async {
     final safeTotal = totalCount <= 0 ? 1 : totalCount;
-    final lastIndex = _prefs?.getInt(_keyCompanionFlowVerseIndex) ?? -1;
+    final lastIndex =
+        LocalDataRecovery.getInt(_prefs, _keyCompanionFlowVerseIndex) ?? -1;
     final nextIndex = (lastIndex + 1) % safeTotal;
     await _prefs?.setInt(_keyCompanionFlowVerseIndex, nextIndex);
     return nextIndex;
@@ -320,21 +379,23 @@ class LocalPreferencesService {
   // Prayer location
   static Future<PrayerLocation> _readPrayerLocation() async {
     PrayerLocation? decoded;
-    final raw = _prefs?.getString(_keyPrayerLocation);
+    final raw = LocalDataRecovery.getString(_prefs, _keyPrayerLocation);
     if (raw != null && raw.isNotEmpty) {
       try {
         final json = jsonDecode(raw) as Map<String, dynamic>;
         decoded = PrayerLocation.fromJson(json);
-      } catch (_) {
+      } catch (error, stackTrace) {
+        LocalDataRecovery.log('prayerLocation:$_keyPrayerLocation', error, stackTrace);
+        await LocalDataRecovery.clearPrefsKeys(_prefs, [_keyPrayerLocation]);
         // Fall through to legacy keys.
       }
     }
 
     double? secureLat = _parseDouble(
-      await SecureStorageService.read(_secureKeyPrayerLat),
+      await SecureStorageService.readSafely(_secureKeyPrayerLat),
     );
     double? secureLng = _parseDouble(
-      await SecureStorageService.read(_secureKeyPrayerLng),
+      await SecureStorageService.readSafely(_secureKeyPrayerLng),
     );
 
     var migratedFromLegacy = false;
@@ -349,8 +410,8 @@ class LocalPreferencesService {
       migratedFromLegacy = true;
     }
 
-    final legacyLat = _prefs?.getDouble(_keyPrayerLat);
-    final legacyLng = _prefs?.getDouble(_keyPrayerLng);
+    final legacyLat = LocalDataRecovery.getDouble(_prefs, _keyPrayerLat);
+    final legacyLng = LocalDataRecovery.getDouble(_prefs, _keyPrayerLng);
     if ((secureLat == null || secureLng == null) &&
         legacyLat != null &&
         legacyLng != null) {
@@ -391,8 +452,8 @@ class LocalPreferencesService {
       );
     }
 
-    final modeRaw = _prefs?.getString(_keyPrayerLocationMode);
-    final cityName = _prefs?.getString(_keyPrayerCityName);
+    final modeRaw = LocalDataRecovery.getString(_prefs, _keyPrayerLocationMode);
+    final cityName = LocalDataRecovery.getString(_prefs, _keyPrayerCityName);
     if (modeRaw == null &&
         cityName == null &&
         secureLat == null &&
@@ -452,10 +513,14 @@ class LocalPreferencesService {
   }
 
   static RamadanSuggestionSelection? getRamadanSuggestionSelection() {
-    final dateKey = _prefs?.getString(_keyRamadanSuggestionsDate);
-    final duaIndex = _prefs?.getInt(_keyRamadanSuggestionsDuaIndex);
-    final ayetIndex = _prefs?.getInt(_keyRamadanSuggestionsAyetIndex);
-    final iyilikIndex = _prefs?.getInt(_keyRamadanSuggestionsIyilikIndex);
+    final dateKey =
+        LocalDataRecovery.getString(_prefs, _keyRamadanSuggestionsDate);
+    final duaIndex =
+        LocalDataRecovery.getInt(_prefs, _keyRamadanSuggestionsDuaIndex);
+    final ayetIndex =
+        LocalDataRecovery.getInt(_prefs, _keyRamadanSuggestionsAyetIndex);
+    final iyilikIndex =
+        LocalDataRecovery.getInt(_prefs, _keyRamadanSuggestionsIyilikIndex);
     if (dateKey == null ||
         duaIndex == null ||
         ayetIndex == null ||
@@ -483,7 +548,7 @@ class LocalPreferencesService {
   }
 
   static String? getRamadanSuggestionFavoritesRaw() {
-    return _prefs?.getString(_keyRamadanSuggestionsFavorites);
+    return LocalDataRecovery.getString(_prefs, _keyRamadanSuggestionsFavorites);
   }
 
   static Future<void> setRamadanSuggestionFavoritesRaw(String value) async {
@@ -491,7 +556,7 @@ class LocalPreferencesService {
   }
 
   static String? getTodayCardFavoritesRaw() {
-    return _prefs?.getString(_keyTodayCardFavorites);
+    return LocalDataRecovery.getString(_prefs, _keyTodayCardFavorites);
   }
 
   static Future<void> setTodayCardFavoritesRaw(String value) async {
@@ -499,7 +564,7 @@ class LocalPreferencesService {
   }
 
   static String? getAsmaFavoritesRaw() {
-    return _prefs?.getString(_keyAsmaFavorites);
+    return LocalDataRecovery.getString(_prefs, _keyAsmaFavorites);
   }
 
   static Future<void> setAsmaFavoritesRaw(String value) async {
@@ -507,7 +572,10 @@ class LocalPreferencesService {
   }
 
   static String? getHomeDailyRotationStateRaw(String rotationKey) {
-    return _prefs?.getString('$_keyHomeDailyRotationPrefix$rotationKey');
+    return LocalDataRecovery.getString(
+      _prefs,
+      '$_keyHomeDailyRotationPrefix$rotationKey',
+    );
   }
 
   static Future<void> setHomeDailyRotationStateRaw(
@@ -522,7 +590,7 @@ class LocalPreferencesService {
       'tr' => _keyHomeHadithRotationTr,
       _ => _keyHomeHadithRotationEn,
     };
-    return _prefs?.getString(key);
+    return LocalDataRecovery.getString(_prefs, key);
   }
 
   static Future<void> setHadithRotationStateRaw(
@@ -536,22 +604,23 @@ class LocalPreferencesService {
     await _prefs?.setString(key, value);
   }
 
-  static int get appOpenCount => _prefs?.getInt(_keyAppOpenCount) ?? 0;
+  static int get appOpenCount =>
+      LocalDataRecovery.getInt(_prefs, _keyAppOpenCount) ?? 0;
 
   static int get companionFlowCompletionCount =>
-      _prefs?.getInt(_keyCompanionFlowCompletionCount) ?? 0;
+      LocalDataRecovery.getInt(_prefs, _keyCompanionFlowCompletionCount) ?? 0;
 
   static int get feedbackPromptActiveDays =>
-      _prefs?.getInt(_keyFeedbackPromptActiveDays) ?? 0;
+      LocalDataRecovery.getInt(_prefs, _keyFeedbackPromptActiveDays) ?? 0;
 
   static DateTime? get lastFeedbackPromptShownAt =>
       _readDateTime(_keyFeedbackPromptLastShownAt);
 
   static bool get feedbackPromptCompleted =>
-      _prefs?.getBool(_keyFeedbackPromptCompleted) ?? false;
+      LocalDataRecovery.getBool(_prefs, _keyFeedbackPromptCompleted);
 
   static bool get feedbackPromptRated =>
-      _prefs?.getBool(_keyFeedbackPromptRated) ?? false;
+      LocalDataRecovery.getBool(_prefs, _keyFeedbackPromptRated);
 
   static Future<int> incrementAppOpenCount() async {
     final nextValue = appOpenCount + 1;
@@ -615,9 +684,12 @@ class LocalPreferencesService {
   }
 
   static DateTime? _readDateTime(String key) {
-    final raw = _prefs?.getString(key);
+    final raw = LocalDataRecovery.getString(_prefs, key);
     if (raw == null || raw.isEmpty) return null;
-    return DateTime.tryParse(raw);
+    final parsed = DateTime.tryParse(raw);
+    if (parsed != null) return parsed;
+    unawaited(LocalDataRecovery.clearPrefsKeys(_prefs, [key]));
+    return null;
   }
 
   static String _normalizeReleaseLanguage(String lang) {
@@ -627,14 +699,17 @@ class LocalPreferencesService {
   }
 
   static List<SpiritualNotificationTime> _readSpiritualNotificationTimes() {
-    final raw = _prefs?.getStringList(_keySpiritualNotificationTimes);
+    final raw = LocalDataRecovery.getStringList(
+      _prefs,
+      _keySpiritualNotificationTimes,
+    );
     if (raw == null || raw.isEmpty) {
       return const [
         SpiritualNotificationTime.morning,
         SpiritualNotificationTime.night,
       ];
     }
-    return _normalizeSpiritualNotificationTimes(
+    final normalized = _normalizeSpiritualNotificationTimes(
       raw
           .map((value) {
             for (final item in SpiritualNotificationTime.values) {
@@ -645,6 +720,10 @@ class LocalPreferencesService {
           .whereType<SpiritualNotificationTime>()
           .toList(growable: false),
     );
+    if (normalized.length != raw.length) {
+      unawaited(setSpiritualNotificationTimes(normalized));
+    }
+    return normalized;
   }
 
   static List<SpiritualNotificationTime> _normalizeSpiritualNotificationTimes(
@@ -668,7 +747,8 @@ class LocalPreferencesService {
 
   static Future<void> _recordFeedbackPromptActiveDayIfNeeded() async {
     final todayKey = _todayDateKey();
-    final lastActiveDate = _prefs?.getString(_keyFeedbackPromptLastActiveDate);
+    final lastActiveDate =
+        LocalDataRecovery.getString(_prefs, _keyFeedbackPromptLastActiveDate);
     if (lastActiveDate == todayKey) return;
     await _prefs?.setString(_keyFeedbackPromptLastActiveDate, todayKey);
     final nextCount = feedbackPromptActiveDays + 1;

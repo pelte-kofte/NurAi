@@ -16,13 +16,15 @@ class TasbihScreen extends StatefulWidget {
 class _TasbihScreenState extends State<TasbihScreen>
     with TickerProviderStateMixin {
   static const String _keyDhikr = 'tasbih_dhikr_key';
+  static const String _keyCustomDhikrs = 'tasbih_custom_dhikr_items';
   static const String _keyCustomDhikr = 'tasbih_custom_dhikr';
   static const String _keyGoal = 'tasbih_goal_value';
   static const String _keyCount = 'tasbih_current_count';
   static const String _keyAsmaId = 'tasbih_asma_id';
   static const String _keyAsmaMode = 'tasbih_asma_mode';
   static const String _asmaDhikrKey = 'asmaul_husna';
-  static const String _customDhikrKey = 'custom';
+  static const String _customDhikrActionKey = 'custom_action';
+  static const String _customDhikrPrefix = 'custom:';
   static const int _customGoalValue = -1;
 
   static const List<_DhikrOption> _baseDhikrs = [
@@ -34,7 +36,7 @@ class _TasbihScreenState extends State<TasbihScreen>
   ];
 
   String _selectedDhikrKey = _baseDhikrs.first.key;
-  String _customDhikr = '';
+  List<String> _customDhikrs = const [];
   List<AsmaulHusnaName> _asmaNames = const [];
   String? _selectedAsmaId;
   _AsmaTasbihMode _asmaMode = _AsmaTasbihMode.single;
@@ -44,6 +46,7 @@ class _TasbihScreenState extends State<TasbihScreen>
   late final AnimationController _tapPulseController;
   late final AnimationController _completionGlowController;
   bool _didShowCompletionMessage = false;
+  StateSetter? _settingsSheetSetState;
 
   @override
   void initState() {
@@ -73,17 +76,19 @@ class _TasbihScreenState extends State<TasbihScreen>
           key: _asmaDhikrKey,
           label: S.get('tasbih_dhikr_asmaul_husna'),
         ),
+        ..._customDhikrs.map(
+          (dhikr) => _DhikrOption(
+            key: _customKeyFor(dhikr),
+            label: dhikr,
+          ),
+        ),
         _DhikrOption(
-          key: _customDhikrKey,
-          label: _customDhikr.trim().isEmpty
-              ? '${S.get('custom')}...'
-              : _customDhikr.trim(),
+          key: _customDhikrActionKey,
+          label: S.get('custom'),
         ),
       ];
 
-  List<int> get _goalOptions => _isAsmaMemorizationMode
-      ? const [33, 99]
-      : const [33, 99, 100, _customGoalValue];
+  List<int> get _goalOptions => const [33, 99, 100, _customGoalValue];
 
   String get _languageCode => AsmaulHusnaService.currentLanguageCode();
 
@@ -92,9 +97,17 @@ class _TasbihScreenState extends State<TasbihScreen>
   bool get _isAsmaMemorizationMode =>
       _isAsmaSelected && _asmaMode == _AsmaTasbihMode.memorization;
 
+  bool get _isCustomDhikrSelected =>
+      _selectedDhikrKey.startsWith(_customDhikrPrefix);
+
+  String? get _selectedCustomDhikr {
+    if (!_isCustomDhikrSelected) return null;
+    return _selectedDhikrKey.substring(_customDhikrPrefix.length);
+  }
+
   int get _effectiveGoal {
     if (!_isAsmaMemorizationMode || _asmaNames.isEmpty) return _goal;
-    return _goal.clamp(1, _asmaNames.length);
+    return _asmaNames.length.clamp(1, _asmaNames.length);
   }
 
   int get _activeAsmaIndex {
@@ -129,10 +142,8 @@ class _TasbihScreenState extends State<TasbihScreen>
           ? asma.localizedName(_languageCode)
           : asma.localizedDhikr(_languageCode);
     }
-    if (_selectedDhikrKey == _customDhikrKey) {
-      return _customDhikr.trim().isEmpty
-          ? '${S.get('custom')}...'
-          : _customDhikr;
+    if (_isCustomDhikrSelected) {
+      return _selectedCustomDhikr ?? S.get('custom');
     }
     return _baseDhikrs
         .firstWhere(
@@ -179,8 +190,20 @@ class _TasbihScreenState extends State<TasbihScreen>
   Future<void> _loadState() async {
     final prefs = await SharedPreferences.getInstance();
     final asmaNames = await AsmaulHusnaService.getAllNames();
-    final dhikr = prefs.getString(_keyDhikr) ?? _baseDhikrs.first.key;
-    final customDhikr = prefs.getString(_keyCustomDhikr) ?? '';
+    final storedDhikr = prefs.getString(_keyDhikr) ?? _baseDhikrs.first.key;
+    final legacyCustomDhikr = prefs.getString(_keyCustomDhikr)?.trim() ?? '';
+    final storedCustomDhikrs = prefs
+            .getStringList(_keyCustomDhikrs)
+            ?.map((item) => item.trim())
+            .where((item) => item.isNotEmpty)
+            .toSet()
+            .toList() ??
+        <String>[];
+    if (legacyCustomDhikr.isNotEmpty &&
+        !storedCustomDhikrs.contains(legacyCustomDhikr)) {
+      storedCustomDhikrs.add(legacyCustomDhikr);
+    }
+    storedCustomDhikrs.sort();
     final goal = prefs.getInt(_keyGoal) ?? 33;
     final current = prefs.getInt(_keyCount) ?? 0;
     final savedAsmaId = prefs.getString(_keyAsmaId);
@@ -189,9 +212,16 @@ class _TasbihScreenState extends State<TasbihScreen>
     final hasDhikrOption = [
       ..._baseDhikrs.map((item) => item.key),
       _asmaDhikrKey,
-      _customDhikrKey,
-    ].contains(dhikr);
-    final selectedDhikr = hasDhikrOption ? dhikr : _baseDhikrs.first.key;
+      ...storedCustomDhikrs.map(_customKeyFor),
+      _customDhikrActionKey,
+      'custom',
+    ].contains(storedDhikr);
+    var selectedDhikr = hasDhikrOption ? storedDhikr : _baseDhikrs.first.key;
+    if (selectedDhikr == 'custom') {
+      selectedDhikr = legacyCustomDhikr.isNotEmpty
+          ? _customKeyFor(legacyCustomDhikr)
+          : _baseDhikrs.first.key;
+    }
     final asmaMode = _AsmaTasbihModeParser.fromStorage(savedAsmaMode);
     final normalizedGoal = _normalizeGoal(
       value: goal <= 0 ? 33 : goal,
@@ -201,10 +231,10 @@ class _TasbihScreenState extends State<TasbihScreen>
     );
 
     if (!mounted) return;
-    setState(() {
+    _updateState(() {
       _asmaNames = asmaNames;
       _selectedDhikrKey = selectedDhikr;
-      _customDhikr = customDhikr;
+      _customDhikrs = storedCustomDhikrs;
       _asmaMode = asmaMode;
       _goal = normalizedGoal;
       _currentCount = current.clamp(0, normalizedGoal);
@@ -218,7 +248,8 @@ class _TasbihScreenState extends State<TasbihScreen>
   Future<void> _saveState() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyDhikr, _selectedDhikrKey);
-    await prefs.setString(_keyCustomDhikr, _customDhikr);
+    await prefs.setStringList(_keyCustomDhikrs, _customDhikrs);
+    await prefs.setString(_keyCustomDhikr, _selectedCustomDhikr ?? '');
     await prefs.setInt(_keyGoal, _goal);
     await prefs.setInt(_keyCount, _currentCount);
     await prefs.setString(_keyAsmaMode, _asmaMode.storageValue);
@@ -287,18 +318,23 @@ class _TasbihScreenState extends State<TasbihScreen>
 
   Future<void> _onDhikrChanged(String? key) async {
     if (key == null) return;
-    if (key == _customDhikrKey) {
+    if (key == _customDhikrActionKey) {
       final custom = await _askCustomDhikr();
       if (custom == null) return;
-      setState(() {
-        _customDhikr = custom;
-        _selectedDhikrKey = _customDhikrKey;
+      _updateState(() {
+        _customDhikrs = {..._customDhikrs, custom}.toList()..sort();
+        _selectedDhikrKey = _customKeyFor(custom);
         _asmaMode = _AsmaTasbihMode.single;
+        _goal = _normalizeGoal(
+          value: _goal,
+          isAsmaMemorizationMode: false,
+          asmaCount: _asmaNames.length,
+        );
       });
       await _saveState();
       return;
     }
-    setState(() {
+    _updateState(() {
       _selectedDhikrKey = key;
       if (key == _asmaDhikrKey &&
           _selectedAsmaId == null &&
@@ -323,7 +359,7 @@ class _TasbihScreenState extends State<TasbihScreen>
 
   Future<void> _onAsmaModeChanged(_AsmaTasbihMode mode) async {
     if (_asmaMode == mode) return;
-    setState(() {
+    _updateState(() {
       _asmaMode = mode;
       _currentCount = 0;
       _goal = _normalizeGoal(
@@ -340,7 +376,7 @@ class _TasbihScreenState extends State<TasbihScreen>
 
   Future<void> _onAsmaChanged(String? id) async {
     if (id == null) return;
-    setState(() => _selectedAsmaId = id);
+    _updateState(() => _selectedAsmaId = id);
     await _saveState();
   }
 
@@ -350,7 +386,7 @@ class _TasbihScreenState extends State<TasbihScreen>
         _asmaNames.indexWhere((item) => item.id == _selectedAsmaId);
     final nextIndex =
         currentIndex < 0 ? 0 : (currentIndex + 1) % _asmaNames.length;
-    setState(() => _selectedAsmaId = _asmaNames[nextIndex].id);
+    _updateState(() => _selectedAsmaId = _asmaNames[nextIndex].id);
     await _saveState();
   }
 
@@ -359,7 +395,7 @@ class _TasbihScreenState extends State<TasbihScreen>
     if (value == _customGoalValue) {
       final custom = await _askCustomGoal();
       if (custom == null) return;
-      setState(() {
+      _updateState(() {
         _goal = _normalizeGoal(
           value: custom,
           isAsmaMemorizationMode: _isAsmaMemorizationMode,
@@ -372,7 +408,7 @@ class _TasbihScreenState extends State<TasbihScreen>
       await _saveState();
       return;
     }
-    setState(() {
+    _updateState(() {
       _goal = _normalizeGoal(
         value: value,
         isAsmaMemorizationMode: _isAsmaMemorizationMode,
@@ -386,7 +422,7 @@ class _TasbihScreenState extends State<TasbihScreen>
   }
 
   Future<String?> _askCustomDhikr() async {
-    final controller = TextEditingController(text: _customDhikr);
+    final controller = TextEditingController(text: _selectedCustomDhikr ?? '');
     final value = await showDialog<String>(
       context: context,
       builder: (ctx) {
@@ -397,7 +433,7 @@ class _TasbihScreenState extends State<TasbihScreen>
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           title: Text(
-            S.get('tasbih_custom_dhikr'),
+            S.get('tasbih_custom_dhikr_input_title'),
             style: TextStyle(
               fontFamily: 'Merriweather',
               fontSize: 18,
@@ -422,8 +458,12 @@ class _TasbihScreenState extends State<TasbihScreen>
               child: Text(S.get('cancel')),
             ),
             TextButton(
-              onPressed: () => Navigator.of(ctx).pop(controller.text.trim()),
-              child: Text(S.get('save')),
+              onPressed: () {
+                final trimmed = controller.text.trim();
+                if (trimmed.isEmpty) return;
+                Navigator.of(ctx).pop(trimmed);
+              },
+              child: Text(S.get('tasbih_save_dhikr')),
             ),
           ],
         );
@@ -503,8 +543,7 @@ class _TasbihScreenState extends State<TasbihScreen>
   }) {
     final normalized = value <= 0 ? 33 : value;
     if (!isAsmaMemorizationMode || asmaCount <= 0) return normalized;
-    final memorizationGoal = normalized <= 33 ? 33 : 99;
-    return memorizationGoal.clamp(1, asmaCount);
+    return 99.clamp(1, asmaCount);
   }
 
   @override
@@ -538,21 +577,34 @@ class _TasbihScreenState extends State<TasbihScreen>
           ? Center(
               child: CircularProgressIndicator(color: colorScheme.primary),
             )
-          : Padding(
-              padding: const EdgeInsets.fromLTRB(22, 12, 22, 24),
-              child: Column(
-                children: [
-                  _buildFocusHeader(completed: completed),
-                  const SizedBox(height: 18),
-                  Expanded(
-                    child: _buildCountingSanctuary(
-                      completed: completed,
-                      remaining: remaining,
+          : DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: RadialGradient(
+                  center: const Alignment(0, -0.18),
+                  radius: 1.08,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.92),
+                    const Color(0xFFF7F1E8),
+                    theme.scaffoldBackgroundColor,
+                  ],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(22, 12, 22, 24),
+                child: Column(
+                  children: [
+                    _buildFocusHeader(completed: completed),
+                    const SizedBox(height: 18),
+                    Expanded(
+                      child: _buildCountingSanctuary(
+                        completed: completed,
+                        remaining: remaining,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  _buildUtilityBar(),
-                ],
+                    const SizedBox(height: 16),
+                    _buildUtilityBar(),
+                  ],
+                ),
               ),
             ),
     );
@@ -780,6 +832,34 @@ class _TasbihScreenState extends State<TasbihScreen>
                       ),
                     ),
                   ),
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Center(
+                        child: Container(
+                          width: 242,
+                          height: 242,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                Colors.white.withValues(
+                                  alpha: completed
+                                      ? 0.26 +
+                                          (_completionGlowController.value *
+                                              0.08)
+                                      : 0.22 +
+                                          (_tapPulseController.value * 0.05),
+                                ),
+                                Colors.white.withValues(alpha: 0.04),
+                                Colors.transparent,
+                              ],
+                              stops: const [0.0, 0.54, 1.0],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 20,
@@ -844,6 +924,14 @@ class _TasbihScreenState extends State<TasbihScreen>
                                       blurRadius: completed ? 28 : 20,
                                       offset: const Offset(0, 10),
                                     ),
+                                    BoxShadow(
+                                      color: Colors.white.withValues(
+                                        alpha: completed ? 0.42 : 0.34,
+                                      ),
+                                      blurRadius: 2,
+                                      spreadRadius: -1,
+                                      offset: const Offset(0, -2),
+                                    ),
                                   ],
                                 ),
                               ),
@@ -874,7 +962,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                                         textAlign: TextAlign.center,
                                         style: TextStyle(
                                           fontFamily: 'Inter',
-                                          fontSize: completed ? 82 : 78,
+                                          fontSize: completed ? 88 : 84,
                                           fontWeight: FontWeight.w700,
                                           color: completed
                                               ? const Color(0xFF203432)
@@ -884,21 +972,22 @@ class _TasbihScreenState extends State<TasbihScreen>
                                         ),
                                       ),
                                     ),
-                                    const SizedBox(height: 12),
+                                    const SizedBox(height: 14),
                                     Text(
                                       '$_currentCount / $_effectiveGoal',
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         fontFamily: 'Inter',
-                                        fontSize: 16,
+                                        fontSize: 17,
                                         fontWeight: FontWeight.w600,
                                         color: completed
                                             ? AppColors.turquoiseAccentStrong
                                                 .withValues(alpha: 0.9)
                                             : const Color(0xFF6B625A),
+                                        letterSpacing: 0.1,
                                       ),
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: 10),
                                     Text(
                                       completed
                                           ? (_isAsmaMemorizationMode
@@ -915,6 +1004,7 @@ class _TasbihScreenState extends State<TasbihScreen>
                                         color: completed
                                             ? AppColors.emphasisAccent
                                             : const Color(0xFF877D73),
+                                        letterSpacing: completed ? 0.15 : -0.2,
                                       ),
                                     ),
                                   ],
@@ -984,28 +1074,50 @@ class _TasbihScreenState extends State<TasbihScreen>
       showDragHandle: true,
       isScrollControlled: true,
       builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              20,
-              8,
-              20,
-              24 + MediaQuery.of(context).viewInsets.bottom,
-            ),
-            child: SingleChildScrollView(
-              child: _buildSelectors(),
-            ),
-          ),
+        return StatefulBuilder(
+          builder: (context, modalSetState) {
+            _settingsSheetSetState = modalSetState;
+            return SafeArea(
+              child: Padding(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  8,
+                  20,
+                  24 + MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: SingleChildScrollView(
+                  child: _buildSelectors(),
+                ),
+              ),
+            );
+          },
         );
       },
     );
+    _settingsSheetSetState = null;
     if (mounted) {
       setState(() {});
     }
   }
 
+  void _updateState(VoidCallback fn) {
+    if (mounted) {
+      setState(fn);
+    } else {
+      fn();
+    }
+    final modalSetState = _settingsSheetSetState;
+    if (modalSetState != null) {
+      modalSetState(() {});
+    }
+  }
+
+  String _customKeyFor(String value) => '$_customDhikrPrefix$value';
+
   Widget _buildSelectors() {
     final colorScheme = Theme.of(context).colorScheme;
+    final isAsmaSelected = _isAsmaSelected;
+    final isAsmaMemorizationMode = _isAsmaMemorizationMode;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -1066,7 +1178,7 @@ class _TasbihScreenState extends State<TasbihScreen>
               ),
             ],
           ),
-          if (_isAsmaSelected && _asmaNames.isNotEmpty) ...[
+          if (isAsmaSelected && _asmaNames.isNotEmpty) ...[
             const SizedBox(height: 12),
             Text(
               S.get('tasbih_asma_mode'),
@@ -1077,21 +1189,24 @@ class _TasbihScreenState extends State<TasbihScreen>
               ),
             ),
             const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
+            Row(
               children: [
-                _buildAsmaModeChip(
-                  mode: _AsmaTasbihMode.single,
-                  label: S.get('tasbih_asma_mode_single'),
+                Expanded(
+                  child: _buildAsmaModeChip(
+                    mode: _AsmaTasbihMode.single,
+                    label: S.get('tasbih_asma_mode_single'),
+                  ),
                 ),
-                _buildAsmaModeChip(
-                  mode: _AsmaTasbihMode.memorization,
-                  label: S.get('tasbih_asma_mode_memorization'),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildAsmaModeChip(
+                    mode: _AsmaTasbihMode.memorization,
+                    label: S.get('tasbih_asma_mode_memorization'),
+                  ),
                 ),
               ],
             ),
-            if (!_isAsmaMemorizationMode) ...[
+            if (!isAsmaMemorizationMode) ...[
               const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
@@ -1137,39 +1252,42 @@ class _TasbihScreenState extends State<TasbihScreen>
               ),
             ],
           ],
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  S.get('tasbih_goal'),
-                  style: const TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    color: Color(0xFF7A7068),
+          if (!isAsmaMemorizationMode) ...[
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    S.get('tasbih_goal'),
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      color: Color(0xFF7A7068),
+                    ),
                   ),
                 ),
-              ),
-              _buildDropdownField<int>(
-                value: _goalOptions.contains(_goal) ? _goal : _customGoalValue,
-                items: _goalOptions
-                    .map(
-                      (e) => DropdownMenuItem<int>(
-                        value: e,
-                        child: Text(
-                          e == _customGoalValue ? S.get('custom') : '$e',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            color: colorScheme.onSurface,
+                _buildDropdownField<int>(
+                  value:
+                      _goalOptions.contains(_goal) ? _goal : _customGoalValue,
+                  items: _goalOptions
+                      .map(
+                        (e) => DropdownMenuItem<int>(
+                          value: e,
+                          child: Text(
+                            e == _customGoalValue ? S.get('custom') : '$e',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              color: colorScheme.onSurface,
+                            ),
                           ),
                         ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: _onGoalChanged,
-              ),
-            ],
-          ),
+                      )
+                      .toList(),
+                  onChanged: _onGoalChanged,
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -1254,24 +1372,40 @@ class _TasbihScreenState extends State<TasbihScreen>
     required _AsmaTasbihMode mode,
     required String label,
   }) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: _asmaMode == mode,
-      onSelected: (_) => _onAsmaModeChanged(mode),
-      showCheckmark: false,
-      selectedColor: AppColors.emphasisAccent.withValues(alpha: 0.16),
-      side: BorderSide(
-        color: _asmaMode == mode
-            ? AppColors.emphasisAccent.withValues(alpha: 0.24)
-            : Theme.of(context).colorScheme.outline,
-      ),
-      labelStyle: TextStyle(
-        fontFamily: 'Inter',
-        fontSize: 13,
-        fontWeight: _asmaMode == mode ? FontWeight.w600 : FontWeight.w500,
-        color: _asmaMode == mode
-            ? AppColors.emphasisAccent
-            : Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72),
+    final selected = _asmaMode == mode;
+    return InkWell(
+      onTap: () => _onAsmaModeChanged(mode),
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.emphasisAccent.withValues(alpha: 0.18)
+              : Colors.white.withValues(alpha: 0.75),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected
+                ? AppColors.emphasisAccent.withValues(alpha: 0.38)
+                : const Color(0xFFE4DBD0),
+            width: selected ? 1.4 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 13,
+            fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
+            color: selected
+                ? AppColors.emphasisAccent
+                : Theme.of(context).colorScheme.onSurface.withValues(
+                      alpha: 0.74,
+                    ),
+          ),
+        ),
       ),
     );
   }

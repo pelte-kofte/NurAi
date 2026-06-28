@@ -69,9 +69,7 @@ struct NextPrayerProvider: TimelineProvider {
     let entry = NextPrayerEntry(date: now, payload: payload)
 
     var nextRefresh: Date
-    if payload?.isWidgetEnabled != true {
-      nextRefresh = now.addingTimeInterval(disabledRefreshInterval)
-    } else if let nextPrayer = resolveNextPrayer(payload: payload, now: now) {
+    if let nextPrayer = resolveNextPrayer(payload: payload, now: now) {
       let boundaryRefresh = nextPrayer.date.addingTimeInterval(rolloverDriftSeconds)
       let safetyRefresh = now.addingTimeInterval(safetyRefreshInterval)
       nextRefresh = min(boundaryRefresh, safetyRefresh)
@@ -163,8 +161,8 @@ struct NextPrayerWidgetView: View {
   @Environment(\.colorScheme) private var colorScheme
   let entry: NextPrayerEntry
 
-  private var isEnabled: Bool {
-    entry.payload?.isWidgetEnabled == true
+  private var hasPayload: Bool {
+    entry.payload != nil
   }
 
   private var hasPrayerSourceData: Bool {
@@ -221,14 +219,14 @@ struct NextPrayerWidgetView: View {
 
   var body: some View {
     Group {
-      if !isEnabled {
-        disabledView
-      } else if targetDate != nil {
+      if targetDate != nil {
         contentView
       } else if hasPrayerSourceData {
         refreshingView
-      } else {
+      } else if hasPayload {
         missingDataView
+      } else {
+        loadingView
       }
     }
     .widgetURL(URL(string: "duaya://adhanTimes"))
@@ -236,26 +234,26 @@ struct NextPrayerWidgetView: View {
   }
 
   @ViewBuilder
-  private var disabledView: some View {
+  private var loadingView: some View {
     switch family {
     case .accessoryInline:
       HStack(spacing: 4) {
-        Image(systemName: "moon.stars.fill")
+        Image(systemName: "arrow.clockwise")
           .font(.caption2)
-        Text(localized("next_prayer_widget_enable_short", fallback: "Enable in Settings", languageCode: payloadLanguageCode))
+        Text(localized("widget_loading", fallback: "Loading...", languageCode: payloadLanguageCode))
           .font(.caption2)
           .lineLimit(1)
       }
     case .accessoryCircular:
       ZStack {
-        Image(systemName: "moon.stars.fill")
+        Image(systemName: "arrow.clockwise")
           .font(.caption)
           .foregroundStyle(.secondary)
       }
     case .accessoryRectangular:
       VStack(alignment: .leading, spacing: 6) {
-        accessoryHeader(icon: "moon.stars.fill")
-        Text(localized("next_prayer_widget_enable_short", fallback: "Enable in Settings", languageCode: payloadLanguageCode))
+        accessoryHeader(icon: "arrow.clockwise")
+        Text(localized("widget_loading", fallback: "Loading...", languageCode: payloadLanguageCode))
           .font(.system(size: 13, weight: .medium))
           .lineLimit(2)
           .minimumScaleFactor(0.8)
@@ -263,10 +261,10 @@ struct NextPrayerWidgetView: View {
       }
     default:
       VStack(spacing: 8) {
-        Image(systemName: "moon.stars.fill")
+        Image(systemName: "arrow.clockwise")
           .font(.system(size: 20, weight: .semibold))
           .foregroundStyle(clayAccent)
-        Text(localized("next_prayer_widget_enable_short", fallback: "Enable in Settings", languageCode: payloadLanguageCode))
+        Text(localized("widget_loading", fallback: "Loading...", languageCode: payloadLanguageCode))
           .font(.caption.weight(.semibold))
           .multilineTextAlignment(.center)
           .lineLimit(2)
@@ -681,7 +679,7 @@ struct NextPrayerWidgetView: View {
 }
 
 private func resolveNextPrayer(payload: NextPrayerPayload?, now: Date) -> ResolvedPrayer? {
-  guard let payload, payload.isWidgetEnabled == true else { return nil }
+  guard let payload else { return nil }
 
   let threshold = now.addingTimeInterval(rolloverDriftSeconds)
   let fromUpcoming: [ResolvedPrayer] =

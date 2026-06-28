@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/ads/ad_service.dart';
@@ -8,6 +9,7 @@ import 'data/bookmark_service.dart';
 import 'data/collective_reading_service.dart';
 import 'data/adhan_notification_service.dart';
 import 'data/local_preferences_service.dart';
+import 'data/local_data_recovery.dart';
 import 'data/user_profile_service.dart';
 import 'data/notes_service.dart';
 import 'data/daily_content_service.dart';
@@ -36,11 +38,29 @@ void _startupLog(String message) {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   _startupLog('main started');
-  await LocalPreferencesService.init();
-  await LocalPreferencesService.incrementAppOpenCount();
+  await _runRecoverableStartupStep(
+    'LocalPreferencesService.init',
+    LocalPreferencesService.init,
+  );
+  await _runRecoverableStartupStep(
+    'LocalPreferencesService.incrementAppOpenCount',
+    LocalPreferencesService.incrementAppOpenCount,
+  );
   _startupLog('local preferences initialized');
   runApp(const NurAIApp());
   _startupLog('runApp called');
+}
+
+Future<void> _runRecoverableStartupStep(
+  String label,
+  Future<Object?> Function() action,
+) async {
+  try {
+    await action();
+  } catch (error, stackTrace) {
+    LocalDataRecovery.log(label, error, stackTrace);
+    _startupLog('$label recovered after local-data failure');
+  }
 }
 
 /// Root widget for NurAI app.
@@ -214,7 +234,6 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
     }
     if (state == AppLifecycleState.resumed && _isAppReady) {
       AdhanNotificationService.syncSpiritualNotifications();
-      AdhanNotificationService.syncNightCompanionReminder();
     }
     if (SeasonalConfig.isRamadanSeason &&
         state == AppLifecycleState.resumed &&
@@ -223,6 +242,7 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
       IftarLiveActivityService.maybeStartOrUpdate();
     }
     if (state == AppLifecycleState.resumed && _isAppReady) {
+      unawaited(LocalPreferencesService.refreshCompanionFlowCompletedToday());
       WidgetPayloadService.writeNextPrayerPayload();
     }
   }
@@ -231,34 +251,79 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
     _startupLog('app loader start');
     await Future.wait([
       QuranData.instance.load(),
-      ReadingProgressService.init(),
-      BookmarkService.init(),
-      CollectiveReadingService.init(),
-      NotesService.init(),
+      _runRecoverableStartupStep(
+        'ReadingProgressService.init',
+        ReadingProgressService.init,
+      ),
+      _runRecoverableStartupStep('BookmarkService.init', BookmarkService.init),
+      _runRecoverableStartupStep(
+        'CollectiveReadingService.init',
+        CollectiveReadingService.init,
+      ),
+      _runRecoverableStartupStep('NotesService.init', NotesService.init),
       DailyContentService.init(),
-      AyahNotesService.init(),
-      LocalPreferencesService.init(),
-      AdService.initialize(),
-      PremiumService.init(),
-      UserProfileService.init(),
-      AdhanNotificationService.init(),
-      IftarLiveActivityService.init(),
+      _runRecoverableStartupStep(
+        'AyahNotesService.init',
+        AyahNotesService.init,
+      ),
+      _runRecoverableStartupStep(
+        'LocalPreferencesService.init',
+        LocalPreferencesService.init,
+      ),
+      _runRecoverableStartupStep('AdService.initialize', AdService.initialize),
+      _runRecoverableStartupStep('PremiumService.init', PremiumService.init),
+      _runRecoverableStartupStep(
+        'UserProfileService.init',
+        UserProfileService.init,
+      ),
+      _runRecoverableStartupStep(
+        'AdhanNotificationService.init',
+        AdhanNotificationService.init,
+      ),
+      _runRecoverableStartupStep(
+        'IftarLiveActivityService.init',
+        IftarLiveActivityService.init,
+      ),
     ]);
     _startupLog('core services initialized');
-    await AdhanNotificationService.syncSpiritualNotifications();
-    await AdhanNotificationService.syncNightCompanionReminder();
-    await AdhanNotificationService.syncReadingReminder();
-    await PrayerLocationService.hydrateCurrentLocationIfPermitted();
+    await _runRecoverableStartupStep(
+      'AdhanNotificationService.syncSpiritualNotifications',
+      AdhanNotificationService.syncSpiritualNotifications,
+    );
+    await _runRecoverableStartupStep(
+      'AdhanNotificationService.cancelNightCompanionReminder',
+      AdhanNotificationService.cancelNightCompanionReminder,
+    );
+    await _runRecoverableStartupStep(
+      'AdhanNotificationService.syncReadingReminder',
+      AdhanNotificationService.syncReadingReminder,
+    );
+    await _runRecoverableStartupStep(
+      'PrayerLocationService.hydrateCurrentLocationIfPermitted',
+      PrayerLocationService.hydrateCurrentLocationIfPermitted,
+    );
     _startupLog('prayer location hydration completed');
     // Re-schedule prayer notifications on every app launch.
     if (LocalPreferencesService.adhanEnabled.value) {
-      AdhanNotificationService.rescheduleForToday();
+      await _runRecoverableStartupStep(
+        'AdhanNotificationService.rescheduleForToday',
+        AdhanNotificationService.rescheduleForToday,
+      );
     }
     if (SeasonalConfig.isRamadanSeason) {
-      await IftarLiveActivityService.scheduleIftarNotifications();
-      await IftarLiveActivityService.maybeStartOrUpdate();
+      await _runRecoverableStartupStep(
+        'IftarLiveActivityService.scheduleIftarNotifications',
+        IftarLiveActivityService.scheduleIftarNotifications,
+      );
+      await _runRecoverableStartupStep(
+        'IftarLiveActivityService.maybeStartOrUpdate',
+        IftarLiveActivityService.maybeStartOrUpdate,
+      );
     }
-    await WidgetPayloadService.writeNextPrayerPayload();
+    await _runRecoverableStartupStep(
+      'WidgetPayloadService.writeNextPrayerPayload',
+      WidgetPayloadService.writeNextPrayerPayload,
+    );
     _startupLog('app loader completed');
   }
 

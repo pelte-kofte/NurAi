@@ -1,5 +1,8 @@
+import 'dart:async';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/reading_context.dart';
+import 'local_data_recovery.dart';
 
 /// Stores and retrieves reading progress locally.
 /// Supports multiple reading contexts (explore, hatim, juz)
@@ -18,31 +21,38 @@ class ReadingProgressService {
   /// Initialize SharedPreferences and migrate legacy data.
   static Future<void> init() async {
     _prefs ??= await SharedPreferences.getInstance();
-    _migrateLegacyKeys();
+    await _migrateLegacyKeys();
   }
 
   /// Migrate old single-progress keys to global + explore context.
-  static void _migrateLegacyKeys() {
+  static Future<void> _migrateLegacyKeys() async {
     if (_prefs == null) return;
-    final hasLegacy = _prefs!.containsKey(_legacySurah);
-    final hasGlobal = _prefs!.containsKey(_globalSurah);
+    final hasLegacy = LocalDataRecovery.containsKey(_prefs, _legacySurah);
+    final hasGlobal = LocalDataRecovery.containsKey(_prefs, _globalSurah);
 
     if (hasLegacy && !hasGlobal) {
-      final surah = _prefs!.getInt(_legacySurah)!;
-      final ayah = _prefs!.getInt(_legacyAyah) ?? 1;
+      final surah = LocalDataRecovery.getInt(_prefs, _legacySurah);
+      final ayah = LocalDataRecovery.getInt(_prefs, _legacyAyah) ?? 1;
+      if (surah == null || surah <= 0) {
+        await LocalDataRecovery.clearPrefsKeys(
+          _prefs,
+          [_legacySurah, _legacyAyah],
+        );
+        return;
+      }
 
       // Copy to global
-      _prefs!.setInt(_globalSurah, surah);
-      _prefs!.setInt(_globalAyah, ayah);
+      await _prefs!.setInt(_globalSurah, surah);
+      await _prefs!.setInt(_globalAyah, ayah);
 
       // Copy to explore context
       const explore = ReadingContext.explore();
-      _prefs!.setInt(explore.surahKey, surah);
-      _prefs!.setInt(explore.ayahKey, ayah);
+      await _prefs!.setInt(explore.surahKey, surah);
+      await _prefs!.setInt(explore.ayahKey, ayah);
 
       // Remove legacy keys
-      _prefs!.remove(_legacySurah);
-      _prefs!.remove(_legacyAyah);
+      await _prefs!.remove(_legacySurah);
+      await _prefs!.remove(_legacyAyah);
     }
   }
 
@@ -56,17 +66,17 @@ class ReadingProgressService {
 
   /// Get global last-read surah. Returns null if no history.
   static int? getGlobalLastSurah() {
-    return _prefs?.getInt(_globalSurah);
+    return LocalDataRecovery.getInt(_prefs, _globalSurah);
   }
 
   /// Get global last-read ayah. Returns null if no history.
   static int? getGlobalLastAyah() {
-    return _prefs?.getInt(_globalAyah);
+    return LocalDataRecovery.getInt(_prefs, _globalAyah);
   }
 
   /// Returns true if any global reading history exists.
   static bool hasGlobalHistory() {
-    return _prefs?.containsKey(_globalSurah) ?? false;
+    return LocalDataRecovery.containsKey(_prefs, _globalSurah);
   }
 
   // ── Context-specific progress ────────────────────────────
@@ -89,10 +99,17 @@ class ReadingProgressService {
 
   /// Get progress for a specific context. Returns null if none.
   static ({int surah, int ayah})? getContextProgress(ReadingContext ctx) {
-    final surah = _prefs?.getInt(ctx.surahKey);
-    final ayah = _prefs?.getInt(ctx.ayahKey);
-    if (surah == null) return null;
-    return (surah: surah, ayah: ayah ?? 1);
+    final surah = LocalDataRecovery.getInt(_prefs, ctx.surahKey);
+    final ayah = LocalDataRecovery.getInt(_prefs, ctx.ayahKey) ?? 1;
+    if (surah == null || surah <= 0) {
+      if (LocalDataRecovery.containsKey(_prefs, ctx.surahKey)) {
+        unawaited(
+          LocalDataRecovery.clearPrefsKeys(_prefs, [ctx.surahKey, ctx.ayahKey]),
+        );
+      }
+      return null;
+    }
+    return (surah: surah, ayah: ayah <= 0 ? 1 : ayah);
   }
 
   /// Returns the last ayah for [targetSurah] inside the given context.
@@ -105,7 +122,7 @@ class ReadingProgressService {
 
   /// Returns true if a specific context has saved progress.
   static bool hasContextProgress(ReadingContext ctx) {
-    return _prefs?.containsKey(ctx.surahKey) ?? false;
+    return LocalDataRecovery.containsKey(_prefs, ctx.surahKey);
   }
 
   static Future<void> resetHatimProgress() async {

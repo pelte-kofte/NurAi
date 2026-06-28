@@ -1,5 +1,3 @@
-import 'dart:ui' as ui;
-
 import 'package:flutter/material.dart';
 
 import '../../data/premium_service.dart';
@@ -22,6 +20,8 @@ class _PremiumPageState extends State<PremiumPage> {
   static const Color _premiumSecondary = Color(0xFF7EA08C);
   static const Color _premiumGlow = Color(0xFFF0E4C8);
   static const Color _premiumInk = Color(0xFF314744);
+  static const String _premiumHeroBgAsset =
+      'assets/images/home_cards/guide_card_bg.PNG';
 
   @override
   void initState() {
@@ -90,8 +90,6 @@ class _PremiumPageState extends State<PremiumPage> {
                                         const SizedBox(height: 16),
                                       ],
                                       _buildTierComparisonCard(cardDecoration),
-                                      const SizedBox(height: 16),
-                                      _buildFeatureCard(cardDecoration),
                                       const SizedBox(height: 24),
                                       if (isPremium)
                                         _buildStatusCard(
@@ -310,15 +308,7 @@ class _PremiumPageState extends State<PremiumPage> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFFF8F1E6),
-            Color(0xFFE5EEE8),
-            Color(0xFFDCE8E1),
-          ],
-        ),
+        color: const Color(0xFFF8F1E6),
         borderRadius: BorderRadius.circular(28),
         border: Border.all(
           color: _premiumSecondary.withValues(alpha: 0.14),
@@ -340,15 +330,51 @@ class _PremiumPageState extends State<PremiumPage> {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Opacity(
-                      opacity: 0.1,
-                      child: ImageFiltered(
-                        imageFilter:
-                            ui.ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-                        child: Image.asset(
-                          'assets/images/mosque_bg.png',
-                          fit: BoxFit.cover,
-                          alignment: Alignment.topCenter,
+                    Image.asset(
+                      _premiumHeroBgAsset,
+                      fit: BoxFit.cover,
+                      alignment: Alignment.center,
+                    ),
+                    Align(
+                      alignment: Alignment.topLeft,
+                      child: FractionallySizedBox(
+                        widthFactor: 0.76,
+                        heightFactor: 1,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                              colors: [
+                                const Color(0xFFF7F0E4).withValues(alpha: 0.92),
+                                const Color(0xFFF7F0E4).withValues(alpha: 0.78),
+                                const Color(0xFFF7F0E4).withValues(alpha: 0.40),
+                                const Color(0xFFF7F0E4).withValues(alpha: 0.0),
+                              ],
+                              stops: const [0.0, 0.38, 0.72, 1.0],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.topLeft,
+                      child: FractionallySizedBox(
+                        widthFactor: 0.62,
+                        heightFactor: 0.62,
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            gradient: RadialGradient(
+                              center: const Alignment(-0.78, -0.64),
+                              radius: 1.08,
+                              colors: [
+                                const Color(0xFF2B4038).withValues(alpha: 0.20),
+                                const Color(0xFF2B4038).withValues(alpha: 0.10),
+                                const Color(0xFF2B4038).withValues(alpha: 0.0),
+                              ],
+                              stops: const [0.0, 0.48, 1.0],
+                            ),
+                          ),
                         ),
                       ),
                     ),
@@ -358,11 +384,19 @@ class _PremiumPageState extends State<PremiumPage> {
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
                           colors: [
-                            Colors.white.withValues(alpha: 0.18),
-                            const Color(0xFFF8F1E6).withValues(alpha: 0.72),
-                            const Color(0xFFF8F1E6).withValues(alpha: 0.96),
+                            Colors.white.withValues(alpha: 0.06),
+                            Colors.white.withValues(alpha: 0.03),
+                            Colors.white.withValues(alpha: 0.02),
                           ],
                         ),
+                      ),
+                    ),
+                    Opacity(
+                      opacity: 0.03,
+                      child: Image.asset(
+                        fit: BoxFit.cover,
+                        _premiumHeroBgAsset,
+                        alignment: Alignment.center,
                       ),
                     ),
                   ],
@@ -481,6 +515,13 @@ class _PremiumPageState extends State<PremiumPage> {
                     fontWeight: FontWeight.w400,
                     color: _premiumInk,
                     height: 1.15,
+                    shadows: [
+                      Shadow(
+                        color: Color(0x38212E29),
+                        blurRadius: 16,
+                        offset: Offset(0, 3),
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -492,6 +533,24 @@ class _PremiumPageState extends State<PremiumPage> {
                     fontWeight: FontWeight.w400,
                     color: mutedTextColor,
                     height: 1.6,
+                    shadows: const [
+                      Shadow(
+                        color: Color(0x30212E29),
+                        blurRadius: 12,
+                        offset: Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  S.get('premium_social_proof'),
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w500,
+                    color: mutedTextColor,
+                    height: 1.45,
                   ),
                 ),
                 const SizedBox(height: 22),
@@ -523,68 +582,6 @@ class _PremiumPageState extends State<PremiumPage> {
                 ),
               ],
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFeatureCard(BoxDecoration cardDecoration) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final benefits = [
-      (
-        icon: Icons.notifications_active_rounded,
-        label: S.get('premium_benefit_more_reminders'),
-      ),
-      (
-        icon: Icons.insights_rounded,
-        label: S.get('premium_benefit_spiritual_progress'),
-      ),
-      (
-        icon: Icons.spa_rounded,
-        label: S.get('premium_focus_value'),
-      ),
-    ];
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: cardDecoration,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            S.get('premium_benefits_title'),
-            style: TextStyle(
-              fontFamily: 'Merriweather',
-              fontSize: 19,
-              fontWeight: FontWeight.w400,
-              color: colorScheme.onSurface,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            S.get('premium_benefits_subtitle'),
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 13,
-              fontWeight: FontWeight.w400,
-              color: colorScheme.onSurface.withValues(alpha: 0.68),
-              height: 1.45,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Wrap(
-            spacing: 12,
-            runSpacing: 12,
-            children: benefits
-                .map(
-                  (benefit) => _PremiumBenefitCard(
-                    icon: benefit.icon,
-                    label: benefit.label,
-                  ),
-                )
-                .toList(),
           ),
         ],
       ),
@@ -623,26 +620,35 @@ class _PremiumPageState extends State<PremiumPage> {
           ),
           const SizedBox(height: 14),
           Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Expanded(
-                child: _TierColumn(
-                  title: S.get('premium_compare_free_title'),
-                  rows: [
-                    S.get('premium_compare_free_notifications'),
-                    S.get('premium_compare_free_focus'),
-                  ],
-                  highlighted: false,
+                child: SizedBox(
+                  height: 214,
+                  child: _TierColumn(
+                    title: S.get('premium_compare_free_title'),
+                    rows: [
+                      S.get('premium_compare_free_notifications'),
+                      S.get('premium_compare_free_tasbih'),
+                      S.get('premium_compare_free_focus'),
+                    ],
+                    highlighted: false,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
-                child: _TierColumn(
-                  title: S.get('premium_compare_premium_title'),
-                  rows: [
-                    S.get('premium_compare_premium_notifications'),
-                    S.get('premium_compare_premium_focus'),
-                  ],
-                  highlighted: true,
+                child: SizedBox(
+                  height: 214,
+                  child: _TierColumn(
+                    title: S.get('premium_compare_premium_title'),
+                    rows: [
+                      S.get('premium_compare_premium_notifications'),
+                      S.get('premium_compare_premium_tasbih'),
+                      S.get('premium_compare_premium_focus'),
+                    ],
+                    highlighted: true,
+                  ),
                 ),
               ),
             ],
@@ -753,70 +759,6 @@ class _PremiumPageState extends State<PremiumPage> {
 
   String _trustLine(BuildContext context) {
     return S.get('premium_cancel_anytime');
-  }
-}
-
-class _PremiumBenefitCard extends StatelessWidget {
-  const _PremiumBenefitCard({
-    required this.icon,
-    required this.label,
-  });
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final cardWidth = (MediaQuery.of(context).size.width - 72) / 2;
-
-    return Container(
-      width: cardWidth.clamp(140.0, 220.0),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.84),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: colorScheme.shadow.withValues(alpha: 0.05),
-            blurRadius: 18,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: _PremiumPageState._premiumPrimary.withValues(alpha: 0.10),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            alignment: Alignment.center,
-            child: Icon(
-              icon,
-              size: 20,
-              color: _PremiumPageState._premiumPrimary,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            label,
-            maxLines: 2,
-            overflow: TextOverflow.fade,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: _PremiumPageState._premiumInk,
-              height: 1.35,
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }
 
@@ -937,37 +879,52 @@ class _TierColumn extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          for (final row in rows) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Padding(
-                  padding: const EdgeInsets.only(top: 2),
-                  child: Icon(
-                    highlighted ? Icons.check_rounded : Icons.remove_rounded,
-                    size: 15,
-                    color: highlighted
-                        ? _PremiumPageState._premiumPrimary
-                        : colorScheme.onSurface.withValues(alpha: 0.5),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    row,
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w500,
-                      color: colorScheme.onSurface.withValues(alpha: 0.78),
-                      height: 1.35,
+                for (var index = 0; index < rows.length; index++) ...[
+                  Expanded(
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Icon(
+                            highlighted
+                                ? Icons.check_rounded
+                                : Icons.remove_rounded,
+                            size: 15,
+                            color: highlighted
+                                ? _PremiumPageState._premiumPrimary
+                                : colorScheme.onSurface.withValues(alpha: 0.5),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            rows[index],
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 12.5,
+                              fontWeight: FontWeight.w500,
+                              color: colorScheme.onSurface.withValues(
+                                alpha: 0.78,
+                              ),
+                              height: 1.35,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
+                  if (index != rows.length - 1) const SizedBox(height: 10),
+                ],
               ],
             ),
-            const SizedBox(height: 10),
-          ],
+          ),
         ],
       ),
     );

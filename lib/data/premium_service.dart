@@ -8,6 +8,7 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'adhan_notification_service.dart';
+import 'local_data_recovery.dart';
 import 'local_preferences_service.dart';
 import '../l10n/app_strings.dart';
 
@@ -56,9 +57,9 @@ class PremiumService {
 
     try {
       _prefs ??= await SharedPreferences.getInstance();
-      isPremium.value = _prefs?.getBool(_keyEntitled) ?? false;
+      isPremium.value = LocalDataRecovery.getBool(_prefs, _keyEntitled);
       _log(
-        'init: storedPremium=${_prefs?.getBool(_keyEntitled)} '
+        'init: storedPremium=${LocalDataRecovery.getBool(_prefs, _keyEntitled)} '
         'effectivePremium=${isPremium.value}',
       );
 

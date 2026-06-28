@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'local_data_recovery.dart';
+
 /// Represents a Juz (cüz) range in the Quran.
 class JuzRange {
   final int juzNumber;
@@ -61,8 +63,9 @@ class CollectiveReadingService {
   }
 
   static Future<void> _migrateLegacyCompletionIfNeeded() async {
-    final legacyCompleted = _prefs?.getBool(_legacyCompletedKey) ?? false;
-    final selectedJuz = _prefs?.getInt(_selectedJuzKey);
+    final legacyCompleted =
+        LocalDataRecovery.getBool(_prefs, _legacyCompletedKey);
+    final selectedJuz = LocalDataRecovery.getInt(_prefs, _selectedJuzKey);
     if (!legacyCompleted || selectedJuz == null) {
       await _prefs?.remove(_legacyCompletedKey);
       return;
@@ -89,7 +92,7 @@ class CollectiveReadingService {
 
   /// Get the currently selected juz number, or null if none.
   static int? getSelectedJuz() {
-    final value = _prefs?.getInt(_selectedJuzKey);
+    final value = LocalDataRecovery.getInt(_prefs, _selectedJuzKey);
     return value;
   }
 
@@ -112,7 +115,12 @@ class CollectiveReadingService {
   }
 
   static List<int> getCompletedJuzs() {
-    final raw = _prefs?.getStringList(_completedJuzsKey) ?? const [];
+    final raw = LocalDataRecovery.getStringList(
+          _prefs,
+          _completedJuzsKey,
+          fallback: const <String>[],
+        ) ??
+        const <String>[];
     final values = raw
         .map(int.tryParse)
         .whereType<int>()
@@ -157,7 +165,12 @@ class CollectiveReadingService {
   }
 
   static Set<String> _getReadAyahs() {
-    final list = _prefs?.getStringList(_readAyahsKey) ?? [];
+    final list = LocalDataRecovery.getStringList(
+          _prefs,
+          _readAyahsKey,
+          fallback: const <String>[],
+        ) ??
+        const <String>[];
     return list.toSet();
   }
 

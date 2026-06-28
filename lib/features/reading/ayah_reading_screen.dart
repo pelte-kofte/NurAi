@@ -434,11 +434,11 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
           Positioned.fill(
             child: IgnorePointer(
               child: Opacity(
-                opacity: 0.18,
+                opacity: 0.28,
                 child: Transform.scale(
-                  scale: 1.08,
+                  scale: 1.05,
                   child: ImageFiltered(
-                    imageFilter: ui.ImageFilter.blur(sigmaX: 1.6, sigmaY: 1.6),
+                    imageFilter: ui.ImageFilter.blur(sigmaX: 1.1, sigmaY: 1.1),
                     child: Image.asset(
                       'assets/images/mosque_bg_2.png',
                       fit: BoxFit.cover,
@@ -457,8 +457,8 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      theme.scaffoldBackgroundColor.withValues(alpha: 0.08),
-                      theme.scaffoldBackgroundColor.withValues(alpha: 0.16),
+                      theme.scaffoldBackgroundColor.withValues(alpha: 0.03),
+                      theme.scaffoldBackgroundColor.withValues(alpha: 0.09),
                     ],
                   ),
                 ),

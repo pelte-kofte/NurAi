@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/note_entry.dart';
+import 'local_data_recovery.dart';
 import 'secure_storage_service.dart';
 
 class AyahNotesService {
@@ -88,7 +89,7 @@ class AyahNotesService {
   }
 
   static Future<void> _loadFromSecureOrMigrate() async {
-    final secureRaw = await SecureStorageService.read(_secureNotesMapKey);
+    final secureRaw = await SecureStorageService.readSafely(_secureNotesMapKey);
     final secureMap = _decodeRawMap(secureRaw);
 
     if (secureMap.isNotEmpty) {
@@ -106,12 +107,12 @@ class AyahNotesService {
   }
 
   static Map<String, String> _readLegacyMapFromPrefs() {
-    final keys = _prefs?.getKeys() ?? const <String>{};
+    final keys = LocalDataRecovery.getKeys(_prefs);
     final mapped = <String, String>{};
 
     for (final key in keys) {
       if (!key.startsWith(_prefix)) continue;
-      final raw = _prefs?.getString(key);
+      final raw = LocalDataRecovery.getString(_prefs, key);
       final note = NoteEntry.fromRawJson(raw);
       if (note == null || note.text.trim().isEmpty) continue;
       mapped[key] = note.toRawJson();
@@ -148,7 +149,7 @@ class AyahNotesService {
   }
 
   static Future<void> _clearLegacyPrefsNotes() async {
-    final keys = _prefs?.getKeys() ?? const <String>{};
+    final keys = LocalDataRecovery.getKeys(_prefs);
     for (final key in keys) {
       if (!key.startsWith(_prefix)) continue;
       await _prefs?.remove(key);

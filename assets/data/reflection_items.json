@@ -1,0 +1,128 @@
+[
+  {
+    "type": "ayah",
+    "arabic": "أَلَا بِذِكْرِ اللَّهِ تَطْمَئِنُّ الْقُلُوبُ",
+    "tr": {
+      "text": "Kalpler ancak Allah’ı anmakla huzur bulur.",
+      "source": "Ra’d Suresi 13:28",
+      "guidance": "Bu sözün içinde birkaç saniye kal."
+    },
+    "en": {
+      "text": "Surely in the remembrance of Allah do hearts find rest.",
+      "source": "Surah Ar-Ra’d 13:28",
+      "guidance": "Stay with these words for a few seconds."
+    }
+  },
+  {
+    "type": "ayah",
+    "arabic": "وَهُوَ مَعَكُمْ أَيْنَ مَا كُنْتُمْ",
+    "tr": {
+      "text": "Nerede olursanız olun, O sizinle beraberdir.",
+      "source": "Hadid Suresi 57:4",
+      "guidance": "Bu yakınlığı düşün."
+    },
+    "en": {
+      "text": "He is with you wherever you are.",
+      "source": "Surah Al-Hadid 57:4",
+      "guidance": "Reflect on this nearness."
+    }
+  },
+  {
+    "type": "ayah",
+    "arabic": "إِنَّ مَعَ الْعُسْرِ يُسْرًا",
+    "tr": {
+      "text": "Muhakkak zorlukla beraber bir kolaylık vardır.",
+      "source": "İnşirah Suresi 94:6",
+      "guidance": "Bu vaadin kalbinde nasıl yankılandığını fark et."
+    },
+    "en": {
+      "text": "Surely with hardship comes ease.",
+      "source": "Surah Ash-Sharh 94:6",
+      "guidance": "Notice how this promise lands in your heart."
+    }
+  },
+  {
+    "type": "dhikr",
+    "arabic": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+    "tr": {
+      "transliteration": "Subhanallahi ve bihamdihi",
+      "meaning": "Allah her türlü eksiklikten uzaktır; hamd O’nadır.",
+      "guidance": "İçinden tekrar et."
+    },
+    "en": {
+      "transliteration": "Subhanallahi wa bihamdihi",
+      "meaning": "Glory be to Allah, and praise belongs to Him.",
+      "guidance": "Repeat it quietly within."
+    }
+  },
+  {
+    "type": "dhikr",
+    "arabic": "حَسْبِيَ اللَّهُ لَا إِلَٰهَ إِلَّا هُوَ",
+    "tr": {
+      "transliteration": "Hasbiyallahu la ilahe illa Hu",
+      "meaning": "Allah bana yeter. O’ndan başka ilah yoktur.",
+      "guidance": "Bu teslimiyette birkaç saniye kal."
+    },
+    "en": {
+      "transliteration": "Hasbiyallahu la ilaha illa Hu",
+      "meaning": "Allah is sufficient for me. There is no god but Him.",
+      "guidance": "Stay with this surrender for a few seconds."
+    }
+  },
+  {
+    "type": "dhikr",
+    "arabic": "لَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ",
+    "tr": {
+      "transliteration": "La havle ve la kuvvete illa billah",
+      "meaning": "Güç ve kuvvet ancak Allah’tandır.",
+      "guidance": "Bu sözü kalbinde yavaşça taşı."
+    },
+    "en": {
+      "transliteration": "La hawla wa la quwwata illa billah",
+      "meaning": "There is no power nor strength except through Allah.",
+      "guidance": "Carry these words gently in your heart."
+    }
+  },
+  {
+    "type": "asma",
+    "arabic": "اللَّطِيفُ",
+    "tr": {
+      "name": "El-Latif",
+      "meaning": "İncelikle kuşatan, yumuşaklıkla ulaştıran.",
+      "guidance": "Bu anlamı düşün."
+    },
+    "en": {
+      "name": "Al-Latif",
+      "meaning": "The One who reaches with subtle mercy.",
+      "guidance": "Reflect on this meaning."
+    }
+  },
+  {
+    "type": "asma",
+    "arabic": "السَّلَامُ",
+    "tr": {
+      "name": "Es-Selam",
+      "meaning": "Esenliğin ve selametin kaynağı olan.",
+      "guidance": "Kalbinin hangi yerine sükunet gerektiğini fark et."
+    },
+    "en": {
+      "name": "As-Salam",
+      "meaning": "The Source of peace and wholeness.",
+      "guidance": "Notice where your heart needs peace."
+    }
+  },
+  {
+    "type": "asma",
+    "arabic": "الرَّحْمَٰنُ",
+    "tr": {
+      "name": "Er-Rahman",
+      "meaning": "Rahmeti bütün varlığı kuşatan.",
+      "guidance": "Bu rahmetin sana da değdiğini hatırla."
+    },
+    "en": {
+      "name": "Ar-Rahman",
+      "meaning": "The One whose mercy embraces all creation.",
+      "guidance": "Remember that this mercy reaches you too."
+    }
+  }
+]

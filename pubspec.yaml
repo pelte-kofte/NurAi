@@ -1,7 +1,7 @@
 name: nurai
 description: A calm, mobile-first Islamic app for Quran reading and reflection.
 publish_to: 'none'
-version: 1.0.4+52
+version: 1.0.6+63
 
 environment:
   sdk: ^3.0.0
@@ -27,6 +27,7 @@ dependencies:
   path_provider: ^2.1.5
   package_info_plus: ^9.0.0
   device_info_plus: ^10.1.2
+  flutter_svg: ^2.0.7
   in_app_review: ^2.0.9
   in_app_purchase: ^3.2.0
   google_mobile_ads: ^5.3.1
@@ -65,7 +66,17 @@ flutter:
     - assets/splash/
     - assets/images/mosque_bg.png
     - assets/images/mosque_bg_2.png
-    - assets/images/ornaments/
+    - assets/images/home_cards/
+    - assets/images/home_cards/verse_hero_bg.PNG
+    - assets/images/home_cards/quran_card_bg.PNG
+    - assets/images/home_cards/stay_with_me_bg.PNG
+    - assets/images/home_cards/asma_card_bg.PNG
+    - assets/images/home_cards/guide_card_bg.PNG
+    - assets/images/prayer/prayer_hero_bg.png
+    - assets/images/reflection/
+    - assets/images/companion/
+    - assets/images/calligraphy/
+    - assets/data/
     - assets/quran/final/quran_ar_tr.json
     - assets/quran/meta/surahs.json
     - assets/quran/meta/juz_ranges.json

@@ -13,6 +13,8 @@ import '../../models/prayer_location.dart';
 import '../../theme/app_theme.dart';
 import 'city_picker_screen.dart';
 
+const _prayerHeroBackgroundAsset = 'assets/images/prayer/prayer_hero_bg.png';
+
 class AdhanTimesScreen extends StatefulWidget {
   const AdhanTimesScreen({super.key});
 
@@ -175,136 +177,101 @@ class _AdhanTimesScreenState extends State<AdhanTimesScreen> {
     final bool hasCoordinates = location.hasCoordinates;
     final bool isCurrentLocationActive =
         location.mode == PrayerLocationMode.current && hasCoordinates;
+    final statusLabel = isCurrentLocationActive
+        ? S.get('prayer_times_location_active')
+        : S.get('prayer_times_use_current');
+    final detailLabel = _inlineMessage ??
+        (hasCoordinates
+            ? _selectedLocationLabel(location)
+            : S.get('prayer_times_location_required'));
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Colors.white.withValues(alpha: 0.86),
-            const Color(0xFFF8F1E8).withValues(alpha: 0.82),
-          ],
+    return InkWell(
+      onTap: isCurrentLocationActive ? null : _useCurrentLocation,
+      borderRadius: BorderRadius.circular(18),
+      child: Ink(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white.withValues(alpha: 0.76),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFF0E7DB)),
         ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFEAE1D7)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0A8F7E6E),
-            blurRadius: 18,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF3ECE3),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                alignment: Alignment.center,
-                child: const Icon(
-                  Icons.place_outlined,
-                  size: 18,
-                  color: Color(0xFF756455),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      S.get('location'),
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF8A8077),
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 3),
-                    Text(
-                      _selectedLocationLabel(location),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF2B2725),
-                        height: 1.35,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (_inlineMessage != null) ...[
-            const SizedBox(height: 12),
+        child: Row(
+          children: [
             Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              width: 34,
+              height: 34,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.58),
-                borderRadius: BorderRadius.circular(14),
+                color: const Color(0xFFF8F3EC),
+                borderRadius: BorderRadius.circular(12),
               ),
-              child: Text(
-                _inlineMessage!,
+              alignment: Alignment.center,
+              child: Icon(
+                isCurrentLocationActive
+                    ? Icons.my_location_rounded
+                    : Icons.place_outlined,
+                size: 18,
+                color: const Color(0xFF756455),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    statusLabel,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF8A8077),
+                      letterSpacing: 0.3,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    detailLabel,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF2B2725),
+                      height: 1.3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            TextButton.icon(
+              onPressed: _chooseCity,
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF6A5F55),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                minimumSize: Size.zero,
+              ),
+              iconAlignment: IconAlignment.end,
+              icon: const Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+              ),
+              label: Text(
+                S.get('prayer_times_choose_city'),
                 style: const TextStyle(
                   fontFamily: 'Inter',
-                  fontSize: 12,
-                  color: Color(0xFF776F68),
-                  height: 1.35,
+                  fontSize: 12.5,
+                  fontWeight: FontWeight.w600,
                 ),
-              ),
-            ),
-          ] else if (!hasCoordinates) ...[
-            const SizedBox(height: 12),
-            Text(
-              S.get('prayer_times_location_required'),
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                color: Color(0xFF8A8077),
-                height: 1.35,
               ),
             ),
           ],
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              if (isCurrentLocationActive)
-                _CompactActionChip(
-                  icon: Icons.my_location_rounded,
-                  label: S.get('prayer_times_location_active'),
-                  onTap: () {},
-                )
-              else
-                _CompactActionChip(
-                  icon: Icons.my_location_rounded,
-                  label: S.get('prayer_times_use_current'),
-                  onTap: _useCurrentLocation,
-                ),
-              _CompactActionChip(
-                icon: Icons.location_city_rounded,
-                label: S.get('prayer_times_choose_city'),
-                onTap: _chooseCity,
-              ),
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -324,7 +291,7 @@ class _AdhanTimesScreenState extends State<AdhanTimesScreen> {
           style: const TextStyle(
             fontFamily: 'Inter',
             fontSize: 11,
-            color: Color(0xFF8E857C),
+            color: Color(0xFF9C9389),
           ),
         ),
       ],
@@ -468,244 +435,146 @@ class _HeroCard extends StatelessWidget {
     final prayerLabel = prayer == null
         ? S.get('next_prayer_none_title')
         : labelForKey(prayer!.key);
-    final heroPalette = _heroPaletteFor(now);
 
     return ClipRRect(
-      borderRadius: BorderRadius.circular(30),
+      borderRadius: BorderRadius.circular(28),
       child: Container(
-        padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
         decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: heroPalette.colors,
-          ),
-          borderRadius: BorderRadius.circular(30),
-          border: Border.all(color: heroPalette.border),
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
           boxShadow: const [
             BoxShadow(
-              color: Color(0x1A8F7E6E),
-              blurRadius: 26,
-              offset: Offset(0, 12),
+              color: Color(0x0F8F7E6E),
+              blurRadius: 22,
+              offset: Offset(0, 10),
             ),
           ],
         ),
         child: Stack(
           children: [
-            Positioned(
-              right: -54,
-              top: -42,
-              child: IgnorePointer(
-                child: Container(
-                  width: 190,
-                  height: 190,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: RadialGradient(
-                      colors: heroPalette.orbColors,
-                    ),
+            Positioned.fill(
+              child: Image.asset(
+                _prayerHeroBackgroundAsset,
+                fit: BoxFit.cover,
+                filterQuality: FilterQuality.high,
+              ),
+            ),
+            const Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                    colors: <Color>[
+                      Color(0x2E000000),
+                      Color(0x14000000),
+                      Colors.transparent,
+                    ],
                   ),
                 ),
               ),
             ),
-            Positioned(
-              left: -28,
-              bottom: -34,
-              child: IgnorePointer(
-                child: Container(
-                  width: 150,
-                  height: 110,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(999),
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: heroPalette.sweepColors,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              left: 18,
-              right: 18,
-              top: 56,
-              child: IgnorePointer(
-                child: Container(
-                  height: 1,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0),
-                        Colors.white.withValues(alpha: 0.34),
-                        Colors.white.withValues(alpha: 0),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 7,
-                      ),
-                      decoration: BoxDecoration(
-                        color: AppColors.emphasisAccent.withValues(alpha: 0.14),
-                        borderRadius: BorderRadius.circular(999),
-                        border: Border.all(
-                          color:
-                              AppColors.emphasisAccent.withValues(alpha: 0.18),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.schedule_rounded,
-                            size: 14,
-                            color: AppColors.emphasisAccent,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            S.get('prayer_times_next_prayer'),
-                            style: const TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.emphasisAccent,
-                              letterSpacing: 0.3,
-                            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(22, 20, 22, 22),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (location.hasCoordinates)
+                    Text(
+                      locationLabel,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        shadows: [
+                          Shadow(
+                            color: Color(0x30000000),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
                           ),
                         ],
                       ),
                     ),
-                    const Spacer(),
-                    if (location.hasCoordinates)
-                      Text(
-                        locationLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
-                          color: Color(0xFF6E6259),
+                  const SizedBox(height: 18),
+                  Text(
+                    prayerLabel,
+                    style: const TextStyle(
+                      fontFamily: 'Merriweather',
+                      fontSize: 30,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.white,
+                      height: 1.12,
+                      shadows: [
+                        Shadow(
+                          color: Color(0x34000000),
+                          blurRadius: 10,
+                          offset: Offset(0, 2),
                         ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 22),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.22),
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(
-                      color: AppColors.emphasisAccent.withValues(alpha: 0.16),
+                      ],
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        prayerLabel,
-                        style: const TextStyle(
-                          fontFamily: 'Merriweather',
-                          fontSize: 31,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFF2E2621),
-                          height: 1.15,
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        timeText,
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 48,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.emphasisAccent,
-                          height: 1,
-                          letterSpacing: -1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.42),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(
-                      color: AppColors.emphasisAccent.withValues(alpha: 0.12),
-                    ),
-                  ),
-                  child: Text(
-                    remainingText ??
-                        (location.hasCoordinates
-                            ? S.get('next_prayer_none_title')
-                            : S.get('next_prayer_set_location_cta')),
+                  const SizedBox(height: 10),
+                  Text(
+                    timeText,
                     style: const TextStyle(
                       fontFamily: 'Inter',
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                      color: Color(0xFF53463E),
-                      height: 1.35,
+                      fontSize: 48,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                      height: 1,
+                      letterSpacing: -1.4,
+                      shadows: [
+                        Shadow(
+                          color: Color(0x36000000),
+                          blurRadius: 10,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.18),
+                      ),
+                    ),
+                    child: Text(
+                      remainingText ??
+                          (location.hasCoordinates
+                              ? S.get('next_prayer_none_title')
+                              : S.get('next_prayer_set_location_cta')),
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                        height: 1.2,
+                        shadows: [
+                          Shadow(
+                            color: Color(0x33000000),
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
       ),
-    );
-  }
-
-  _HeroPalette _heroPaletteFor(DateTime dateTime) {
-    final hour = dateTime.hour;
-    if (hour >= 5 && hour < 11) {
-      return const _HeroPalette(
-        colors: [Color(0xFFF8F2E7), Color(0xFFF0E8DB)],
-        border: Color(0xFFE6DAC8),
-        orbColors: [Color(0x66FFF7EC), Color(0x00FFF7EC)],
-        sweepColors: [Color(0x30FFFFFF), Color(0x00FFFFFF)],
-      );
-    }
-    if (hour >= 17 && hour < 21) {
-      return const _HeroPalette(
-        colors: [Color(0xFFF4E8D9), Color(0xFFE8D7C7)],
-        border: Color(0xFFE2CFBB),
-        orbColors: [Color(0x52FFE8C9), Color(0x00FFE8C9)],
-        sweepColors: [Color(0x24FFF7EE), Color(0x00FFF7EE)],
-      );
-    }
-    if (hour >= 21 || hour < 5) {
-      return const _HeroPalette(
-        colors: [Color(0xFFE7E0D8), Color(0xFFDAD2C8)],
-        border: Color(0xFFD3C8BD),
-        orbColors: [Color(0x48FFF7EF), Color(0x00FFF7EF)],
-        sweepColors: [Color(0x20FFFFFF), Color(0x00FFFFFF)],
-      );
-    }
-    return const _HeroPalette(
-      colors: [Color(0xFFF5EFE5), Color(0xFFEBE3D8)],
-      border: Color(0xFFE1D6C9),
-      orbColors: [Color(0x4DFFF5EA), Color(0x00FFF5EA)],
-      sweepColors: [Color(0x24FFFFFF), Color(0x00FFFFFF)],
     );
   }
 }
@@ -718,31 +587,22 @@ class _ScheduleCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [
-            Colors.white.withValues(alpha: 0.88),
-            const Color(0xFFF8F2EA).withValues(alpha: 0.72),
-          ],
-        ),
+        color: Colors.white.withValues(alpha: 0.82),
         borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: const Color(0xFFEAE1D7)),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x088F7E6E),
-            blurRadius: 20,
-            offset: Offset(0, 8),
-          ),
-        ],
+        border: Border.all(color: const Color(0xFFF0E7DB)),
       ),
       child: Column(
         children: [
           for (int i = 0; i < rows.length; i++) ...[
             _PrayerTimeRow(row: rows[i]),
-            if (i != rows.length - 1) const SizedBox(height: 10),
+            if (i != rows.length - 1)
+              Divider(
+                height: 18,
+                thickness: 1,
+                color: const Color(0xFFF1E7DC).withValues(alpha: 0.7),
+              ),
           ],
         ],
       ),
@@ -758,43 +618,18 @@ class _PrayerTimeRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final backgroundColor = row.isHighlighted
-        ? AppColors.emphasisAccent.withValues(alpha: 0.12)
-        : Colors.white.withValues(alpha: 0.55);
-    final borderColor = row.isHighlighted
-        ? AppColors.emphasisAccent.withValues(alpha: 0.22)
-        : const Color(0xF0EEE4D9);
+        ? const Color(0xFFF7EFE3)
+        : Colors.transparent;
     final textColor =
         row.isHighlighted ? const Color(0xFF2D2621) : const Color(0xFF5D5650);
     final timeColor =
         row.isHighlighted ? const Color(0xFF231D19) : const Color(0xFF342E2A);
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: row.isHighlighted
-              ? [
-                  AppColors.emphasisAccent.withValues(alpha: 0.16),
-                  const Color(0xFFF4ECE3),
-                ]
-              : [
-                  backgroundColor,
-                  const Color(0xFFF8F4EE),
-                ],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: borderColor),
-        boxShadow: row.isHighlighted
-            ? const [
-                BoxShadow(
-                  color: Color(0x126E878A),
-                  blurRadius: 18,
-                  offset: Offset(0, 6),
-                ),
-              ]
-            : null,
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
         children: [
@@ -825,11 +660,8 @@ class _PrayerTimeRow extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.68),
+                color: Colors.white.withValues(alpha: 0.85),
                 borderRadius: BorderRadius.circular(999),
-                border: Border.all(
-                  color: AppColors.emphasisAccent.withValues(alpha: 0.14),
-                ),
               ),
               child: Text(
                 S.get('prayer_times_next_prayer'),
@@ -860,57 +692,6 @@ class _PrayerTimeRow extends StatelessWidget {
   }
 }
 
-class _CompactActionChip extends StatelessWidget {
-  const _CompactActionChip({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(999),
-      child: Ink(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white.withValues(alpha: 0.72),
-              const Color(0xFFF4ECE3),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(999),
-          border: Border.all(color: const Color(0xFFE6DDD2)),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 16, color: const Color(0xFF6A5F55)),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF403934),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
 class _PrayerRowData {
   const _PrayerRowData({
     required this.key,
@@ -923,18 +704,4 @@ class _PrayerRowData {
   final String label;
   final DateTime time;
   final bool isHighlighted;
-}
-
-class _HeroPalette {
-  const _HeroPalette({
-    required this.colors,
-    required this.border,
-    required this.orbColors,
-    required this.sweepColors,
-  });
-
-  final List<Color> colors;
-  final Color border;
-  final List<Color> orbColors;
-  final List<Color> sweepColors;
 }

@@ -106,7 +106,20 @@ class _QiblaScreenState extends State<QiblaScreen> {
         ),
         centerTitle: true,
       ),
-      body: SafeArea(child: _buildBody(context)),
+      body: DecoratedBox(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFFFFCF8),
+              Color(0xFFFBF6F2),
+              Color(0xFFF7F1EA),
+            ],
+          ),
+        ),
+        child: SafeArea(child: _buildBody(context)),
+      ),
     );
   }
 
@@ -292,28 +305,36 @@ class _QiblaCompass extends StatelessWidget {
                         ),
                         const SizedBox(height: 20),
                         Text(
-                          AppStrings.t(
-                            context,
-                            'qibla_value',
-                          ).replaceFirst('{degrees}', '$qiblaDegrees'),
+                          AppStrings.t(context, 'qibla_title'),
                           style: const TextStyle(
                             fontFamily: 'Inter',
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: Color(0xFF2B2725),
-                            letterSpacing: 0.5,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF8B8178),
+                            letterSpacing: 0.4,
                           ),
                         ),
                         const SizedBox(height: 8),
+                        Text(
+                          '$qiblaDegrees°',
+                          style: const TextStyle(
+                            fontFamily: 'Merriweather',
+                            fontSize: 34,
+                            fontWeight: FontWeight.w400,
+                            color: Color(0xFF2B2725),
+                            height: 1.1,
+                          ),
+                        ),
+                        const SizedBox(height: 10),
                         // Calibration hint (always shown subtly)
                         Text(
                           AppStrings.t(context, 'qibla_calibration_hint'),
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             fontFamily: 'Inter',
-                            fontSize: 12,
+                            fontSize: 11.5,
                             fontWeight: FontWeight.w400,
-                            color: Color(0xFFB5AEA8),
+                            color: Color(0xFFA9A199),
                           ),
                         ),
                       ],
@@ -340,9 +361,9 @@ class _CompassRingPainter extends CustomPainter {
 
     // Outer ring
     final ringPaint = Paint()
-      ..color = const Color(0xFFEDE6E1)
+      ..color = const Color(0xFFECE4DA)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+      ..strokeWidth = 1.4;
     canvas.drawCircle(center, radius, ringPaint);
 
     // Tick marks + cardinal labels
@@ -380,7 +401,7 @@ class _CompassRingPainter extends CustomPainter {
         tickPaint
           ..strokeWidth = isCardinal ? 2.0 : 1.0
           ..color = isCardinal
-              ? const Color(0xFF7A746F)
+              ? const Color(0xFF746C66)
               : const Color(0xFFB5AEA8),
       );
 
@@ -400,7 +421,7 @@ class _CompassRingPainter extends CustomPainter {
               fontSize: 13,
               fontWeight: FontWeight.w600,
               color: i == 0
-                  ? const Color(0xFFB57A5A)
+                  ? const Color(0xFFC18A58)
                   : const Color(0xFF7A746F),
             ),
           ),
@@ -431,27 +452,46 @@ class _NeedlePainter extends CustomPainter {
 
     // Needle pointing upward (toward Qibla)
     final needlePaint = Paint()
-      ..color = const Color(0xFFB57A5A)
+      ..color = const Color(0xFFC18A58)
       ..style = PaintingStyle.fill;
 
     final path = Path()
       ..moveTo(center.dx, center.dy - radius + 30) // tip
-      ..lineTo(center.dx - 6, center.dy - 20) // left base
-      ..lineTo(center.dx + 6, center.dy - 20) // right base
+      ..lineTo(center.dx - 8, center.dy - 20) // left base
+      ..lineTo(center.dx + 8, center.dy - 20) // right base
       ..close();
     canvas.drawPath(path, needlePaint);
 
+    final highlightPaint = Paint()
+      ..color = const Color(0xFFFFF6E9)
+      ..style = PaintingStyle.fill;
+    final highlightPath = Path()
+      ..moveTo(center.dx, center.dy - radius + 44)
+      ..lineTo(center.dx - 2.5, center.dy - 26)
+      ..lineTo(center.dx + 2.5, center.dy - 26)
+      ..close();
+    canvas.drawPath(highlightPath, highlightPaint);
+
     // Small tail opposite
     final tailPaint = Paint()
-      ..color = const Color(0xFFEDE6E1)
+      ..color = const Color(0xFFE7DED3)
       ..style = PaintingStyle.fill;
 
     final tailPath = Path()
       ..moveTo(center.dx, center.dy + radius - 50)
-      ..lineTo(center.dx - 4, center.dy + 20)
-      ..lineTo(center.dx + 4, center.dy + 20)
+      ..lineTo(center.dx - 5, center.dy + 18)
+      ..lineTo(center.dx + 5, center.dy + 18)
       ..close();
     canvas.drawPath(tailPath, tailPaint);
+
+    final centerOuter = Paint()
+      ..color = const Color(0xFFF3E7D8)
+      ..style = PaintingStyle.fill;
+    final centerInner = Paint()
+      ..color = const Color(0xFFC18A58)
+      ..style = PaintingStyle.fill;
+    canvas.drawCircle(center, 8, centerOuter);
+    canvas.drawCircle(center, 4, centerInner);
   }
 
   @override

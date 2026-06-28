@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/config/seasonal_config.dart';
 import '../../core/ads/banner_ad_widget.dart';
@@ -31,9 +32,9 @@ import '../../widgets/premium_experience_widgets.dart';
 import '../adhan/adhan_times_screen.dart';
 import '../asma/asmaul_husna_screen.dart';
 import '../companion/companion_flow_screen.dart';
+import '../companion/minute_reflection_screen.dart';
 import '../qibla/qibla_screen.dart';
 import '../ramadan/ramadan_hub_screen.dart';
-import '../reading/ayah_reading_screen.dart';
 import '../settings/settings_screen.dart';
 import '../settings/premium_page.dart';
 import '../surah/surah_list_screen.dart';
@@ -57,6 +58,17 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with RouteAware {
+  static const String _verseHeroBgAsset =
+      'assets/images/home_cards/verse_hero_bg.PNG';
+  static const String _quranCardBgAsset =
+      'assets/images/home_cards/quran_card_bg.PNG';
+  static const String _stayWithMeBgAsset =
+      'assets/images/home_cards/stay_with_me_bg.PNG';
+  static const String _asmaCardBgAsset =
+      'assets/images/home_cards/asma_card_bg.PNG';
+  static const String _reflectionCardBgAsset =
+      'assets/images/reflection/reflection_bg.png';
+
   static const _feedbackPromptDelay = Duration(seconds: 8);
   bool _checkedNamePrompt = false;
   Timer? _clockTicker;
@@ -73,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void initState() {
     super.initState();
+    unawaited(LocalPreferencesService.refreshCompanionFlowCompletedToday());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _maybeShowNamePrompt();
       _maybeOpenInitialTodayIntent();
@@ -124,6 +137,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   @override
   void didPopNext() {
+    unawaited(LocalPreferencesService.refreshCompanionFlowCompletedToday());
     setState(() {});
     _maybeOpenInitialCompanionFlow();
     _scheduleTimedUpsellCheck();
@@ -655,16 +669,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       sections.addAll(<Widget>[
         const SizedBox(height: 32),
         _buildHeroSection(),
-        const SizedBox(height: 28),
+        const SizedBox(height: 18),
+        _buildCoreActionsRow(),
+        const SizedBox(height: 22),
         _buildDailyContentSection(),
-        const SizedBox(height: 28),
-        _buildExploreQuranEntry(context),
-        const SizedBox(height: 28),
-        _buildCompanionEntry(),
-        const SizedBox(height: 8),
-        _buildCompanionConnectionLine(),
-        const SizedBox(height: 10),
-        _buildGuidedHelperLink(),
+        const SizedBox(height: 22),
+        _buildFeatureGrid(),
+        const SizedBox(height: 12),
+        _buildReflectionHelperLinks(),
         const SizedBox(height: 8),
       ]);
     } else {
@@ -673,44 +685,18 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         _buildHeroSection(),
         const SizedBox(height: 20),
         _buildCoreActionsRow(),
-        const SizedBox(height: 20),
-        _buildSectionHeader(
-          title: S.get('home_section_for_today'),
-          icon: Icons.auto_awesome_outlined,
-        ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 22),
         _buildDailyContentSection(),
+        const SizedBox(height: 22),
+        _buildFeatureGrid(),
+        const SizedBox(height: 10),
+        _buildCompanionConnectionLine(),
+        const SizedBox(height: 8),
+        _buildReflectionHelperLinks(),
         if (_shouldShowNightCompanionPrompt()) ...[
           const SizedBox(height: 18),
           _buildNightRitualPromptCard(),
         ],
-        const SizedBox(height: 10),
-        _buildTodayLink(),
-        const SizedBox(height: 20),
-        _buildSectionHeader(
-          title: S.get('home_section_explore'),
-          icon: Icons.explore_outlined,
-        ),
-        const SizedBox(height: 12),
-        _buildExploreQuranEntry(context),
-        const SizedBox(height: 14),
-        _buildCompanionEntry(),
-        const SizedBox(height: 8),
-        _buildCompanionConnectionLine(),
-        const SizedBox(height: 14),
-        _buildAsmaEntry(),
-        const SizedBox(height: 14),
-        _buildExploreEntry(
-          title: S.get('ramadan_hub_title'),
-          showMosqueBackground: true,
-          onTap: () {
-            Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => const RamadanHubScreen(),
-              ),
-            );
-          },
-        ),
         const SizedBox(height: 14),
         _buildPremiumSection(),
         const BannerAdWidget(
@@ -749,26 +735,20 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  Widget _buildTodayLink() {
-    return TextButton(
-      onPressed: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const TodayScreen()),
-        );
-      },
-      style: TextButton.styleFrom(
-        foregroundColor: AppColors.turquoiseAccentStrong,
-        padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-      ),
-      child: Text(
-        S.get('home_see_more_for_today'),
-        style: const TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 13,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+  Widget _buildFeatureGrid() {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 12,
+      mainAxisSpacing: 12,
+      childAspectRatio: _HomeFeatureCard.defaultAspectRatio,
+      children: [
+        _buildExploreQuranEntry(context),
+        _buildMinuteReflectionEntry(),
+        _buildAsmaEntry(),
+        _buildCompanionEntry(),
+      ],
     );
   }
 
@@ -926,9 +906,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             Positioned.fill(
               child: IgnorePointer(
                 child: Opacity(
-                  opacity: 0.16,
+                  opacity: 0.3,
                   child: ImageFiltered(
-                    imageFilter: ui.ImageFilter.blur(sigmaX: 2.1, sigmaY: 2.1),
+                    imageFilter: ui.ImageFilter.blur(sigmaX: 0.8, sigmaY: 0.8),
                     child: Image.asset(
                       'assets/images/mosque_bg.png',
                       fit: BoxFit.cover,
@@ -946,8 +926,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        colorScheme.surface.withValues(alpha: 0.006),
-                        colorScheme.surface.withValues(alpha: 0.035),
+                        Colors.white.withValues(alpha: 0.18),
+                        Colors.white.withValues(alpha: 0.12),
+                        colorScheme.surface.withValues(alpha: 0.05),
                       ],
                     ),
                   ),
@@ -1243,7 +1224,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   Widget _buildQuranFramedCard({
     required Widget child,
-    bool showMosqueBackground = false,
+    String? backgroundAsset,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -1255,14 +1236,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: style.background,
+        color: backgroundAsset == null ? style.background : Colors.transparent,
         borderRadius: borderRadius,
         border: Border.all(color: style.borderColor, width: 1),
-        gradient: LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: style.backgroundGradient,
-        ),
+        gradient: backgroundAsset == null
+            ? LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: style.backgroundGradient,
+              )
+            : null,
         boxShadow: [
           BoxShadow(
             color: style.shadowColor,
@@ -1276,71 +1259,42 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
-            if (showMosqueBackground) ...[
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: Opacity(
-                    opacity: 0.15,
-                    child: Transform.scale(
-                      scale: 1.12,
-                      child: ImageFiltered(
-                        imageFilter:
-                            ui.ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
-                        child: Image.asset(
-                          'assets/images/mosque_bg_2.png',
-                          fit: BoxFit.cover,
-                          alignment: Alignment.topCenter,
-                        ),
-                      ),
+            if (backgroundAsset != null)
+              ..._buildImageCardBackground(
+                colorScheme,
+                backgroundAsset: backgroundAsset,
+              ),
+            if (backgroundAsset == null)
+              Positioned(
+                top: -34,
+                right: -18,
+                child: Container(
+                  width: 140,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        style.accentWash,
+                        style.accentWash.withValues(alpha: 0),
+                      ],
                     ),
                   ),
                 ),
               ),
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          colorScheme.surface.withValues(alpha: 0.018),
-                          colorScheme.surface.withValues(alpha: 0.05),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-            Positioned(
-              top: -34,
-              right: -18,
-              child: Container(
-                width: 140,
-                height: 140,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  gradient: RadialGradient(
-                    colors: [
-                      style.accentWash,
-                      style.accentWash.withValues(alpha: 0),
-                    ],
-                  ),
-                ),
-              ),
-            ),
             DecoratedBox(
               decoration: BoxDecoration(
                 borderRadius: borderRadius,
-                gradient: RadialGradient(
-                  center: const Alignment(-0.85, -1.0),
-                  radius: 1.2,
-                  colors: [
-                    style.innerGlow,
-                    style.innerGlow.withValues(alpha: 0),
-                  ],
-                ),
+                gradient: backgroundAsset == null
+                    ? RadialGradient(
+                        center: const Alignment(-0.85, -1.0),
+                        radius: 1.2,
+                        colors: [
+                          style.innerGlow,
+                          style.innerGlow.withValues(alpha: 0),
+                        ],
+                      )
+                    : null,
               ),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
@@ -1353,6 +1307,21 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
+  List<Widget> _buildImageCardBackground(
+    ColorScheme colorScheme, {
+    required String backgroundAsset,
+  }) {
+    return [
+      Positioned.fill(
+        child: Image(
+          image: AssetImage(backgroundAsset),
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.high,
+        ),
+      ),
+    ];
+  }
+
   Widget _buildPrimaryCard({
     required String title,
     required String body,
@@ -1362,6 +1331,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final colorScheme = Theme.of(context).colorScheme;
     final cleanSource = source?.trim() ?? '';
     final card = _buildQuranFramedCard(
+      backgroundAsset: _verseHeroBgAsset,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1424,7 +1394,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final card = _buildQuranFramedCard(
-      showMosqueBackground: true,
+      backgroundAsset: _verseHeroBgAsset,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1481,6 +1451,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final meaning = asma.localizedMeaning(languageCode);
     final reflection = asma.localizedReflection(languageCode);
     final card = _buildQuranFramedCard(
+      backgroundAsset: _verseHeroBgAsset,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1938,58 +1909,61 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     const readingContext = ReadingContext.explore();
     final progress = ReadingProgressService.getContextProgress(readingContext);
 
-    return _buildExploreEntry(
+    return _buildFeatureCard(
       title: S.get('start_reading'),
       subtitle: progress == null
           ? null
           : '${QuranData.instance.getSurahName(progress.surah, languageCode: Localizations.localeOf(context).languageCode)} · ${progress.ayah}. ${S.get('ayah_label')}',
-      showMosqueBackground: true,
+      backgroundAsset: _quranCardBgAsset,
       onTap: () {
-        if (progress != null) {
-          final surahName = QuranData.instance.getSurahName(
-            progress.surah,
-            languageCode: Localizations.localeOf(context).languageCode,
-          );
-          Navigator.of(context)
-              .push(
-                MaterialPageRoute(
-                  builder: (_) => AyahReadingScreen(
-                    surahNumber: progress.surah,
-                    surahName: surahName,
-                    readingContext: readingContext,
-                  ),
-                ),
-              )
-              .then((_) => _tryShowPremiumUpsell(triggeredByInteraction: true));
-        } else {
-          Navigator.of(context)
-              .push(
-                MaterialPageRoute(builder: (_) => const SurahListScreen()),
-              )
-              .then((_) => _tryShowPremiumUpsell(triggeredByInteraction: true));
-        }
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(builder: (_) => const SurahListScreen()),
+            )
+            .then((_) => _tryShowPremiumUpsell(triggeredByInteraction: true));
       },
     );
   }
 
   Widget _buildCompanionEntry() {
-    return _buildExploreEntry(
+    return _buildFeatureCard(
       title: S.get('companion_flow_title'),
       subtitle: S.get('companion_flow_home_subtitle'),
-      showMosqueBackground: true,
-      onTap: _openCompanionFlow,
+      backgroundAsset: _stayWithMeBgAsset,
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const RamadanHubScreen(),
+          ),
+        );
+      },
     );
   }
 
   Widget _buildAsmaEntry() {
-    return _buildExploreEntry(
+    return _buildFeatureCard(
       title: S.get('asma_screen_title'),
       subtitle: S.get('asma_explore_subtitle'),
-      showMosqueBackground: true,
+      backgroundAsset: _asmaCardBgAsset,
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (_) => const AsmaulHusnaScreen(),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMinuteReflectionEntry() {
+    return _buildFeatureCard(
+      title: S.get('minute_reflection_title'),
+      subtitle: S.get('minute_reflection_home_subtitle'),
+      backgroundAsset: _reflectionCardBgAsset,
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const MinuteReflectionScreen(),
           ),
         );
       },
@@ -2026,6 +2000,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
+  Widget _buildReflectionHelperLinks() {
+    return _buildGuidedHelperLink();
+  }
+
   Widget _buildCompanionConnectionLine() {
     final colorScheme = Theme.of(context).colorScheme;
     return ValueListenableBuilder<bool>(
@@ -2037,10 +2015,25 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           builder: (context, snapshot) {
             final reflectionDays =
                 (snapshot.data?.reflectionStreakCount ?? 1).clamp(1, 999);
-            final filledDots = reflectionDays.clamp(1, 5);
+            final completedCount = reflectionDays.clamp(1, 7);
 
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
+            return Container(
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+              decoration: BoxDecoration(
+                color: colorScheme.surface.withValues(alpha: 0.94),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppColors.earthAccent.withValues(alpha: 0.14),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: colorScheme.shadow.withValues(alpha: 0.05),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
@@ -2049,44 +2042,98 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     S.get('spiritual_connection_status_today'),
                     style: TextStyle(
                       fontFamily: 'Inter',
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w400,
-                      color: colorScheme.onSurface.withValues(alpha: 0.58),
-                      height: 1.4,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface.withValues(alpha: 0.82),
+                      height: 1.35,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     S
                         .get('spiritual_connection_continuity')
                         .replaceAll('{count}', '$reflectionDays'),
                     style: TextStyle(
                       fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: colorScheme.onSurface.withValues(alpha: 0.5),
-                      height: 1.35,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w500,
+                      color: colorScheme.onSurface.withValues(alpha: 0.6),
+                      height: 1.4,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(5, (index) {
-                      final isFilled = index < filledDots;
-                      return Padding(
-                        padding: EdgeInsets.only(right: index == 4 ? 0 : 6),
-                        child: Container(
-                          width: 5,
-                          height: 5,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: colorScheme.onSurface.withValues(
-                              alpha: isFilled ? 0.34 : 0.12,
+                  const SizedBox(height: 16),
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      const gap = 8.0;
+                      final circleSize =
+                          ((constraints.maxWidth - (gap * 6)) / 7)
+                              .clamp(32.0, 42.0);
+                      return Row(
+                        children: List.generate(7, (index) {
+                          final isCompleted = index >= 7 - completedCount;
+                          final isToday = index == 6;
+                          return Padding(
+                            padding:
+                                EdgeInsets.only(right: index == 6 ? 0 : gap),
+                            child: SizedBox(
+                              width: circleSize,
+                              height: circleSize,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: isCompleted
+                                      ? AppColors.indigoAccent.withValues(
+                                          alpha: isToday ? 0.22 : 0.16,
+                                        )
+                                      : colorScheme.onSurface.withValues(
+                                          alpha: 0.08,
+                                        ),
+                                  border: Border.all(
+                                    color: isCompleted
+                                        ? AppColors.indigoAccent.withValues(
+                                            alpha: isToday ? 0.3 : 0.16,
+                                          )
+                                        : colorScheme.onSurface.withValues(
+                                            alpha: 0.06,
+                                          ),
+                                  ),
+                                ),
+                                child: Center(
+                                  child: isToday && isCompleted
+                                      ? Padding(
+                                          padding: const EdgeInsets.all(7),
+                                          child: FittedBox(
+                                            fit: BoxFit.contain,
+                                            child: SvgPicture.asset(
+                                              'assets/images/calligraphy/allahu_akbar.svg',
+                                              width: 22,
+                                              height: 22,
+                                              colorFilter: ColorFilter.mode(
+                                                colorScheme.onSurface
+                                                    .withValues(alpha: 0.88),
+                                                BlendMode.srcIn,
+                                              ),
+                                            ),
+                                          ),
+                                        )
+                                      : Icon(
+                                          isCompleted
+                                              ? Icons.check_rounded
+                                              : Icons.circle,
+                                          size: isCompleted ? 16 : 8,
+                                          color: isCompleted
+                                              ? colorScheme.onSurface
+                                                  .withValues(alpha: 0.74)
+                                              : colorScheme.onSurface
+                                                  .withValues(alpha: 0.18),
+                                        ),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
+                          );
+                        }),
                       );
-                    }),
+                    },
                   ),
                 ],
               ),
@@ -2161,155 +2208,18 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  Widget _buildExploreEntry({
+  Widget _buildFeatureCard({
     required String title,
     String? subtitle,
-    bool showMosqueBackground = false,
+    required String backgroundAsset,
     required VoidCallback onTap,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final borderRadius = BorderRadius.circular(12);
-    return Material(
-      color: Colors.transparent,
-      borderRadius: borderRadius,
-      child: InkWell(
-        borderRadius: borderRadius,
-        onTap: onTap,
-        child: Ink(
-          width: double.infinity,
-          decoration: BoxDecoration(
-            color: colorScheme.surface.withValues(alpha: 0.98),
-            borderRadius: borderRadius,
-            border: Border.all(
-              color: AppColors.earthAccent.withValues(alpha: 0.16),
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.earthAccent.withValues(alpha: 0.055),
-                blurRadius: 14,
-                offset: const Offset(0, 6),
-              ),
-              BoxShadow(
-                color: colorScheme.shadow.withValues(alpha: 0.025),
-                blurRadius: 6,
-                offset: const Offset(0, 2),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: borderRadius,
-            child: Stack(
-              children: [
-                if (showMosqueBackground) ...[
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: Opacity(
-                        opacity: 0.15,
-                        child: Transform.scale(
-                          scale: 1.06,
-                          child: ImageFiltered(
-                            imageFilter:
-                                ui.ImageFilter.blur(sigmaX: 1.6, sigmaY: 1.6),
-                            child: Image.asset(
-                              'assets/images/mosque_bg_2.png',
-                              fit: BoxFit.cover,
-                              alignment: Alignment.center,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned.fill(
-                    child: IgnorePointer(
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topCenter,
-                            end: Alignment.bottomCenter,
-                            colors: [
-                              colorScheme.surface.withValues(alpha: 0.035),
-                              colorScheme.surface.withValues(alpha: 0.085),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-                Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              title,
-                              style: TextStyle(
-                                fontFamily: 'Merriweather',
-                                fontSize: 15,
-                                fontWeight: FontWeight.w400,
-                                color: colorScheme.onSurface.withValues(
-                                  alpha: showMosqueBackground ? 0.97 : 0.94,
-                                ),
-                                height: 1.4,
-                                shadows: showMosqueBackground
-                                    ? const [
-                                        Shadow(
-                                          color: Color(0x24000000),
-                                          blurRadius: 10,
-                                          offset: Offset(0, 2),
-                                        ),
-                                      ]
-                                    : null,
-                              ),
-                            ),
-                            if (subtitle != null && subtitle.isNotEmpty) ...[
-                              const SizedBox(height: 3),
-                              Text(
-                                subtitle,
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w400,
-                                  color: colorScheme.onSurface.withValues(
-                                    alpha: showMosqueBackground ? 0.76 : 0.66,
-                                  ),
-                                  shadows: showMosqueBackground
-                                      ? const [
-                                          Shadow(
-                                            color: Color(0x18000000),
-                                            blurRadius: 8,
-                                            offset: Offset(0, 1),
-                                          ),
-                                        ]
-                                      : null,
-                                ),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 14,
-                        color: AppColors.indigoAccent.withValues(
-                          alpha: showMosqueBackground ? 0.74 : 0.58,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
+    return _HomeFeatureCard(
+      title: title,
+      subtitle: subtitle,
+      backgroundAsset: backgroundAsset,
+      overlayStrength: backgroundAsset == _stayWithMeBgAsset ? 0.78 : 1,
+      onTap: onTap,
     );
   }
 }
@@ -2369,6 +2279,176 @@ class _HomeShortcutCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeFeatureCard extends StatelessWidget {
+  const _HomeFeatureCard({
+    required this.title,
+    this.subtitle,
+    required this.backgroundAsset,
+    this.overlayStrength = 1,
+    required this.onTap,
+  });
+
+  static const double defaultAspectRatio = 0.98;
+
+  final String title;
+  final String? subtitle;
+  final String backgroundAsset;
+  final double overlayStrength;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: defaultAspectRatio,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(22),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(22),
+          onTap: onTap,
+          child: Ink(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(22),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Positioned.fill(
+                    child: Image(
+                      image: AssetImage(backgroundAsset),
+                      fit: BoxFit.cover,
+                      filterQuality: FilterQuality.high,
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.centerLeft,
+                          end: Alignment.centerRight,
+                          stops: const [0.0, 0.34, 0.62, 1.0],
+                          colors: [
+                            Colors.black.withValues(
+                              alpha: 0.34 * overlayStrength,
+                            ),
+                            Colors.black.withValues(
+                              alpha: 0.22 * overlayStrength,
+                            ),
+                            Colors.black.withValues(
+                              alpha: 0.08 * overlayStrength,
+                            ),
+                            Colors.transparent,
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: FractionallySizedBox(
+                          widthFactor: 0.66,
+                          heightFactor: 1,
+                          alignment: Alignment.centerLeft,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.centerLeft,
+                                end: Alignment.centerRight,
+                                colors: [
+                                  Colors.white.withValues(
+                                    alpha: 0.08 * overlayStrength,
+                                  ),
+                                  Colors.white.withValues(
+                                    alpha: 0.03 * overlayStrength,
+                                  ),
+                                  Colors.transparent,
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Spacer(),
+                        Align(
+                          alignment: Alignment.bottomLeft,
+                          child: FractionallySizedBox(
+                            widthFactor: 0.78,
+                            alignment: Alignment.centerLeft,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  title,
+                                  textAlign: TextAlign.left,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontFamily: 'Merriweather',
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w500,
+                                    color: Colors.white,
+                                    height: 1.25,
+                                    shadows: [
+                                      Shadow(
+                                        color: Color(0x66000000),
+                                        blurRadius: 18,
+                                        offset: Offset(0, 4),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                if (subtitle != null &&
+                                    subtitle!.trim().isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    subtitle!,
+                                    textAlign: TextAlign.left,
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontFamily: 'Inter',
+                                      fontSize: 12.5,
+                                      fontWeight: FontWeight.w500,
+                                      color: Color(0xF5FFFFFF),
+                                      height: 1.35,
+                                      shadows: [
+                                        Shadow(
+                                          color: Color(0x66000000),
+                                          blurRadius: 14,
+                                          offset: Offset(0, 3),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );

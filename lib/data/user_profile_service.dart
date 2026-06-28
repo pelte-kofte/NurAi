@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'local_data_recovery.dart';
 import 'secure_storage_service.dart';
 
 class UserProfileService {
@@ -17,9 +18,10 @@ class UserProfileService {
     _prefs ??= await SharedPreferences.getInstance();
 
     final secureDisplayName = _normalize(
-      await SecureStorageService.read(_secureKeyDisplayName),
+      await SecureStorageService.readSafely(_secureKeyDisplayName),
     );
-    final legacyDisplayName = _normalize(_prefs?.getString(_keyDisplayName));
+    final legacyDisplayName =
+        _normalize(LocalDataRecovery.getString(_prefs, _keyDisplayName));
 
     if (secureDisplayName == null && legacyDisplayName != null) {
       await SecureStorageService.write(
@@ -35,7 +37,7 @@ class UserProfileService {
   static String? get displayName => displayNameNotifier.value;
 
   static bool get shouldShowNamePrompt =>
-      !(_prefs?.getBool(_keyNamePromptShown) ?? false);
+      !LocalDataRecovery.getBool(_prefs, _keyNamePromptShown);
 
   static Future<void> markNamePromptShown() async {
     await _prefs?.setBool(_keyNamePromptShown, true);

@@ -71,17 +71,6 @@ class WidgetPayloadService {
   }
 
   static Map<String, dynamic> _buildPayload(DateTime now) {
-    final widgetEnabled = LocalPreferencesService.nextPrayerWidgetEnabled.value;
-    if (!widgetEnabled) {
-      _log('build_payload widget_disabled');
-      return <String, dynamic>{
-        'generatedAtEpochMs': now.millisecondsSinceEpoch,
-        'lang': LocalPreferencesService.language.value,
-        'isWidgetEnabled': false,
-        'upcomingPrayers': const <Map<String, dynamic>>[],
-      };
-    }
-
     final location = LocalPreferencesService.prayerLocation.value;
     final locationLabel = _locationLabel(location);
 

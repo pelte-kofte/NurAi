@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'collective_reading_service.dart';
+import 'local_data_recovery.dart';
 
 enum ReflectionPeriod { morning, evening }
 
@@ -87,8 +90,9 @@ class SpiritualProgressService {
   static Future<SpiritualProgressState> loadState() async {
     final prefs = await _instance();
     final todayKey = _dateKey(DateTime.now());
-    final storedDailyGoalDate = prefs.getString(_keyDailyGoalDate);
-    var dailyGoalDone = prefs.getBool(_keyDailyGoalDone) ?? false;
+    final storedDailyGoalDate =
+        await _readCanonicalDateKey(prefs, _keyDailyGoalDate);
+    var dailyGoalDone = LocalDataRecovery.getBool(prefs, _keyDailyGoalDone);
 
     if (storedDailyGoalDate != todayKey && dailyGoalDone) {
       dailyGoalDone = false;
@@ -106,21 +110,29 @@ class SpiritualProgressService {
             : 1;
 
     return SpiritualProgressState(
-      streakCount: prefs.getInt(_keyStreakCount) ?? 0,
-      lastReadDate: prefs.getString(_keyLastReadDate),
+      streakCount: _sanitizeNonNegativeInt(
+        prefs,
+        _keyStreakCount,
+      ),
+      lastReadDate: await _readCanonicalDateKey(prefs, _keyLastReadDate),
       currentJuz: currentJuz,
       highestCompletedJuz: highestCompletedJuz,
       completedJuzCount: completedJuzCount,
       allJuzCompleted: allJuzCompleted,
       dailyGoalDone: dailyGoalDone && storedDailyGoalDate == todayKey,
       dailyGoalDate: storedDailyGoalDate,
-      reflectionStreakCount: prefs.getInt(_keyReflectionStreakCount) ?? 0,
-      reflectionLastCompletedDate:
-          prefs.getString(_keyReflectionLastCompletedDate),
-      morningReflectionCompletedDate:
-          prefs.getString(_keyMorningReflectionCompletedDate),
-      eveningReflectionCompletedDate:
-          prefs.getString(_keyEveningReflectionCompletedDate),
+      reflectionStreakCount: _sanitizeNonNegativeInt(
+        prefs,
+        _keyReflectionStreakCount,
+      ),
+      reflectionLastCompletedDate: await _readCanonicalDateKey(
+        prefs,
+        _keyReflectionLastCompletedDate,
+      ),
+      morningReflectionCompletedDate: await _readCanonicalDateKey(
+          prefs, _keyMorningReflectionCompletedDate),
+      eveningReflectionCompletedDate: await _readCanonicalDateKey(
+          prefs, _keyEveningReflectionCompletedDate),
     );
   }
 
@@ -128,13 +140,15 @@ class SpiritualProgressService {
     final prefs = await _instance();
     final today = DateTime.now();
     final todayKey = _dateKey(today);
-    final lastReadDate = prefs.getString(_keyLastReadDate);
-    final storedDailyGoalDate = prefs.getString(_keyDailyGoalDate);
-    final wasDailyGoalDoneToday = (prefs.getBool(_keyDailyGoalDone) ?? false) &&
-        storedDailyGoalDate == todayKey;
+    final lastReadDate = await _readCanonicalDateKey(prefs, _keyLastReadDate);
+    final storedDailyGoalDate =
+        await _readCanonicalDateKey(prefs, _keyDailyGoalDate);
+    final wasDailyGoalDoneToday =
+        LocalDataRecovery.getBool(prefs, _keyDailyGoalDone) &&
+            storedDailyGoalDate == todayKey;
     final streakContinued =
         lastReadDate == _dateKey(today.subtract(const Duration(days: 1)));
-    var streakCount = prefs.getInt(_keyStreakCount) ?? 0;
+    var streakCount = _sanitizeNonNegativeInt(prefs, _keyStreakCount);
 
     if (lastReadDate == todayKey) {
       if (streakCount <= 0) {
@@ -169,16 +183,24 @@ class SpiritualProgressService {
     ReflectionPeriod period,
   ) async {
     final prefs = await _instance();
-    final today = DateTime.now();
-    final todayKey = _dateKey(today);
+    return _completeReflectionForDate(period, DateTime.now(), prefs);
+  }
+
+  static Future<ReflectionCompletionResult> _completeReflectionForDate(
+    ReflectionPeriod period,
+    DateTime now,
+    SharedPreferences prefs,
+  ) async {
+    final todayKey = _dateKey(now);
     final periodKey = switch (period) {
       ReflectionPeriod.morning => _keyMorningReflectionCompletedDate,
       ReflectionPeriod.evening => _keyEveningReflectionCompletedDate,
     };
-    final lastPeriodCompletion = prefs.getString(periodKey);
+    final lastPeriodCompletion = await _readCanonicalDateKey(prefs, periodKey);
     if (lastPeriodCompletion == todayKey) {
       return ReflectionCompletionResult(
-        reflectionStreakCount: prefs.getInt(_keyReflectionStreakCount) ?? 0,
+        reflectionStreakCount:
+            _sanitizeNonNegativeInt(prefs, _keyReflectionStreakCount),
         completedNow: false,
         streakContinued: false,
       );
@@ -186,18 +208,22 @@ class SpiritualProgressService {
 
     await prefs.setString(periodKey, todayKey);
 
-    final lastReflectionDate = prefs.getString(_keyReflectionLastCompletedDate);
+    final lastReflectionDate = await _readCanonicalDateKey(
+      prefs,
+      _keyReflectionLastCompletedDate,
+    );
     if (lastReflectionDate == todayKey) {
       return ReflectionCompletionResult(
-        reflectionStreakCount: prefs.getInt(_keyReflectionStreakCount) ?? 0,
+        reflectionStreakCount:
+            _sanitizeNonNegativeInt(prefs, _keyReflectionStreakCount),
         completedNow: true,
         streakContinued: false,
       );
     }
 
-    var streakCount = prefs.getInt(_keyReflectionStreakCount) ?? 0;
-    final streakContinued =
-        lastReflectionDate == _dateKey(today.subtract(const Duration(days: 1)));
+    var streakCount = _sanitizeNonNegativeInt(prefs, _keyReflectionStreakCount);
+    final dayGap = _dayGap(lastReflectionDate, todayKey);
+    final streakContinued = dayGap == 1;
     if (streakContinued) {
       streakCount = streakCount <= 0 ? 1 : streakCount + 1;
     } else {
@@ -213,16 +239,69 @@ class SpiritualProgressService {
     );
   }
 
+  static Future<String?> _readCanonicalDateKey(
+    SharedPreferences prefs,
+    String key,
+  ) async {
+    final rawValue = LocalDataRecovery.getString(prefs, key);
+    final normalized = _normalizeDateKey(rawValue);
+    if (normalized != null && normalized != rawValue) {
+      await prefs.setString(key, normalized);
+    }
+    if (normalized == null && rawValue != null && rawValue.isNotEmpty) {
+      await LocalDataRecovery.clearPrefsKeys(prefs, [key]);
+    }
+    return normalized;
+  }
+
+  static String? _normalizeDateKey(String? value) {
+    if (value == null || value.isEmpty) return null;
+    final directMatch = RegExp(r'^\d{4}-\d{2}-\d{2}$').firstMatch(value);
+    if (directMatch != null) {
+      return directMatch.group(0);
+    }
+
+    final parsed = DateTime.tryParse(value);
+    if (parsed == null) return null;
+    return _dateKey(parsed.toLocal());
+  }
+
+  static int? _dayGap(String? earlierDateKey, String laterDateKey) {
+    final earlier = _dateFromKey(earlierDateKey);
+    final later = _dateFromKey(laterDateKey);
+    if (earlier == null || later == null) return null;
+    return later.difference(earlier).inDays;
+  }
+
+  static DateTime? _dateFromKey(String? value) {
+    final normalized = _normalizeDateKey(value);
+    if (normalized == null) return null;
+    final parts = normalized.split('-');
+    if (parts.length != 3) return null;
+    return DateTime(
+      int.parse(parts[0]),
+      int.parse(parts[1]),
+      int.parse(parts[2]),
+    );
+  }
+
   static Future<int> nextReflectionMessageIndex(ReflectionPeriod period) async {
     final prefs = await _instance();
     final key = switch (period) {
       ReflectionPeriod.morning => _keyMorningReflectionMessageIndex,
       ReflectionPeriod.evening => _keyEveningReflectionMessageIndex,
     };
-    final current = prefs.getInt(key) ?? 0;
+    final current = _sanitizeNonNegativeInt(prefs, key) % 3;
     final next = (current + 1) % 3;
     await prefs.setInt(key, next);
     return current;
+  }
+
+  static int _sanitizeNonNegativeInt(SharedPreferences prefs, String key) {
+    final value = LocalDataRecovery.getInt(prefs, key) ?? 0;
+    if (value >= 0) return value;
+    unawaited(LocalDataRecovery.clearPrefsKeys(prefs, [key]));
+    return 0;
   }
 
   static int? _resolveJuzNumber(int surah, int ayah) {
@@ -238,5 +317,17 @@ class SpiritualProgressService {
     final month = date.month.toString().padLeft(2, '0');
     final day = date.day.toString().padLeft(2, '0');
     return '${date.year}-$month-$day';
+  }
+
+  static Future<ReflectionCompletionResult> completeReflectionForTesting({
+    required ReflectionPeriod period,
+    required DateTime now,
+  }) async {
+    final prefs = await _instance();
+    return _completeReflectionForDate(period, now, prefs);
+  }
+
+  static void resetForTesting() {
+    _prefs = null;
   }
 }
