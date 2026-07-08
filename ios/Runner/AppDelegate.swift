@@ -71,7 +71,6 @@ import WidgetKit
           return
         }
         self.writePayload(payload, key: self.payloadKey)
-        self.refreshWidgets()
         result(nil)
 
       case self.methodSetDailyContentPayload:
@@ -83,7 +82,6 @@ import WidgetKit
           return
         }
         self.writePayload(payload, key: self.dailyContentPayloadKey)
-        self.refreshWidgets()
         result(nil)
 
       case self.methodRefreshWidgets:

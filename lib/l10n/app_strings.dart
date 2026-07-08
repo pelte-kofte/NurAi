@@ -99,9 +99,9 @@ class S {
       'ayah_count_suffix': 'ayet',
       'juz_selected': 'Cüz seçildi',
       'juz_label': 'Cüz',
-      'ramadan_hub_title': 'Şu an bana eşlik et',
+      'ramadan_hub_title': 'Kalbini Dinlendir',
       'ramadan_intro':
-          'Nasıl hissediyorsan, sana uygun kısa ve sakin bir alan açalım.',
+          'Kalbindeki yükü Allah\'a bırak.\nKısa bir duruşla kalbini zikirle dinlendir.',
       'guided_helper_title': 'Nasıl hissediyorsun?',
       'guided_helper_subtitle': 'Sana iyi gelecek kısa bir alan seç.',
       'guided_helper_emotional_title': 'Şu an nasıl hissediyorsun?',
@@ -137,9 +137,9 @@ class S {
           'Geceye daha yumuşak geçiş için kısa bir alan açıyorum.',
       'guided_helper_message_prepare_prayer':
           'Namaz vaktine hazırlanman için açıyorum.',
-      'companion_flow_title': 'Şu an bana eşlik et',
+      'companion_flow_title': 'Kalbini Dinlendir',
       'companion_flow_home_subtitle':
-          'Nasıl hissediyorsan, sana uygun kısa ve sakin bir alan açalım.',
+          'Allah\'ı zikrederek kalbine kısa bir mola ver.',
       'companion_flow_step_verse': 'Ayet',
       'companion_flow_step_breathe': 'Nefes',
       'companion_flow_step_dhikr': 'Zikir',
@@ -177,11 +177,12 @@ class S {
       'companion_flow_finish_body':
           'Kısa bir durak bazen kalbi toparlamaya yeter.',
       'companion_flow_close': 'Kapat',
-      'minute_reflection_title': '1 Dakikalık Tefekkür',
+      'minute_reflection_title': 'Bir Dakika Tefekkür',
       'minute_reflection_subtitle': 'Sadece burada kal.',
-      'minute_reflection_screen_subtitle': 'Bugün kalbini bir sözle dinlendir.',
+      'minute_reflection_screen_subtitle':
+          'Ayet, zikir ve Esma ile kısa bir tefekkür alanı.',
       'minute_reflection_home_subtitle':
-          'Sadece dur. Nefes al. Kalbini toparla.',
+          'Ayet, zikir ve Esma ile kısa bir tefekkür alanı.',
       'minute_reflection_type_ayah': 'Ayet',
       'minute_reflection_type_hadith': 'Hadis',
       'minute_reflection_type_dhikr': 'Zikir',
@@ -466,6 +467,9 @@ class S {
 
       // Settings
       'settings': 'Ayarlar',
+      'general': 'Genel',
+      'notifications': 'Bildirimler',
+      'support': 'Destek',
       'language': 'Dil',
       'appearance': 'Görünüm',
       'system': 'Sistem',
@@ -833,9 +837,9 @@ class S {
       'ayah_count_suffix': 'ayahs',
       'juz_selected': 'Juz selected',
       'juz_label': 'Juz',
-      'ramadan_hub_title': 'Be with me now',
+      'ramadan_hub_title': 'Rest Your Heart',
       'ramadan_intro':
-          'However you feel, let’s open a short and calm space for you.',
+          'Leave what weighs on your heart with Allah.\nTake a brief pause and find peace through dhikr.',
       'guided_helper_title': 'How are you feeling?',
       'guided_helper_subtitle': 'Choose the short space that fits you best.',
       'guided_helper_emotional_title': 'How do you feel right now?',
@@ -875,9 +879,9 @@ class S {
           'Opening a softer space for easing into the night.',
       'guided_helper_message_prepare_prayer':
           'Opening a gentle prayer preparation for you.',
-      'companion_flow_title': 'Be with me now',
+      'companion_flow_title': 'Rest Your Heart',
       'companion_flow_home_subtitle':
-          'However you feel, let’s open a short and calm space for you.',
+          'Pause for a moment and remember Allah through dhikr.',
       'companion_flow_step_verse': 'Verse',
       'companion_flow_step_breathe': 'Breathe',
       'companion_flow_step_dhikr': 'Dhikr',
@@ -917,12 +921,12 @@ class S {
       'companion_flow_finish_body':
           'A short pause can be enough to steady the heart.',
       'companion_flow_close': 'Close',
-      'minute_reflection_title': '1 Minute Reflection',
+      'minute_reflection_title': 'One Minute Reflection',
       'minute_reflection_subtitle': 'Just stay here for a moment.',
       'minute_reflection_screen_subtitle':
-          'Let your heart rest with a word today.',
+          'A short reflection with ayah, dhikr and the Beautiful Names of Allah.',
       'minute_reflection_home_subtitle':
-          'Just pause. Breathe. Gather your heart.',
+          'A short reflection with ayah, dhikr and the Beautiful Names of Allah.',
       'minute_reflection_type_ayah': 'Ayah',
       'minute_reflection_type_hadith': 'Hadith',
       'minute_reflection_type_dhikr': 'Dhikr',
@@ -1222,6 +1226,9 @@ class S {
 
       // Settings
       'settings': 'Settings',
+      'general': 'General',
+      'notifications': 'Notifications',
+      'support': 'Support',
       'language': 'Language',
       'appearance': 'Appearance',
       'system': 'System',

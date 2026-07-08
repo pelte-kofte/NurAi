@@ -458,7 +458,7 @@ class _CompanionStepFrame extends StatelessWidget {
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Merriweather',
-              fontSize: 30,
+              fontSize: 28,
               fontWeight: FontWeight.w400,
               color: colorScheme.onSurface.withValues(alpha: 0.97),
               height: 1.42,
@@ -478,7 +478,7 @@ class _CompanionStepFrame extends StatelessWidget {
             style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 15,
-              fontWeight: FontWeight.w500,
+              fontWeight: FontWeight.w400,
               color: colorScheme.onSurface.withValues(alpha: 0.8),
               height: 1.7,
               shadows: const [

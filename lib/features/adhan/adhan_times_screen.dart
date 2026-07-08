@@ -45,12 +45,28 @@ class _AdhanTimesScreenState extends State<AdhanTimesScreen> {
   }
 
   Future<void> _bootstrap() async {
-    if (LocalPreferencesService.adhanEnabled.value) {
-      await AdhanNotificationService.rescheduleForToday();
-    }
-    await WidgetPayloadService.writeNextPrayerPayload();
     if (!mounted) return;
     setState(() => _isLoading = false);
+    unawaited(_runBootstrapSync());
+  }
+
+  Future<void> _runBootstrapSync() async {
+    try {
+      if (LocalPreferencesService.adhanEnabled.value) {
+        await AdhanNotificationService.rescheduleForToday();
+      }
+      await WidgetPayloadService.writeNextPrayerPayload();
+    } catch (error, stackTrace) {
+      debugPrint('[AdhanTimesScreen] bootstrap_sync_failed: $error');
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'adhan_times_screen',
+          context: ErrorDescription('while running Prayer Times bootstrap sync'),
+        ),
+      );
+    }
   }
 
   @override

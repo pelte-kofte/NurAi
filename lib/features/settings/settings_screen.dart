@@ -56,192 +56,212 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-          _buildSectionTitle(S.get('profile')),
-          ValueListenableBuilder<String?>(
-            valueListenable: UserProfileService.displayNameNotifier,
-            builder: (context, displayName, _) {
-              return _buildRow(
-                title: S.get('display_name'),
-                value: _profileNameLabel(displayName),
-                onTap: _showNameEditorSheet,
-              );
-            },
+          _buildSectionGroup(
+            title: S.get('general'),
+            children: [
+              ValueListenableBuilder<String?>(
+                valueListenable: UserProfileService.displayNameNotifier,
+                builder: (context, displayName, _) {
+                  return _buildRow(
+                    title: S.get('display_name'),
+                    value: _profileNameLabel(displayName),
+                    onTap: _showNameEditorSheet,
+                  );
+                },
+              ),
+              _buildRow(
+                title: S.get('my_notes'),
+                icon: Icons.note_alt_outlined,
+                onTap: _openNotes,
+              ),
+              _buildRow(
+                title: S.get('language'),
+                icon: Icons.translate_rounded,
+                value: _languageLabel(LocalPreferencesService.language.value),
+                onTap: () => _showLanguagePicker(),
+              ),
+              ValueListenableBuilder<ThemeMode>(
+                valueListenable: LocalPreferencesService.themeMode,
+                builder: (context, mode, _) {
+                  return _buildRow(
+                    title: S.get('appearance'),
+                    icon: Icons.tune_rounded,
+                    value: _themeModeLabel(mode),
+                    onTap: () => _showThemePicker(),
+                  );
+                },
+              ),
+              ValueListenableBuilder<bool>(
+                valueListenable: LocalPreferencesService.minimalModeEnabled,
+                builder: (context, enabled, _) {
+                  return _buildSwitchRow(
+                    title: S.get('minimal_mode'),
+                    value: enabled,
+                    onChanged: LocalPreferencesService.setMinimalModeEnabled,
+                  );
+                },
+              ),
+            ],
           ),
-          _buildRow(
-            title: S.get('my_notes'),
-            icon: Icons.note_alt_outlined,
-            onTap: _openNotes,
-          ),
-          ValueListenableBuilder<bool>(
-            valueListenable: PremiumService.isPremium,
-            builder: (context, isPremium, _) {
-              return Column(
-                children: [
-                  _buildRow(
-                    title: S.get('premium_app_title'),
-                    icon: Icons.workspace_premium_outlined,
-                    value: isPremium ? S.get('premium_status_active') : null,
-                    onTap: _openPremiumPage,
-                  ),
-                  if (isPremium) ...[
-                    const SizedBox(height: 10),
-                    PremiumActiveCard(
-                      onTap: _openPremiumPage,
-                      primaryActionLabel: S.get(
-                        'premium_success_action_notifications',
+          _buildSectionGroup(
+            title: S.get('notifications'),
+            children: [
+              ValueListenableBuilder<bool>(
+                valueListenable: LocalPreferencesService.adhanEnabled,
+                builder: (context, enabled, _) {
+                  return _buildSwitchRow(
+                    title: S.get('prayer_time_notifications'),
+                    description: S.get('prayer_time_notifications_subtitle'),
+                    value: enabled,
+                    onChanged: _onTogglePrayerTimeNotifications,
+                  );
+                },
+              ),
+              ValueListenableBuilder<bool>(
+                valueListenable:
+                    LocalPreferencesService.spiritualNotificationsEnabled,
+                builder: (context, enabled, _) {
+                  return _buildSwitchRow(
+                    title: S.get('daily_reminder'),
+                    description: S.get('daily_reminder_subtitle'),
+                    value: enabled,
+                    onChanged: _onToggleDailyReminder,
+                  );
+                },
+              ),
+              ValueListenableBuilder<bool>(
+                valueListenable:
+                    LocalPreferencesService.spiritualNotificationsEnabled,
+                builder: (context, enabled, _) {
+                  if (!enabled) return const SizedBox.shrink();
+                  return ValueListenableBuilder<TimeOfDay>(
+                    valueListenable: LocalPreferencesService.dailyReminderTime,
+                    builder: (context, time, _) {
+                      return _buildRow(
+                        title: S.get('daily_reminder_time'),
+                        icon: Icons.bedtime_outlined,
+                        value: MaterialLocalizations.of(context).formatTimeOfDay(
+                          time,
+                          alwaysUse24HourFormat: true,
+                        ),
+                        onTap: _showDailyReminderTimePicker,
+                      );
+                    },
+                  );
+                },
+              ),
+              ValueListenableBuilder<bool>(
+                valueListenable: LocalPreferencesService.readingReminderEnabled,
+                builder: (context, enabled, _) {
+                  return _buildSwitchRow(
+                    title: S.get('reading_reminder'),
+                    description: S.get('reading_reminder_subtitle'),
+                    value: enabled,
+                    onChanged: _onToggleReadingReminder,
+                  );
+                },
+              ),
+              ValueListenableBuilder<bool>(
+                valueListenable: LocalPreferencesService.readingReminderEnabled,
+                builder: (context, enabled, _) {
+                  if (!enabled) return const SizedBox.shrink();
+                  return ValueListenableBuilder<TimeOfDay>(
+                    valueListenable: LocalPreferencesService.readingReminderTime,
+                    builder: (context, time, _) {
+                      return _buildRow(
+                        title: S.get('reading_reminder_time'),
+                        icon: Icons.menu_book_outlined,
+                        value: MaterialLocalizations.of(context).formatTimeOfDay(
+                          time,
+                          alwaysUse24HourFormat: true,
+                        ),
+                        onTap: _showReadingReminderTimePicker,
+                      );
+                    },
+                  );
+                },
+              ),
+              if (SeasonalConfig.isRamadanSeason && !kIsWeb && Platform.isIOS)
+                ValueListenableBuilder<bool>(
+                  valueListenable: IftarLiveActivityService.isSupported,
+                  builder: (context, isSupported, _) {
+                    if (!isSupported) return const SizedBox.shrink();
+                    return _buildSwitchRow(
+                      title: S.get('iftar_countdown_toggle'),
+                      value:
+                          LocalPreferencesService.iftarLiveActivityEnabled.value,
+                      onChanged: _onToggleIftarCountdown,
+                    );
+                  },
+                ),
+              if (SeasonalConfig.isRamadanSeason && !kIsWeb && Platform.isIOS)
+                ValueListenableBuilder<bool>(
+                  valueListenable: IftarLiveActivityService.isSupported,
+                  builder: (context, isSupported, _) {
+                    if (!isSupported) return const SizedBox.shrink();
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(2, 2, 2, 8),
+                      child: Text(
+                        S.get('iftar_countdown_hint'),
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w400,
+                          color: colorScheme.onSurface.withValues(alpha: 0.62),
+                          height: 1.35,
+                        ),
                       ),
-                      onPrimaryAction: _showDailyReminderTimePicker,
-                    ),
-                  ],
-                ],
-              );
-            },
+                    );
+                  },
+                ),
+            ],
           ),
-          const SizedBox(height: 14),
-          const SizedBox(height: 6),
-          _buildRow(
-            title: S.get('language'),
-            icon: Icons.translate_rounded,
-            value: _languageLabel(LocalPreferencesService.language.value),
-            onTap: () => _showLanguagePicker(),
-          ),
-          ValueListenableBuilder<ThemeMode>(
-            valueListenable: LocalPreferencesService.themeMode,
-            builder: (context, mode, _) {
-              return _buildRow(
-                title: S.get('appearance'),
-                icon: Icons.tune_rounded,
-                value: _themeModeLabel(mode),
-                onTap: () => _showThemePicker(),
-              );
-            },
-          ),
-          ValueListenableBuilder<bool>(
-            valueListenable: LocalPreferencesService.minimalModeEnabled,
-            builder: (context, enabled, _) {
-              return _buildSwitchRow(
-                title: S.get('minimal_mode'),
-                value: enabled,
-                onChanged: LocalPreferencesService.setMinimalModeEnabled,
-              );
-            },
-          ),
-          ValueListenableBuilder<bool>(
-            valueListenable: LocalPreferencesService.adhanEnabled,
-            builder: (context, enabled, _) {
-              return _buildSwitchRow(
-                title: S.get('prayer_time_notifications'),
-                description: S.get('prayer_time_notifications_subtitle'),
-                value: enabled,
-                onChanged: _onTogglePrayerTimeNotifications,
-              );
-            },
-          ),
-          ValueListenableBuilder<bool>(
-            valueListenable:
-                LocalPreferencesService.spiritualNotificationsEnabled,
-            builder: (context, enabled, _) {
-              return _buildSwitchRow(
-                title: S.get('daily_reminder'),
-                description: S.get('daily_reminder_subtitle'),
-                value: enabled,
-                onChanged: _onToggleDailyReminder,
-              );
-            },
-          ),
-          ValueListenableBuilder<bool>(
-            valueListenable:
-                LocalPreferencesService.spiritualNotificationsEnabled,
-            builder: (context, enabled, _) {
-              if (!enabled) return const SizedBox.shrink();
-              return ValueListenableBuilder<TimeOfDay>(
-                valueListenable: LocalPreferencesService.dailyReminderTime,
-                builder: (context, time, _) {
-                  return _buildRow(
-                    title: S.get('daily_reminder_time'),
-                    icon: Icons.bedtime_outlined,
-                    value: MaterialLocalizations.of(context)
-                        .formatTimeOfDay(time, alwaysUse24HourFormat: true),
-                    onTap: _showDailyReminderTimePicker,
+          _buildSectionGroup(
+            title: S.get('support'),
+            children: [
+              ValueListenableBuilder<bool>(
+                valueListenable: PremiumService.isPremium,
+                builder: (context, isPremium, _) {
+                  return Column(
+                    children: [
+                      _buildRow(
+                        title: S.get('premium_app_title'),
+                        icon: Icons.workspace_premium_outlined,
+                        value: isPremium ? S.get('premium_status_active') : null,
+                        onTap: _openPremiumPage,
+                      ),
+                      if (isPremium) ...[
+                        const SizedBox(height: 10),
+                        PremiumActiveCard(
+                          onTap: _openPremiumPage,
+                          primaryActionLabel: S.get(
+                            'premium_success_action_notifications',
+                          ),
+                          onPrimaryAction: _showDailyReminderTimePicker,
+                        ),
+                      ],
+                    ],
                   );
                 },
-              );
-            },
+              ),
+              _buildRow(
+                title: S.get('send_feedback'),
+                onTap: _showFeedbackSheet,
+              ),
+            ],
           ),
-          ValueListenableBuilder<bool>(
-            valueListenable: LocalPreferencesService.readingReminderEnabled,
-            builder: (context, enabled, _) {
-              return _buildSwitchRow(
-                title: S.get('reading_reminder'),
-                description: S.get('reading_reminder_subtitle'),
-                value: enabled,
-                onChanged: _onToggleReadingReminder,
-              );
-            },
-          ),
-          ValueListenableBuilder<bool>(
-            valueListenable: LocalPreferencesService.readingReminderEnabled,
-            builder: (context, enabled, _) {
-              if (!enabled) return const SizedBox.shrink();
-              return ValueListenableBuilder<TimeOfDay>(
-                valueListenable: LocalPreferencesService.readingReminderTime,
-                builder: (context, time, _) {
-                  return _buildRow(
-                    title: S.get('reading_reminder_time'),
-                    icon: Icons.menu_book_outlined,
-                    value: MaterialLocalizations.of(context)
-                        .formatTimeOfDay(time, alwaysUse24HourFormat: true),
-                    onTap: _showReadingReminderTimePicker,
-                  );
-                },
-              );
-            },
-          ),
-          if (SeasonalConfig.isRamadanSeason && !kIsWeb && Platform.isIOS)
-            ValueListenableBuilder<bool>(
-              valueListenable: IftarLiveActivityService.isSupported,
-              builder: (context, isSupported, _) {
-                if (!isSupported) return const SizedBox.shrink();
-                return _buildSwitchRow(
-                  title: S.get('iftar_countdown_toggle'),
-                  value: LocalPreferencesService.iftarLiveActivityEnabled.value,
-                  onChanged: _onToggleIftarCountdown,
-                );
-              },
-            ),
-          if (SeasonalConfig.isRamadanSeason && !kIsWeb && Platform.isIOS)
-            ValueListenableBuilder<bool>(
-              valueListenable: IftarLiveActivityService.isSupported,
-              builder: (context, isSupported, _) {
-                if (!isSupported) return const SizedBox.shrink();
-                return Padding(
-                  padding: const EdgeInsets.only(top: 2, bottom: 8),
-                  child: Text(
-                    S.get('iftar_countdown_hint'),
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      color: colorScheme.onSurface.withValues(alpha: 0.62),
-                      height: 1.35,
-                    ),
-                  ),
-                );
-              },
-            ),
-          const SizedBox(height: 24),
-          _buildRow(
-            title: S.get('send_feedback'),
-            onTap: _showFeedbackSheet,
-          ),
-          _buildSectionTitle(S.get('legal')),
-          _buildRow(
-            title: S.get('privacy_policy'),
-            onTap: () => _openExternalUrl(_privacyPolicyUrl),
-          ),
-          _buildRow(
-            title: S.get('terms'),
-            onTap: () => _openExternalUrl(_termsOfUseUrl),
+          _buildSectionGroup(
+            title: S.get('legal'),
+            children: [
+              _buildRow(
+                title: S.get('privacy_policy'),
+                onTap: () => _openExternalUrl(_privacyPolicyUrl),
+              ),
+              _buildRow(
+                title: S.get('terms'),
+                onTap: () => _openExternalUrl(_termsOfUseUrl),
+              ),
+            ],
           ),
           ValueListenableBuilder<bool>(
             valueListenable: PremiumService.isPremium,
@@ -260,9 +280,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildSectionTitle(String title, {IconData? icon}) {
     final mutedIconColor = Theme.of(context).colorScheme.tertiary;
     final sectionTextColor =
-        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72);
+        Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.68);
     return Padding(
-      padding: const EdgeInsets.only(top: 6, bottom: 4),
+      padding: const EdgeInsets.only(top: 12, bottom: 8),
       child: Row(
         children: [
           if (icon != null) ...[
@@ -273,14 +293,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
             title,
             style: TextStyle(
               fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
               color: sectionTextColor,
-              letterSpacing: 0.5,
+              letterSpacing: 0.2,
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildSectionGroup({
+    required String title,
+    required List<Widget> children,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildSectionTitle(title),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: colorScheme.outline.withValues(alpha: 0.08),
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: colorScheme.shadow.withValues(alpha: 0.03),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Column(
+            children: children,
+          ),
+        ),
+      ],
     );
   }
 
@@ -299,7 +353,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14),
+        padding: const EdgeInsets.symmetric(vertical: 15),
         child: Row(
           children: [
             if (icon != null) ...[
@@ -347,7 +401,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }) {
     final onSurface = Theme.of(context).colorScheme.onSurface;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -382,7 +436,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           const SizedBox(width: 12),
           SizedBox(
-            height: 28,
+            height: 30,
             child: Switch.adaptive(
               value: value,
               onChanged: onChanged,

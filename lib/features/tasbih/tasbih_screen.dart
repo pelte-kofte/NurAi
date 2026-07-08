@@ -5,6 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/asmaul_husna_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
+import 'widgets/tasbih_bead_arc.dart';
+
+const bool kEnableTasbihBeadArc = true;
 
 class TasbihScreen extends StatefulWidget {
   const TasbihScreen({super.key});
@@ -44,9 +47,12 @@ class _TasbihScreenState extends State<TasbihScreen>
   int _currentCount = 0;
   bool _loading = true;
   late final AnimationController _tapPulseController;
+  late final AnimationController _beadStepController;
   late final AnimationController _completionGlowController;
   bool _didShowCompletionMessage = false;
   StateSetter? _settingsSheetSetState;
+  double _beadAnimationFromIndex = 0;
+  double _beadAnimationToIndex = 0;
 
   @override
   void initState() {
@@ -55,6 +61,10 @@ class _TasbihScreenState extends State<TasbihScreen>
       vsync: this,
       duration: const Duration(milliseconds: 220),
       reverseDuration: const Duration(milliseconds: 320),
+    );
+    _beadStepController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 190),
     );
     _completionGlowController = AnimationController(
       vsync: this,
@@ -66,6 +76,7 @@ class _TasbihScreenState extends State<TasbihScreen>
   @override
   void dispose() {
     _tapPulseController.dispose();
+    _beadStepController.dispose();
     _completionGlowController.dispose();
     super.dispose();
   }
@@ -187,6 +198,23 @@ class _TasbihScreenState extends State<TasbihScreen>
     return '${next.nameArabic} • ${next.localizedName(_languageCode)}';
   }
 
+  double get _beadArcPosition {
+    final from = _beadAnimationFromIndex;
+    final to = _beadAnimationToIndex;
+    final progress = Curves.easeOut.transform(_beadStepController.value);
+    final delta = to >= from ? to - from : (to + 99) - from;
+    final position = from + (delta * progress);
+    return position % 99;
+  }
+
+  void _syncBeadArcToCurrentCount() {
+    final cycleIndex = (_currentCount % 99).toDouble();
+    _beadStepController.stop();
+    _beadStepController.value = 0;
+    _beadAnimationFromIndex = cycleIndex;
+    _beadAnimationToIndex = cycleIndex;
+  }
+
   Future<void> _loadState() async {
     final prefs = await SharedPreferences.getInstance();
     final asmaNames = await AsmaulHusnaService.getAllNames();
@@ -238,6 +266,7 @@ class _TasbihScreenState extends State<TasbihScreen>
       _asmaMode = asmaMode;
       _goal = normalizedGoal;
       _currentCount = current.clamp(0, normalizedGoal);
+      _syncBeadArcToCurrentCount();
       _selectedAsmaId = asmaNames.any((item) => item.id == savedAsmaId)
           ? savedAsmaId
           : fallbackAsmaId;
@@ -262,18 +291,25 @@ class _TasbihScreenState extends State<TasbihScreen>
 
   Future<void> _increment() async {
     if (_currentCount >= _effectiveGoal) return;
+    final currentCycleIndex = _currentCount % 99;
     final nextCount = (_currentCount + 1).clamp(0, _effectiveGoal);
+    final nextCycleIndex = nextCount % 99;
     _tapPulseController.forward(from: 0).then((_) {
       if (mounted) {
         _tapPulseController.reverse();
       }
     });
+    _beadStepController.forward(from: 0);
     if (nextCount == _effectiveGoal) {
       HapticFeedback.mediumImpact();
     } else {
       HapticFeedback.lightImpact();
     }
-    setState(() => _currentCount = nextCount);
+    setState(() {
+      _beadAnimationFromIndex = currentCycleIndex.toDouble();
+      _beadAnimationToIndex = nextCycleIndex.toDouble();
+      _currentCount = nextCount;
+    });
     await _saveState();
     if (nextCount == _effectiveGoal) {
       _completionGlowController.forward(from: 0);
@@ -282,10 +318,12 @@ class _TasbihScreenState extends State<TasbihScreen>
   }
 
   Future<void> _reset() async {
+    _beadStepController.stop();
     _completionGlowController.stop();
     _completionGlowController.value = 0;
     setState(() {
       _currentCount = 0;
+      _syncBeadArcToCurrentCount();
       _didShowCompletionMessage = false;
     });
     await _saveState();
@@ -353,6 +391,7 @@ class _TasbihScreenState extends State<TasbihScreen>
       if (_currentCount > _goal) {
         _currentCount = _goal;
       }
+      _syncBeadArcToCurrentCount();
     });
     await _saveState();
   }
@@ -362,6 +401,7 @@ class _TasbihScreenState extends State<TasbihScreen>
     _updateState(() {
       _asmaMode = mode;
       _currentCount = 0;
+      _syncBeadArcToCurrentCount();
       _goal = _normalizeGoal(
         value: _goal,
         isAsmaMemorizationMode: mode == _AsmaTasbihMode.memorization,
@@ -404,6 +444,7 @@ class _TasbihScreenState extends State<TasbihScreen>
         if (_currentCount > _goal) {
           _currentCount = _goal;
         }
+        _syncBeadArcToCurrentCount();
       });
       await _saveState();
       return;
@@ -417,6 +458,7 @@ class _TasbihScreenState extends State<TasbihScreen>
       if (_currentCount > _goal) {
         _currentCount = _goal;
       }
+      _syncBeadArcToCurrentCount();
     });
     await _saveState();
   }
@@ -740,6 +782,7 @@ class _TasbihScreenState extends State<TasbihScreen>
       child: AnimatedBuilder(
         animation: Listenable.merge([
           _tapPulseController,
+          _beadStepController,
           _completionGlowController,
         ]),
         builder: (context, _) {
@@ -935,6 +978,18 @@ class _TasbihScreenState extends State<TasbihScreen>
                                   ],
                                 ),
                               ),
+                              if (kEnableTasbihBeadArc)
+                                Positioned(
+                                  top: 28,
+                                  left: 26,
+                                  width: 176,
+                                  height: 108,
+                                  child: IgnorePointer(
+                                    child: TasbihBeadArc(
+                                      position: _beadArcPosition,
+                                    ),
+                                  ),
+                                ),
                               Padding(
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 22),

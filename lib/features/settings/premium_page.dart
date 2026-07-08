@@ -303,7 +303,7 @@ class _PremiumPageState extends State<PremiumPage> {
     required String? productPrice,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    final mutedTextColor = colorScheme.onSurface.withValues(alpha: 0.72);
+    final mutedTextColor = colorScheme.onSurface.withValues(alpha: 0.78);
 
     return Container(
       width: double.infinity,
@@ -346,9 +346,9 @@ class _PremiumPageState extends State<PremiumPage> {
                               begin: Alignment.centerLeft,
                               end: Alignment.centerRight,
                               colors: [
-                                const Color(0xFFF7F0E4).withValues(alpha: 0.92),
-                                const Color(0xFFF7F0E4).withValues(alpha: 0.78),
-                                const Color(0xFFF7F0E4).withValues(alpha: 0.40),
+                                const Color(0xFFF7F0E4).withValues(alpha: 0.95),
+                                const Color(0xFFF7F0E4).withValues(alpha: 0.84),
+                                const Color(0xFFF7F0E4).withValues(alpha: 0.48),
                                 const Color(0xFFF7F0E4).withValues(alpha: 0.0),
                               ],
                               stops: const [0.0, 0.38, 0.72, 1.0],
@@ -517,8 +517,8 @@ class _PremiumPageState extends State<PremiumPage> {
                     height: 1.15,
                     shadows: [
                       Shadow(
-                        color: Color(0x38212E29),
-                        blurRadius: 16,
+                        color: Color(0x40212E29),
+                        blurRadius: 18,
                         offset: Offset(0, 3),
                       ),
                     ],
@@ -535,8 +535,8 @@ class _PremiumPageState extends State<PremiumPage> {
                     height: 1.6,
                     shadows: const [
                       Shadow(
-                        color: Color(0x30212E29),
-                        blurRadius: 12,
+                        color: Color(0x34212E29),
+                        blurRadius: 14,
                         offset: Offset(0, 2),
                       ),
                     ],
@@ -619,12 +619,11 @@ class _PremiumPageState extends State<PremiumPage> {
             ),
           ),
           const SizedBox(height: 14),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 214,
+          IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
                   child: _TierColumn(
                     title: S.get('premium_compare_free_title'),
                     rows: [
@@ -635,11 +634,8 @@ class _PremiumPageState extends State<PremiumPage> {
                     highlighted: false,
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SizedBox(
-                  height: 214,
+                const SizedBox(width: 12),
+                Expanded(
                   child: _TierColumn(
                     title: S.get('premium_compare_premium_title'),
                     rows: [
@@ -650,8 +646,8 @@ class _PremiumPageState extends State<PremiumPage> {
                     highlighted: true,
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -879,52 +875,43 @@ class _TierColumn extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                for (var index = 0; index < rows.length; index++) ...[
-                  Expanded(
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 2),
-                          child: Icon(
-                            highlighted
-                                ? Icons.check_rounded
-                                : Icons.remove_rounded,
-                            size: 15,
-                            color: highlighted
-                                ? _PremiumPageState._premiumPrimary
-                                : colorScheme.onSurface.withValues(alpha: 0.5),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            rows[index],
-                            maxLines: 4,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontFamily: 'Inter',
-                              fontSize: 12.5,
-                              fontWeight: FontWeight.w500,
-                              color: colorScheme.onSurface.withValues(
-                                alpha: 0.78,
-                              ),
-                              height: 1.35,
-                            ),
-                          ),
-                        ),
-                      ],
+          for (var index = 0; index < rows.length; index++) ...[
+            Padding(
+              padding: EdgeInsets.only(
+                bottom: index == rows.length - 1 ? 0 : 12,
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Icon(
+                      highlighted ? Icons.check_rounded : Icons.remove_rounded,
+                      size: 15,
+                      color: highlighted
+                          ? _PremiumPageState._premiumPrimary
+                          : colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
-                  if (index != rows.length - 1) const SizedBox(height: 10),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      rows[index],
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w500,
+                        color: colorScheme.onSurface.withValues(
+                          alpha: 0.78,
+                        ),
+                        height: 1.4,
+                      ),
+                    ),
+                  ),
                 ],
-              ],
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

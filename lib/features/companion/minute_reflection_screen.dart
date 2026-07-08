@@ -267,10 +267,10 @@ class _ActiveReflectionState extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Merriweather',
-                      fontSize: 22,
+                      fontSize: 24,
                       fontWeight: FontWeight.w500,
                       color: colorScheme.onSurface.withValues(alpha: 0.96),
-                      height: 1.25,
+                      height: 1.22,
                     ),
                   ),
                   const SizedBox(height: 10),

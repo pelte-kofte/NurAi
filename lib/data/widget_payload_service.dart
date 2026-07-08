@@ -13,6 +13,7 @@ import 'next_prayer_service.dart';
 class WidgetPayloadService {
   WidgetPayloadService._();
 
+  static const int _additionalUpcomingDays = 14;
   static const String _channelName = 'nurai.widgets';
   static const String _methodSetPayload = 'setNextPrayerPayload';
   static const String _methodSetDailyContentPayload = 'setDailyContentPayload';
@@ -173,30 +174,29 @@ class WidgetPayloadService {
     PrayerLocation location,
   ) {
     final nowWithDrift = now.add(const Duration(seconds: 10));
-    final todayEntries = _prayerEntriesForDate(now, location);
-    final tomorrowEntries = _prayerEntriesForDate(
-      now.add(const Duration(days: 1)),
-      location,
-    );
+    final upcoming = <_PrayerEntry>[];
 
-    final upcoming = <_PrayerEntry>[
-      for (final entry in todayEntries)
-        if (entry.time.isAfter(nowWithDrift)) entry,
-    ];
-
-    for (final entry in tomorrowEntries) {
-      final alreadyIncluded = upcoming.any(
-        (existing) => existing.key == entry.key && existing.time == entry.time,
+    for (var dayOffset = 0; dayOffset <= _additionalUpcomingDays; dayOffset++) {
+      final dayEntries = _prayerEntriesForDate(
+        now.add(Duration(days: dayOffset)),
+        location,
       );
-      if (!alreadyIncluded) {
-        upcoming.add(entry);
+      for (final entry in dayEntries) {
+        if (!entry.time.isAfter(nowWithDrift)) continue;
+        final alreadyIncluded = upcoming.any(
+          (existing) =>
+              existing.key == entry.key && existing.time == entry.time,
+        );
+        if (!alreadyIncluded) {
+          upcoming.add(entry);
+        }
       }
     }
 
     _log(
       'build_upcoming_prayers now=${now.millisecondsSinceEpoch} '
-      'todayRemaining=${todayEntries.where((entry) => entry.time.isAfter(nowWithDrift)).length} '
-      'tomorrowIncluded=${tomorrowEntries.length}',
+      'additionalDays=$_additionalUpcomingDays '
+      'upcomingCount=${upcoming.length}',
     );
     return upcoming;
   }

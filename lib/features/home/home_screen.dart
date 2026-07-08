@@ -2401,10 +2401,10 @@ class _HomeFeatureCard extends StatelessWidget {
                                   overflow: TextOverflow.ellipsis,
                                   style: const TextStyle(
                                     fontFamily: 'Merriweather',
-                                    fontSize: 18,
+                                    fontSize: 20,
                                     fontWeight: FontWeight.w500,
                                     color: Colors.white,
-                                    height: 1.25,
+                                    height: 1.2,
                                     shadows: [
                                       Shadow(
                                         color: Color(0x66000000),
@@ -2424,10 +2424,10 @@ class _HomeFeatureCard extends StatelessWidget {
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(
                                       fontFamily: 'Inter',
-                                      fontSize: 12.5,
+                                      fontSize: 13,
                                       fontWeight: FontWeight.w500,
                                       color: Color(0xF5FFFFFF),
-                                      height: 1.35,
+                                      height: 1.42,
                                       shadows: [
                                         Shadow(
                                           color: Color(0x66000000),
