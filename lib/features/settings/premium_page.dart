@@ -554,31 +554,34 @@ class _PremiumPageState extends State<PremiumPage> {
                   ),
                 ),
                 const SizedBox(height: 22),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _HeroMetric(
-                        icon: isPremium
-                            ? Icons.verified_rounded
-                            : Icons.auto_awesome_rounded,
-                        title: isPremium
-                            ? S.get('premium_active')
-                            : S.get('premium_membership_label'),
-                        value: isPremium
-                            ? S.get('premium_status_active')
-                            : (productPrice ??
-                                S.get('premium_subscription_loading')),
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: _HeroMetric(
+                          icon: isPremium
+                              ? Icons.verified_rounded
+                              : Icons.auto_awesome_rounded,
+                          title: isPremium
+                              ? S.get('premium_active')
+                              : S.get('premium_membership_label'),
+                          value: isPremium
+                              ? S.get('premium_status_active')
+                              : (productPrice ??
+                                  S.get('premium_subscription_loading')),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _HeroMetric(
-                        icon: Icons.nightlight_round,
-                        title: S.get('premium_focus_title'),
-                        value: S.get('premium_focus_value'),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _HeroMetric(
+                          icon: Icons.nightlight_round,
+                          title: S.get('premium_focus_title'),
+                          value: S.get('premium_focus_value'),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -778,6 +781,7 @@ class _HeroMetric extends StatelessWidget {
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
             width: 34,

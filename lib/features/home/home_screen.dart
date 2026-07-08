@@ -1930,6 +1930,22 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       title: S.get('companion_flow_title'),
       subtitle: S.get('companion_flow_home_subtitle'),
       backgroundAsset: _stayWithMeBgAsset,
+      overlayStrength: 0.52,
+      textPanelStrength: 2.4,
+      titleStyle: const TextStyle(
+        fontFamily: 'Merriweather',
+        fontSize: 20,
+        fontWeight: FontWeight.w500,
+        color: Color(0xFF6A4F3D),
+        height: 1.2,
+      ),
+      subtitleStyle: const TextStyle(
+        fontFamily: 'Inter',
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        color: Color(0xD96A4F3D),
+        height: 1.42,
+      ),
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -1960,6 +1976,22 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       title: S.get('minute_reflection_title'),
       subtitle: S.get('minute_reflection_home_subtitle'),
       backgroundAsset: _reflectionCardBgAsset,
+      overlayStrength: 0.48,
+      textPanelStrength: 2.55,
+      titleStyle: const TextStyle(
+        fontFamily: 'Merriweather',
+        fontSize: 20,
+        fontWeight: FontWeight.w500,
+        color: Color(0xFF694F3F),
+        height: 1.2,
+      ),
+      subtitleStyle: const TextStyle(
+        fontFamily: 'Inter',
+        fontSize: 13,
+        fontWeight: FontWeight.w500,
+        color: Color(0xD6694F3F),
+        height: 1.42,
+      ),
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
@@ -2212,13 +2244,20 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     required String title,
     String? subtitle,
     required String backgroundAsset,
+    double overlayStrength = 1,
+    double textPanelStrength = 1,
+    TextStyle? titleStyle,
+    TextStyle? subtitleStyle,
     required VoidCallback onTap,
   }) {
     return _HomeFeatureCard(
       title: title,
       subtitle: subtitle,
       backgroundAsset: backgroundAsset,
-      overlayStrength: backgroundAsset == _stayWithMeBgAsset ? 0.78 : 1,
+      overlayStrength: overlayStrength,
+      textPanelStrength: textPanelStrength,
+      titleStyle: titleStyle,
+      subtitleStyle: subtitleStyle,
       onTap: onTap,
     );
   }
@@ -2291,6 +2330,9 @@ class _HomeFeatureCard extends StatelessWidget {
     this.subtitle,
     required this.backgroundAsset,
     this.overlayStrength = 1,
+    this.textPanelStrength = 1,
+    this.titleStyle,
+    this.subtitleStyle,
     required this.onTap,
   });
 
@@ -2300,6 +2342,9 @@ class _HomeFeatureCard extends StatelessWidget {
   final String? subtitle;
   final String backgroundAsset;
   final double overlayStrength;
+  final double textPanelStrength;
+  final TextStyle? titleStyle;
+  final TextStyle? subtitleStyle;
   final VoidCallback onTap;
 
   @override
@@ -2366,10 +2411,10 @@ class _HomeFeatureCard extends StatelessWidget {
                                 end: Alignment.centerRight,
                                 colors: [
                                   Colors.white.withValues(
-                                    alpha: 0.08 * overlayStrength,
+                                    alpha: 0.08 * textPanelStrength,
                                   ),
                                   Colors.white.withValues(
-                                    alpha: 0.03 * overlayStrength,
+                                    alpha: 0.03 * textPanelStrength,
                                   ),
                                   Colors.transparent,
                                 ],
@@ -2399,20 +2444,21 @@ class _HomeFeatureCard extends StatelessWidget {
                                   textAlign: TextAlign.left,
                                   maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
-                                  style: const TextStyle(
-                                    fontFamily: 'Merriweather',
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white,
-                                    height: 1.2,
-                                    shadows: [
-                                      Shadow(
-                                        color: Color(0x66000000),
-                                        blurRadius: 18,
-                                        offset: Offset(0, 4),
+                                  style: titleStyle ??
+                                      const TextStyle(
+                                        fontFamily: 'Merriweather',
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.white,
+                                        height: 1.2,
+                                        shadows: [
+                                          Shadow(
+                                            color: Color(0x66000000),
+                                            blurRadius: 18,
+                                            offset: Offset(0, 4),
+                                          ),
+                                        ],
                                       ),
-                                    ],
-                                  ),
                                 ),
                                 if (subtitle != null &&
                                     subtitle!.trim().isNotEmpty) ...[
@@ -2422,20 +2468,21 @@ class _HomeFeatureCard extends StatelessWidget {
                                     textAlign: TextAlign.left,
                                     maxLines: 3,
                                     overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontFamily: 'Inter',
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.w500,
-                                      color: Color(0xF5FFFFFF),
-                                      height: 1.42,
-                                      shadows: [
-                                        Shadow(
-                                          color: Color(0x66000000),
-                                          blurRadius: 14,
-                                          offset: Offset(0, 3),
+                                    style: subtitleStyle ??
+                                        const TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                          color: Color(0xF5FFFFFF),
+                                          height: 1.42,
+                                          shadows: [
+                                            Shadow(
+                                              color: Color(0x66000000),
+                                              blurRadius: 14,
+                                              offset: Offset(0, 3),
+                                            ),
+                                          ],
                                         ),
-                                      ],
-                                    ),
                                   ),
                                 ],
                               ],
