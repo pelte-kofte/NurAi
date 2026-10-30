@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../core/config/seasonal_config.dart';
 import '../../core/ads/banner_ad_widget.dart';
@@ -16,6 +15,7 @@ import '../../data/premium_upsell_service.dart';
 import '../../data/quran_data.dart';
 import '../../data/quran_turkish_meal_service.dart';
 import '../../data/reading_progress_service.dart';
+import '../../data/reflection_items_service.dart';
 import '../../data/spiritual_progress_service.dart';
 import '../../services/feedback_prompt_service.dart';
 import '../../services/feedback_service.dart';
@@ -46,11 +46,13 @@ class HomeScreen extends StatefulWidget {
     super.key,
     this.initialTodayIntent,
     this.openCompanionFlowOnLaunch = false,
+    this.minuteReflectionLaunchToken,
     this.launchedFromNotification = false,
   });
 
   final TodayScreenIntent? initialTodayIntent;
   final bool openCompanionFlowOnLaunch;
+  final String? minuteReflectionLaunchToken;
   final bool launchedFromNotification;
 
   @override
@@ -76,18 +78,22 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   DateTime _now = DateTime.now();
   bool _didOpenInitialTodayIntent = false;
   bool _didOpenInitialCompanionFlow = false;
+  bool _didOpenInitialMinuteReflection = false;
   bool _isPresentingUpsell = false;
   bool _isPresentingFeedbackPrompt = false;
   String? _dismissedNightRitualPromptDateKey;
+  late Future<_DailyReflectionHomeData> _dailyReflectionHomeData;
 
   @override
   void initState() {
     super.initState();
+    _dailyReflectionHomeData = _loadDailyReflectionHomeData();
     unawaited(LocalPreferencesService.refreshCompanionFlowCompletedToday());
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _maybeShowNamePrompt();
       _maybeOpenInitialTodayIntent();
       _maybeOpenInitialCompanionFlow();
+      _maybeOpenInitialMinuteReflection();
       _scheduleTimedUpsellCheck();
       _scheduleFeedbackPromptCheck();
     });
@@ -114,6 +120,14 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         _maybeOpenInitialCompanionFlow();
       });
     }
+    if (widget.minuteReflectionLaunchToken !=
+            oldWidget.minuteReflectionLaunchToken &&
+        widget.minuteReflectionLaunchToken != null) {
+      _didOpenInitialMinuteReflection = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _maybeOpenInitialMinuteReflection();
+      });
+    }
   }
 
   @override
@@ -136,6 +150,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   void didPopNext() {
     unawaited(LocalPreferencesService.refreshCompanionFlowCompletedToday());
+    _refreshDailyReflectionHomeData();
     setState(() {});
     _maybeOpenInitialCompanionFlow();
     _scheduleTimedUpsellCheck();
@@ -196,6 +211,48 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     if (_hasBlockingModalRoute()) return;
     _didOpenInitialCompanionFlow = true;
     _openCompanionFlow();
+  }
+
+  void _maybeOpenInitialMinuteReflection() {
+    if (!mounted || _didOpenInitialMinuteReflection) return;
+    if (widget.minuteReflectionLaunchToken == null) return;
+    if (_hasBlockingModalRoute()) return;
+    _didOpenInitialMinuteReflection = true;
+    unawaited(_openMinuteReflection());
+  }
+
+  Future<void> _openMinuteReflection() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const MinuteReflectionScreen()),
+    );
+    if (!mounted) return;
+    _refreshDailyReflectionHomeData();
+  }
+
+  void _refreshDailyReflectionHomeData() {
+    if (!mounted) return;
+    setState(() {
+      _dailyReflectionHomeData = _loadDailyReflectionHomeData();
+    });
+  }
+
+  Future<_DailyReflectionHomeData> _loadDailyReflectionHomeData() async {
+    final results = await Future.wait<Object>([
+      ReflectionItemsService.loadItems(),
+      SpiritualProgressService.loadState(),
+    ]);
+    final items = results[0] as List<ReflectionItem>;
+    final progress = results[1] as SpiritualProgressState;
+    final today = DateTime.now();
+    final dailyItems = ReflectionItemsService.pickDailySessionItems(
+      items,
+      date: today,
+    );
+    return _DailyReflectionHomeData.fromProgress(
+      item: dailyItems.first,
+      progress: progress,
+      today: today,
+    );
   }
 
   void _openCompanionFlow() {
@@ -275,6 +332,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       return;
     }
     if (widget.openCompanionFlowOnLaunch && !_didOpenInitialCompanionFlow) {
+      return;
+    }
+    if (widget.minuteReflectionLaunchToken != null &&
+        !_didOpenInitialMinuteReflection) {
       return;
     }
     if (!FeedbackPromptService.canShowPrompt()) return;
@@ -665,11 +726,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       const SizedBox(height: 20),
       _buildCoreActionsRow(),
       const SizedBox(height: 22),
+      _buildDailyReflectionSection(),
+      const SizedBox(height: 22),
       _buildDailyContentSection(),
       const SizedBox(height: 22),
       _buildFeatureGrid(),
-      const SizedBox(height: 10),
-      _buildCompanionConnectionLine(),
       const SizedBox(height: 8),
       _buildReflectionHelperLinks(),
       if (_shouldShowNightCompanionPrompt()) ...[
@@ -713,26 +774,31 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
+  Widget _buildDailyReflectionSection() {
+    return FutureBuilder<_DailyReflectionHomeData>(
+      future: _dailyReflectionHomeData,
+      builder: (context, snapshot) {
+        final data = snapshot.data;
+        if (data == null) {
+          return const _DailyReflectionCardSkeleton();
+        }
+        return _DailyReflectionCard(
+          data: data,
+          onTap: _openMinuteReflection,
+        );
+      },
+    );
+  }
+
   Widget _buildFeatureGrid() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader(
-          title: S.get('home_section_for_today'),
-          icon: Icons.wb_sunny_outlined,
+          title: S.get('home_section_when_needed'),
+          icon: Icons.favorite_border_rounded,
         ),
         const SizedBox(height: 12),
-        _HomeJourneyTile(
-          icon: Icons.auto_stories_outlined,
-          title: S.get('minute_reflection_title'),
-          subtitle: S.get('minute_reflection_home_subtitle'),
-          onTap: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const MinuteReflectionScreen(),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
         _HomeJourneyTile(
           icon: Icons.volunteer_activism_outlined,
           title: S.get('companion_flow_title'),
@@ -2031,146 +2097,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     return _buildGuidedHelperLink();
   }
 
-  Widget _buildCompanionConnectionLine() {
-    final colorScheme = Theme.of(context).colorScheme;
-    return ValueListenableBuilder<bool>(
-      valueListenable: LocalPreferencesService.companionFlowCompletedToday,
-      builder: (context, completedToday, _) {
-        if (!completedToday) return const SizedBox.shrink();
-        return FutureBuilder<SpiritualProgressState>(
-          future: SpiritualProgressService.loadState(),
-          builder: (context, snapshot) {
-            final reflectionDays =
-                (snapshot.data?.reflectionStreakCount ?? 1).clamp(1, 999);
-            final completedCount = reflectionDays.clamp(1, 7);
-
-            return Container(
-              width: double.infinity,
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
-              decoration: BoxDecoration(
-                color: colorScheme.surface.withValues(alpha: 0.94),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(
-                  color: AppColors.earthAccent.withValues(alpha: 0.14),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: colorScheme.shadow.withValues(alpha: 0.05),
-                    blurRadius: 20,
-                    offset: const Offset(0, 10),
-                  ),
-                ],
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    S.get('spiritual_connection_status_today'),
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                      color: colorScheme.onSurface.withValues(alpha: 0.82),
-                      height: 1.35,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    S
-                        .get('spiritual_connection_continuity')
-                        .replaceAll('{count}', '$reflectionDays'),
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w500,
-                      color: colorScheme.onSurface.withValues(alpha: 0.6),
-                      height: 1.4,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      const gap = 8.0;
-                      final circleSize =
-                          ((constraints.maxWidth - (gap * 6)) / 7)
-                              .clamp(32.0, 42.0);
-                      return Row(
-                        children: List.generate(7, (index) {
-                          final isCompleted = index >= 7 - completedCount;
-                          final isToday = index == 6;
-                          return Padding(
-                            padding:
-                                EdgeInsets.only(right: index == 6 ? 0 : gap),
-                            child: SizedBox(
-                              width: circleSize,
-                              height: circleSize,
-                              child: DecoratedBox(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: isCompleted
-                                      ? AppColors.indigoAccent.withValues(
-                                          alpha: isToday ? 0.22 : 0.16,
-                                        )
-                                      : colorScheme.onSurface.withValues(
-                                          alpha: 0.08,
-                                        ),
-                                  border: Border.all(
-                                    color: isCompleted
-                                        ? AppColors.indigoAccent.withValues(
-                                            alpha: isToday ? 0.3 : 0.16,
-                                          )
-                                        : colorScheme.onSurface.withValues(
-                                            alpha: 0.06,
-                                          ),
-                                  ),
-                                ),
-                                child: Center(
-                                  child: isToday && isCompleted
-                                      ? Padding(
-                                          padding: const EdgeInsets.all(7),
-                                          child: FittedBox(
-                                            fit: BoxFit.contain,
-                                            child: SvgPicture.asset(
-                                              'assets/images/calligraphy/allahu_akbar.svg',
-                                              width: 22,
-                                              height: 22,
-                                              colorFilter: ColorFilter.mode(
-                                                colorScheme.onSurface
-                                                    .withValues(alpha: 0.88),
-                                                BlendMode.srcIn,
-                                              ),
-                                            ),
-                                          ),
-                                        )
-                                      : Icon(
-                                          isCompleted
-                                              ? Icons.check_rounded
-                                              : Icons.circle,
-                                          size: isCompleted ? 16 : 8,
-                                          color: isCompleted
-                                              ? colorScheme.onSurface
-                                                  .withValues(alpha: 0.74)
-                                              : colorScheme.onSurface
-                                                  .withValues(alpha: 0.18),
-                                        ),
-                                ),
-                              ),
-                            ),
-                          );
-                        }),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
   Widget _buildNightRitualPromptCard() {
     final colorScheme = Theme.of(context).colorScheme;
     return Container(
@@ -2254,6 +2180,308 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       titleStyle: titleStyle,
       subtitleStyle: subtitleStyle,
       onTap: onTap,
+    );
+  }
+}
+
+class _DailyReflectionHomeData {
+  const _DailyReflectionHomeData({
+    required this.item,
+    required this.completedToday,
+    required this.streakCount,
+    required this.week,
+  });
+
+  final ReflectionItem item;
+  final bool completedToday;
+  final int streakCount;
+  final List<bool> week;
+
+  factory _DailyReflectionHomeData.fromProgress({
+    required ReflectionItem item,
+    required SpiritualProgressState progress,
+    required DateTime today,
+  }) {
+    final localToday = DateTime(today.year, today.month, today.day);
+    final lastDate = DateTime.tryParse(
+      progress.reflectionLastCompletedDate ?? '',
+    );
+    final normalizedLast = lastDate == null
+        ? null
+        : DateTime(lastDate.year, lastDate.month, lastDate.day);
+    final completedToday = normalizedLast == localToday;
+    final streak = progress.reflectionStreakCount.clamp(0, 999);
+    final week = List<bool>.generate(7, (index) {
+      if (normalizedLast == null || streak <= 0) return false;
+      final day = localToday.subtract(Duration(days: 6 - index));
+      final distance = normalizedLast.difference(day).inDays;
+      return distance >= 0 && distance < streak;
+    });
+    return _DailyReflectionHomeData(
+      item: item,
+      completedToday: completedToday,
+      streakCount: streak,
+      week: week,
+    );
+  }
+}
+
+class _DailyReflectionCardSkeleton extends StatelessWidget {
+  const _DailyReflectionCardSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 254,
+      decoration: BoxDecoration(
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(AppRadii.large),
+        border: Border.all(color: AppColors.cardBorder),
+      ),
+    );
+  }
+}
+
+class _DailyReflectionCard extends StatefulWidget {
+  const _DailyReflectionCard({required this.data, required this.onTap});
+
+  final _DailyReflectionHomeData data;
+  final Future<void> Function() onTap;
+
+  @override
+  State<_DailyReflectionCard> createState() => _DailyReflectionCardState();
+}
+
+class _DailyReflectionCardState extends State<_DailyReflectionCard> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final languageCode = Localizations.localeOf(context).languageCode;
+    final localized = widget.data.item.localized(languageCode);
+    final title = switch (widget.data.item.type) {
+      'asma' => localized.name ?? '',
+      'dhikr' => localized.transliteration ?? '',
+      _ => localized.text ?? '',
+    };
+    final detail = switch (widget.data.item.type) {
+      'asma' => localized.meaning ?? '',
+      'dhikr' => localized.meaning ?? '',
+      _ => localized.source ?? '',
+    };
+    final labels = languageCode == 'tr'
+        ? const ['P', 'S', 'Ç', 'P', 'C', 'C', 'P']
+        : const ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+    final today = DateTime.now();
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 520),
+      curve: Curves.easeOutCubic,
+      builder: (context, value, child) => Opacity(
+        opacity: value,
+        child: Transform.translate(
+          offset: Offset(0, 12 * (1 - value)),
+          child: child,
+        ),
+      ),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => setState(() => _pressed = true),
+        onTapCancel: () => setState(() => _pressed = false),
+        onTapUp: (_) {
+          setState(() => _pressed = false);
+          HapticFeedback.selectionClick();
+          unawaited(widget.onTap());
+        },
+        child: AnimatedScale(
+          scale: _pressed ? 0.985 : 1,
+          duration: const Duration(milliseconds: 150),
+          curve: Curves.easeOutCubic,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            width: double.infinity,
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
+            decoration: BoxDecoration(
+              color: widget.data.completedToday
+                  ? AppColors.ctaSecondaryFill
+                  : AppColors.cardBg,
+              borderRadius: BorderRadius.circular(AppRadii.large),
+              border: Border.all(
+                color: widget.data.completedToday
+                    ? AppColors.ctaSecondaryBorder
+                    : AppColors.cardBorder,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Text(
+                      S.get('home_daily_reflection_eyebrow').toUpperCase(),
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1,
+                        color: AppColors.primaryAccent,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 9,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.cardBgSoft,
+                        borderRadius: BorderRadius.circular(99),
+                      ),
+                      child: Text(
+                        S.get('home_daily_reflection_duration'),
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                Text(
+                  title,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontFamily: 'Merriweather',
+                    fontSize: 23,
+                    fontWeight: FontWeight.w400,
+                    height: 1.42,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                if (detail.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(
+                    detail,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      height: 1.45,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 18),
+                const Divider(height: 1, color: AppColors.cardBorder),
+                const SizedBox(height: 14),
+                Row(
+                  children: List.generate(7, (index) {
+                    final date = today.subtract(Duration(days: 6 - index));
+                    final completed = widget.data.week[index];
+                    final isToday = index == 6;
+                    return Expanded(
+                      child: Column(
+                        children: [
+                          Text(
+                            labels[date.weekday - 1],
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 10,
+                              fontWeight:
+                                  isToday ? FontWeight.w700 : FontWeight.w500,
+                              color: isToday
+                                  ? AppColors.primaryAccent
+                                  : AppColors.textMuted,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.6, end: 1),
+                            duration: Duration(
+                              milliseconds: 260 + (index * 45),
+                            ),
+                            curve: Curves.easeOutBack,
+                            builder: (context, value, child) => Transform.scale(
+                              scale: value,
+                              child: child,
+                            ),
+                            child: Container(
+                              width: 22,
+                              height: 22,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: completed
+                                    ? AppColors.primaryAccent
+                                    : Colors.transparent,
+                                border: Border.all(
+                                  color: isToday
+                                      ? AppColors.primaryAccent
+                                      : AppColors.cardBorder,
+                                ),
+                              ),
+                              child: completed
+                                  ? const Icon(
+                                      Icons.check_rounded,
+                                      size: 14,
+                                      color: Colors.white,
+                                    )
+                                  : null,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Icon(
+                      widget.data.completedToday
+                          ? Icons.check_circle_rounded
+                          : Icons.play_circle_outline_rounded,
+                      size: 20,
+                      color: AppColors.primaryAccent,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      widget.data.completedToday
+                          ? S.get('home_daily_reflection_completed')
+                          : S.get('home_daily_reflection_start'),
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primaryAccent,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (widget.data.streakCount > 1)
+                      Text(
+                        S.get('home_daily_reflection_streak').replaceAll(
+                              '{count}',
+                              '${widget.data.streakCount}',
+                            ),
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

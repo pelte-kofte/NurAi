@@ -34,6 +34,12 @@ class S {
           'Namaz vakitleri, Kur’an ve zikir; ihtiyaç duyduğunda yanında.',
       'home_section_now_upcoming': 'Bir sonraki vakit',
       'home_section_for_today': 'Bugün',
+      'home_section_when_needed': 'İhtiyacın olduğunda',
+      'home_daily_reflection_eyebrow': 'Bugünün Tefekkürü',
+      'home_daily_reflection_duration': '1 dakika',
+      'home_daily_reflection_start': 'Başla',
+      'home_daily_reflection_completed': 'Bugün tamamlandı',
+      'home_daily_reflection_streak': '{count} günlük devam',
       'home_see_more_for_today': 'Bugün için daha fazlasını gör',
       'today_choose_direction_label': '',
       'today_choose_fit_label': '',
@@ -162,6 +168,10 @@ class S {
       'companion_flow_ayah_source_5': 'Kâf Suresi · 16. ayet',
       'companion_flow_ayah_6': 'O, kalplerin özünü hakkıyla bilir.',
       'companion_flow_ayah_source_6': 'Mülk Suresi · 13. ayet',
+      'companion_flow_ayah_7': 'Kim Allah’a tevekkül ederse O, ona yeter.',
+      'companion_flow_ayah_source_7': 'Talâk Suresi · 3. ayet',
+      'companion_flow_ayah_8': 'Şükrederseniz elbette size nimetimi artırırım.',
+      'companion_flow_ayah_source_8': 'İbrâhîm Suresi · 7. ayet',
       'companion_flow_ayah_prompt':
           'Bu ayeti hemen geçmek zorunda değilsin. Sende kalan kelimeyi fark et.',
       'companion_flow_pause_title': 'Biraz sessiz kal.',
@@ -169,6 +179,12 @@ class S {
           'Nefesini değiştirmeye çalışma. İçinden geçenleri olduğu gibi fark et ve Allah’ın seni bildiğini hatırla.',
       'companion_flow_dua_title':
           'Allah’ım, içimde taşıdığım şeyi Sen biliyorsun. Bana doğru olanı kolaylaştır, kalbime ferahlık ver.',
+      'companion_flow_dua_decision':
+          'Allah’ım, önümdeki konuda hayırlı olanı bana göster. Kararımı kolaylaştır ve beni Sana güvenenlerden eyle.',
+      'companion_flow_dua_gratitude':
+          'Allah’ım, verdiğin nimetleri fark etmeyi ve şükrünü hakkıyla yerine getirmeyi nasip et.',
+      'companion_flow_dua_sleep':
+          'Allah’ım, bu günü Sana emanet ediyorum. Eksiklerimi bağışla ve bana huzurlu bir gece nasip et.',
       'companion_flow_dua_body':
           'İstersen bu duayı oku; istersen kendi sözlerinle devam et.',
       'companion_flow_dua_note':
@@ -209,6 +225,21 @@ class S {
       'companion_flow_finish_body':
           'İstersen kendi sözlerinle dua etmeye devam edebilirsin.',
       'companion_flow_close': 'Kapat',
+      'companion_intent_title': 'Şu an neye ihtiyacın var?',
+      'companion_intent_subtitle':
+          'Seçimine göre kısa bir ayet, duruş ve dua açılır.',
+      'companion_intent_overwhelmed': 'Aklım çok dolu',
+      'companion_intent_overwhelmed_subtitle':
+          'Bir ayetle durup düşüncelerini fark et.',
+      'companion_intent_decision': 'Bir karar vermem gerekiyor',
+      'companion_intent_decision_subtitle':
+          'Tevekkül üzerine kısa bir ayet ve dua.',
+      'companion_intent_gratitude': 'Şükretmek istiyorum',
+      'companion_intent_gratitude_subtitle':
+          'Bugünkü nimetleri hatırlamak için kısa bir duruş.',
+      'companion_intent_sleep': 'Uyumadan önce',
+      'companion_intent_sleep_subtitle':
+          'Günü kısa bir ayet ve dua ile tamamla.',
       'minute_reflection_title': 'Bir Dakika Tefekkür',
       'minute_reflection_subtitle': 'Sadece burada kal.',
       'minute_reflection_screen_subtitle':
@@ -233,6 +264,8 @@ class S {
       'minute_reflection_finish_today': 'Bugün: ✓',
       'minute_reflection_finish_home': 'Ana sayfaya dön',
       'minute_reflection_finish_repeat': 'Bir söz daha',
+      'minute_reflection_enable_reminder': 'Her gün hatırlat',
+      'minute_reflection_reminder_loading': 'Hazırlanıyor...',
       'calming_flow_subtitle': 'Biraz daha uzun kal ve düşüncelerini fark et.',
       'calming_flow_start': 'Başla',
       'calming_flow_stage_1': 'Nefesini değiştirmeden birkaç saniye bekle.',
@@ -401,9 +434,9 @@ class S {
       'reading_reset_title': 'İlerleme sıfırlansın mı?',
       'reading_reset_subtitle': 'Bu işlem geri alınmaz.',
       'reading_reset_confirm': 'İlerlemeyi sıfırla',
-      'daily_reminder': 'Günlük ayet ve tefekkür hatırlatması',
+      'daily_reminder': 'Günlük Tefekkür',
       'daily_reminder_subtitle':
-          'Seçtiğin saatte ayet veya tefekkür hatırlatır.',
+          'Seçtiğin saatte Bugünün Tefekkürü’nü hatırlatır.',
       'daily_reminder_time': 'Günlük hatırlatma saati',
       'reading_reminder': 'Kuran okuma hatırlatması',
       'reading_reminder_subtitle': 'Kaldığın yerden devam etmeni hatırlatır.',
@@ -799,6 +832,12 @@ class S {
           'Prayer times, Quran, and dhikr—here when you need them.',
       'home_section_now_upcoming': 'Next prayer time',
       'home_section_for_today': 'Today',
+      'home_section_when_needed': 'When you need it',
+      'home_daily_reflection_eyebrow': 'Today’s Reflection',
+      'home_daily_reflection_duration': '1 minute',
+      'home_daily_reflection_start': 'Start',
+      'home_daily_reflection_completed': 'Completed today',
+      'home_daily_reflection_streak': '{count} days in a row',
       'home_see_more_for_today': 'See more for today',
       'today_choose_direction_label': '',
       'today_choose_fit_label': '',
@@ -934,6 +973,12 @@ class S {
       'companion_flow_ayah_6':
           'He certainly knows best what is hidden in the heart.',
       'companion_flow_ayah_source_6': 'Surah Al-Mulk · 13',
+      'companion_flow_ayah_7':
+          'Whoever puts their trust in Allah, He is sufficient for them.',
+      'companion_flow_ayah_source_7': 'Surah At-Talaq · 3',
+      'companion_flow_ayah_8':
+          'If you are grateful, I will certainly give you more.',
+      'companion_flow_ayah_source_8': 'Surah Ibrahim · 7',
       'companion_flow_ayah_prompt':
           'You do not need to rush past this verse. Notice the word that stays with you.',
       'companion_flow_pause_title': 'Stay quiet for a moment.',
@@ -941,6 +986,12 @@ class S {
           'Do not try to change your breath. Notice what is present and remember that Allah knows you.',
       'companion_flow_dua_title':
           'Allah, You know what I carry within me. Make what is right easy for me and bring relief to my heart.',
+      'companion_flow_dua_decision':
+          'Allah, show me what is best in the matter before me. Make my decision easy and make me among those who trust You.',
+      'companion_flow_dua_gratitude':
+          'Allah, help me notice Your blessings and be truly grateful for them.',
+      'companion_flow_dua_sleep':
+          'Allah, I entrust this day to You. Forgive my shortcomings and grant me a peaceful night.',
       'companion_flow_dua_body':
           'You may read this dua or continue in your own words.',
       'companion_flow_dua_note':
@@ -983,6 +1034,21 @@ class S {
       'companion_flow_finish_body':
           'A short pause can be enough to steady the heart.',
       'companion_flow_close': 'Close',
+      'companion_intent_title': 'What do you need right now?',
+      'companion_intent_subtitle':
+          'Your choice opens a short verse, pause, and dua.',
+      'companion_intent_overwhelmed': 'My mind feels full',
+      'companion_intent_overwhelmed_subtitle':
+          'Pause with a verse and notice your thoughts.',
+      'companion_intent_decision': 'I need to make a decision',
+      'companion_intent_decision_subtitle':
+          'A short verse and dua about trusting Allah.',
+      'companion_intent_gratitude': 'I want to give thanks',
+      'companion_intent_gratitude_subtitle':
+          'Take a moment to remember today’s blessings.',
+      'companion_intent_sleep': 'Before sleep',
+      'companion_intent_sleep_subtitle':
+          'Close the day with a short verse and dua.',
       'minute_reflection_title': 'One Minute Reflection',
       'minute_reflection_subtitle': 'Just stay here for a moment.',
       'minute_reflection_screen_subtitle':
@@ -1010,6 +1076,8 @@ class S {
       'minute_reflection_finish_today': 'Today: ✓',
       'minute_reflection_finish_home': 'Return Home',
       'minute_reflection_finish_repeat': 'Another word',
+      'minute_reflection_enable_reminder': 'Remind me every day',
+      'minute_reflection_reminder_loading': 'Getting ready...',
       'calming_flow_subtitle': 'Stay a little longer. Let your breathing slow.',
       'calming_flow_start': 'Start',
       'calming_flow_stage_1':
@@ -1190,9 +1258,9 @@ class S {
       'reading_reset_title': 'Reset progress?',
       'reading_reset_subtitle': 'This action cannot be undone.',
       'reading_reset_confirm': 'Reset progress',
-      'daily_reminder': 'Daily spiritual reminder',
+      'daily_reminder': 'Daily Reflection',
       'daily_reminder_subtitle':
-          'A calm daily verse or reflection at your chosen time.',
+          'Reminds you of Today’s Reflection at your chosen time.',
       'daily_reminder_time': 'Daily spiritual reminder time',
       'reading_reminder': 'Reading reminder',
       'reading_reminder_subtitle':

@@ -13,12 +13,11 @@ import '../models/prayer_location.dart';
 import '../models/reading_context.dart';
 import 'adhan_times_service.dart';
 import 'collective_reading_service.dart';
-import 'daily_ayah_service.dart';
 import 'daily_content_service.dart';
 import 'local_preferences_service.dart';
 import 'prayer_location_service.dart';
-import 'quran_data.dart';
 import 'reading_progress_service.dart';
+import 'reflection_items_service.dart';
 import 'widget_payload_service.dart';
 
 @pragma('vm:entry-point')
@@ -696,6 +695,7 @@ class AdhanNotificationService {
         androidChannelName: _spiritualChannelName,
         payload: jsonEncode(<String, String>{
           'type': _spiritualPayloadType(slot),
+          'date': _dateKey(date),
         }),
       );
     }
@@ -1111,68 +1111,31 @@ class AdhanNotificationService {
   }) async {
     final locale = Locale(LocalPreferencesService.language.value);
     final isTurkish = locale.languageCode.toLowerCase() == 'tr';
-
-    switch (slot) {
-      case SpiritualNotificationTime.morning:
-        final ayah = DailyAyahService.getAyahWithContextForDate(
-          date,
-          QuranData.instance.ayahs,
-          QuranData.instance.getSurahName,
-        );
-        final readable = await DailyAyahService.getAyahReadableText(
-          surah: ayah.surahNumber,
-          ayah: ayah.ayahNumber,
-          locale: locale,
-        );
-        final reflection = isTurkish
-            ? 'Bu ayeti bugünün niyeti gibi taşıyabilirsin.'
-            : 'Carry this verse gently with you today.';
-        return _SpiritualNotificationContent(
-          title: isTurkish ? 'Sabaha bir ayet' : 'A verse for the morning',
-          body: _joinNotificationParts([
-            readable.isNotEmpty ? readable : ayah.turkishReadable,
-            reflection,
-          ]),
-        );
-      case SpiritualNotificationTime.midday:
-        final reminder =
-            await DailyContentService.getGentleReminderForDate(date, locale);
-        return _SpiritualNotificationContent(
-          title: isTurkish ? 'Niyetini tazele' : 'Return to your intention',
-          body: reminder.trim().isNotEmpty
-              ? reminder.trim()
-              : (isTurkish
-                  ? 'Bugünün içinde kısa bir durak ver.'
-                  : 'Pause for a brief spiritual reset today.'),
-        );
-      case SpiritualNotificationTime.night:
-        final useQuote = DailyContentService.stableHash(
-                  '${_dateKey(date)}|night_content',
-                ) %
-                2 ==
-            0;
-        if (useQuote) {
-          final quote = await DailyContentService.getQuoteForDate(date, locale);
-          return _SpiritualNotificationContent(
-            title: isTurkish ? 'Geceye bir düşünce' : 'A quiet thought for tonight',
-            body: _joinNotificationParts([
-              quote.text,
-              if ((quote.source ?? '').trim().isNotEmpty) quote.source!.trim(),
-            ]),
-          );
-        }
-        final hadith = DailyContentService.getHadithForDate(date);
-        final body = hadith?.text.trim();
-        return _SpiritualNotificationContent(
-          title:
-              isTurkish ? 'Geceye bir hatırlatma' : 'A reflection for tonight',
-          body: _joinNotificationParts([
-            if (body != null && body.isNotEmpty) body,
-            if ((hadith?.source ?? '').trim().isNotEmpty)
-              hadith!.source!.trim(),
-          ]),
-        );
-    }
+    final items = await ReflectionItemsService.loadItems();
+    final item = ReflectionItemsService.pickDailySessionItems(
+      items,
+      date: date,
+    ).first;
+    final localized = item.localized(locale.languageCode);
+    final primary = switch (item.type) {
+      'asma' => localized.name ?? '',
+      'dhikr' => localized.transliteration ?? '',
+      _ => localized.text ?? '',
+    };
+    final source = switch (item.type) {
+      'asma' => localized.meaning ?? '',
+      'dhikr' => localized.meaning ?? '',
+      _ => localized.source ?? '',
+    };
+    return _SpiritualNotificationContent(
+      title:
+          isTurkish ? 'Bugünün tefekkürü hazır' : 'Today’s reflection is ready',
+      body: _joinNotificationParts([
+        primary,
+        if (source.isNotEmpty) source,
+        isTurkish ? 'Yaklaşık 1 dakika' : 'About 1 minute',
+      ]),
+    );
   }
 
   static String _joinNotificationParts(List<String> parts) {

@@ -39,7 +39,8 @@ class ReflectionItem {
     return languageCode.toLowerCase() == 'tr' ? tr : en;
   }
 
-  bool get isSupportedType => type == 'ayah' || type == 'asma' || type == 'dhikr';
+  bool get isSupportedType =>
+      type == 'ayah' || type == 'asma' || type == 'dhikr';
 
   bool isValid() {
     if (!isSupportedType) return false;
@@ -139,7 +140,8 @@ class ReflectionItemsService {
 
     final source = List<ReflectionItem>.from(items);
     source.shuffle(random ?? Random());
-    final selected = source.take(min(count, source.length)).toList(growable: false);
+    final selected =
+        source.take(min(count, source.length)).toList(growable: false);
     if (selected.length >= count) return selected;
 
     final filled = List<ReflectionItem>.from(selected);
@@ -150,6 +152,20 @@ class ReflectionItemsService {
       index += 1;
     }
     return filled;
+  }
+
+  static List<ReflectionItem> pickDailySessionItems(
+    List<ReflectionItem> items, {
+    required DateTime date,
+    int count = 3,
+  }) {
+    final localDate = DateTime(date.year, date.month, date.day);
+    final seed = localDate.year * 10000 + localDate.month * 100 + localDate.day;
+    return pickSessionItems(
+      items,
+      count: count,
+      random: Random(seed),
+    );
   }
 
   static const fallbackItems = <ReflectionItem>[

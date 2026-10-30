@@ -1,9 +1,9 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../data/adhan_notification_service.dart';
 import '../../data/local_preferences_service.dart';
 import '../../data/reflection_items_service.dart';
 import '../../data/spiritual_progress_service.dart';
@@ -25,6 +25,7 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
   int _currentStepRemainingSeconds = _reflectionStepSeconds;
   bool _started = false;
   bool _completed = false;
+  bool _isEnablingReminder = false;
   int _currentReflectionIndex = 0;
   List<ReflectionItem> _sessionItems = ReflectionItemsService.fallbackItems;
 
@@ -44,10 +45,10 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
     final items = await ReflectionItemsService.loadItems();
     if (!mounted) return;
     setState(() {
-      _sessionItems = ReflectionItemsService.pickSessionItems(
+      _sessionItems = ReflectionItemsService.pickDailySessionItems(
         items,
+        date: DateTime.now(),
         count: _sessionItemCount,
-        random: Random(),
       );
       _currentReflectionIndex = _currentReflectionIndex.clamp(
         0,
@@ -80,7 +81,6 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
 
   Future<void> _complete() async {
     _timer?.cancel();
-    await LocalPreferencesService.markReflectionCompletedToday();
     await SpiritualProgressService.completeReflection(ReflectionPeriod.evening);
     HapticFeedback.mediumImpact();
     if (!mounted) return;
@@ -89,6 +89,35 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
       _completed = true;
       _started = false;
     });
+  }
+
+  Future<void> _enableDailyReminder() async {
+    if (_isEnablingReminder) return;
+    setState(() => _isEnablingReminder = true);
+    try {
+      final granted = await AdhanNotificationService.requestPermissions();
+      if (!granted || !mounted) return;
+      final picked = await showTimePicker(
+        context: context,
+        initialTime: LocalPreferencesService.dailyReminderTime.value,
+        builder: (context, child) {
+          if (child == null) return const SizedBox.shrink();
+          return MediaQuery(
+            data: MediaQuery.of(context).copyWith(
+              alwaysUse24HourFormat: true,
+            ),
+            child: child,
+          );
+        },
+      );
+      if (picked == null) return;
+      await LocalPreferencesService.setDailyReminderTime(picked);
+      await LocalPreferencesService.setSpiritualNotificationsEnabled(true);
+      await AdhanNotificationService.syncSpiritualNotifications();
+      HapticFeedback.mediumImpact();
+    } finally {
+      if (mounted) setState(() => _isEnablingReminder = false);
+    }
   }
 
   void _restart() {
@@ -181,7 +210,18 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
                     transitionBuilder: (child, animation) {
                       return FadeTransition(
                         opacity: animation,
-                        child: child,
+                        child: SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0.025, 0),
+                            end: Offset.zero,
+                          ).animate(
+                            CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                            ),
+                          ),
+                          child: child,
+                        ),
                       );
                     },
                     child: _completed
@@ -189,6 +229,8 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
                             key: const ValueKey('completed'),
                             onDone: () => Navigator.of(context).pop(),
                             onRestart: _restart,
+                            onEnableReminder: _enableDailyReminder,
+                            isEnablingReminder: _isEnablingReminder,
                           )
                         : _ActiveReflectionState(
                             key: ValueKey('active_$_currentReflectionIndex'),
@@ -198,6 +240,7 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
                             onNextReflection: _showNextReflection,
                             currentStepRemainingSeconds:
                                 _currentStepRemainingSeconds,
+                            currentReflectionIndex: _currentReflectionIndex,
                             colorScheme: colorScheme,
                           ),
                   ),
@@ -230,6 +273,7 @@ class _ActiveReflectionState extends StatelessWidget {
     required this.onStart,
     required this.onNextReflection,
     required this.currentStepRemainingSeconds,
+    required this.currentReflectionIndex,
     required this.colorScheme,
   });
 
@@ -238,6 +282,7 @@ class _ActiveReflectionState extends StatelessWidget {
   final VoidCallback onStart;
   final VoidCallback onNextReflection;
   final int currentStepRemainingSeconds;
+  final int currentReflectionIndex;
   final ColorScheme colorScheme;
 
   @override
@@ -282,6 +327,12 @@ class _ActiveReflectionState extends StatelessWidget {
                       height: 1.5,
                     ),
                   ),
+                  const SizedBox(height: 24),
+                  _ReflectionProgress(
+                    currentIndex: currentReflectionIndex,
+                    remainingSeconds: currentStepRemainingSeconds,
+                    started: started,
+                  ),
                   const SizedBox(height: 28),
                   GestureDetector(
                     behavior: HitTestBehavior.opaque,
@@ -294,7 +345,18 @@ class _ActiveReflectionState extends StatelessWidget {
                         transitionBuilder: (child, animation) {
                           return FadeTransition(
                             opacity: animation,
-                            child: child,
+                            child: SlideTransition(
+                              position: Tween<Offset>(
+                                begin: const Offset(0.04, 0),
+                                end: Offset.zero,
+                              ).animate(
+                                CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOutCubic,
+                                ),
+                              ),
+                              child: child,
+                            ),
                           );
                         },
                         child: _ReflectionContentView(
@@ -353,6 +415,63 @@ class _ActiveReflectionState extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+class _ReflectionProgress extends StatelessWidget {
+  const _ReflectionProgress({
+    required this.currentIndex,
+    required this.remainingSeconds,
+    required this.started,
+  });
+
+  final int currentIndex;
+  final int remainingSeconds;
+  final bool started;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: List.generate(3, (index) {
+        final progress = index < currentIndex
+            ? 1.0
+            : index > currentIndex
+                ? 0.0
+                : started
+                    ? (1 - (remainingSeconds / 20)).clamp(0.0, 1.0)
+                    : 0.0;
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(right: index == 2 ? 0 : 7),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(99),
+              child: SizedBox(
+                height: 3,
+                child: ColoredBox(
+                  color: AppColors.cardBorder,
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(end: progress),
+                    duration: const Duration(milliseconds: 450),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, _) {
+                      return Align(
+                        alignment: Alignment.centerLeft,
+                        child: FractionallySizedBox(
+                          widthFactor: value,
+                          child: const ColoredBox(
+                            color: AppColors.primaryAccent,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+      }),
     );
   }
 }
@@ -602,10 +721,14 @@ class _ReflectionCompletionState extends StatelessWidget {
     super.key,
     required this.onDone,
     required this.onRestart,
+    required this.onEnableReminder,
+    required this.isEnablingReminder,
   });
 
   final VoidCallback onDone;
   final VoidCallback onRestart;
+  final Future<void> Function() onEnableReminder;
+  final bool isEnablingReminder;
 
   @override
   Widget build(BuildContext context) {
@@ -624,6 +747,29 @@ class _ReflectionCompletionState extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+                  TweenAnimationBuilder<double>(
+                    tween: Tween(begin: 0.72, end: 1),
+                    duration: const Duration(milliseconds: 680),
+                    curve: Curves.easeOutBack,
+                    builder: (context, value, child) => Transform.scale(
+                      scale: value,
+                      child: child,
+                    ),
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: const BoxDecoration(
+                        color: AppColors.ctaSecondaryFill,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.check_rounded,
+                        size: 32,
+                        color: AppColors.emphasisAccent,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
                   Text(
                     S.get('minute_reflection_finish_title'),
                     textAlign: TextAlign.center,
@@ -657,13 +803,51 @@ class _ReflectionCompletionState extends StatelessWidget {
                       color: colorScheme.onSurface.withValues(alpha: 0.62),
                     ),
                   ),
-                  const SizedBox(height: 42),
+                  const SizedBox(height: 28),
+                  ValueListenableBuilder<bool>(
+                    valueListenable:
+                        LocalPreferencesService.spiritualNotificationsEnabled,
+                    builder: (context, enabled, _) {
+                      if (enabled) return const SizedBox.shrink();
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: SizedBox(
+                          width: double.infinity,
+                          child: _ReflectionPrimaryButton(
+                            label: isEnablingReminder
+                                ? S.get('minute_reflection_reminder_loading')
+                                : S.get('minute_reflection_enable_reminder'),
+                            onPressed: () => unawaited(onEnableReminder()),
+                            enabled: !isEnablingReminder,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
                   SizedBox(
                     width: double.infinity,
-                    child: _ReflectionPrimaryButton(
-                      label: S.get('minute_reflection_finish_repeat'),
+                    height: 52,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: colorScheme.onSurface.withValues(
+                          alpha: 0.82,
+                        ),
+                        side: BorderSide(
+                          color: colorScheme.onSurface.withValues(alpha: 0.14),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
                       onPressed: onRestart,
-                      enabled: true,
+                      child: Text(
+                        S.get('minute_reflection_finish_repeat'),
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 12),

@@ -146,7 +146,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     builder: (context, time, _) {
                       return _buildRow(
                         title: S.get('daily_reminder_time'),
-                        icon: Icons.bedtime_outlined,
+                        icon: Icons.schedule_rounded,
                         value:
                             MaterialLocalizations.of(context).formatTimeOfDay(
                           time,

@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../data/local_preferences_service.dart';
-import '../../data/spiritual_progress_service.dart';
 import '../../l10n/app_strings.dart';
 import '../../theme/app_theme.dart';
 
 enum CompanionFlowStep { ayah, pause, dua }
+
+enum CompanionIntent { overwhelmed, decision, gratitude, beforeSleep }
 
 class CompanionFlowScreen extends StatefulWidget {
   const CompanionFlowScreen({super.key});
@@ -30,24 +31,34 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
     _AyahContent('companion_flow_ayah_4', 'companion_flow_ayah_source_4'),
     _AyahContent('companion_flow_ayah_5', 'companion_flow_ayah_source_5'),
     _AyahContent('companion_flow_ayah_6', 'companion_flow_ayah_source_6'),
+    _AyahContent('companion_flow_ayah_7', 'companion_flow_ayah_source_7'),
+    _AyahContent('companion_flow_ayah_8', 'companion_flow_ayah_source_8'),
   ];
 
   CompanionFlowStep _step = CompanionFlowStep.ayah;
   int _ayahIndex = 0;
+  CompanionIntent? _intent;
 
-  @override
-  void initState() {
-    super.initState();
-    _loadAyah();
+  void _selectIntent(CompanionIntent intent) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _intent = intent;
+      _step = CompanionFlowStep.ayah;
+      _ayahIndex = switch (intent) {
+        CompanionIntent.overwhelmed => 0,
+        CompanionIntent.decision => 6,
+        CompanionIntent.gratitude => 7,
+        CompanionIntent.beforeSleep => 3,
+      };
+    });
   }
 
-  Future<void> _loadAyah() async {
-    final index = await LocalPreferencesService.nextCompanionFlowVerseIndex(
-      totalCount: _ayahs.length,
-    );
-    if (!mounted) return;
-    setState(() => _ayahIndex = index);
-  }
+  String get _duaTitleKey => switch (_intent) {
+        CompanionIntent.decision => 'companion_flow_dua_decision',
+        CompanionIntent.gratitude => 'companion_flow_dua_gratitude',
+        CompanionIntent.beforeSleep => 'companion_flow_dua_sleep',
+        _ => 'companion_flow_dua_title',
+      };
 
   void _continue() {
     HapticFeedback.selectionClick();
@@ -62,7 +73,6 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
 
   Future<void> _finish() async {
     await LocalPreferencesService.markCompanionFlowCompletedToday();
-    await SpiritualProgressService.completeReflection(ReflectionPeriod.evening);
     HapticFeedback.mediumImpact();
     if (!mounted) return;
     Navigator.of(context).pop();
@@ -100,65 +110,98 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
               ),
             ),
             const SizedBox(height: 18),
-            _StepIndicator(step: _step),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 260),
+              child: _intent == null
+                  ? const SizedBox(height: 32, key: ValueKey('intent-space'))
+                  : _StepIndicator(
+                      key: const ValueKey('step-indicator'),
+                      step: _step,
+                    ),
+            ),
             Expanded(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 260),
-                child: SingleChildScrollView(
-                  key: ValueKey(_step),
-                  padding: const EdgeInsets.fromLTRB(24, 34, 24, 18),
-                  child: switch (_step) {
-                    CompanionFlowStep.ayah => _CompanionCard(
-                        eyebrow: S.get('companion_flow_content_type_ayah'),
-                        title: S.get(ayah.textKey),
-                        source: S.get(ayah.sourceKey),
-                        body: S.get('companion_flow_ayah_prompt'),
-                        icon: Icons.menu_book_rounded,
-                      ),
-                    CompanionFlowStep.pause => _CompanionCard(
-                        eyebrow: S.get('companion_flow_step_pause'),
-                        title: S.get('companion_flow_pause_title'),
-                        body: S.get('companion_flow_pause_body'),
-                        icon: Icons.hourglass_bottom_rounded,
-                      ),
-                    CompanionFlowStep.dua => _CompanionCard(
-                        eyebrow: S.get('companion_flow_content_type_dua'),
-                        title: S.get('companion_flow_dua_title'),
-                        body: S.get('companion_flow_dua_body'),
-                        note: S.get('companion_flow_dua_note'),
-                        icon: Icons.volunteer_activism_rounded,
-                      ),
-                  },
+                duration: const Duration(milliseconds: 380),
+                switchInCurve: Curves.easeOutCubic,
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: SlideTransition(
+                    position: Tween<Offset>(
+                      begin: const Offset(0.035, 0),
+                      end: Offset.zero,
+                    ).animate(animation),
+                    child: child,
+                  ),
                 ),
+                child: _intent == null
+                    ? _CompanionIntentPicker(
+                        key: const ValueKey('intent-picker'),
+                        onSelected: _selectIntent,
+                      )
+                    : SingleChildScrollView(
+                        key: ValueKey(_step),
+                        padding: const EdgeInsets.fromLTRB(24, 34, 24, 18),
+                        child: switch (_step) {
+                          CompanionFlowStep.ayah => _CompanionCard(
+                              eyebrow:
+                                  S.get('companion_flow_content_type_ayah'),
+                              title: S.get(ayah.textKey),
+                              source: S.get(ayah.sourceKey),
+                              body: S.get('companion_flow_ayah_prompt'),
+                              icon: Icons.menu_book_rounded,
+                            ),
+                          CompanionFlowStep.pause => _CompanionCard(
+                              eyebrow: S.get('companion_flow_step_pause'),
+                              title: S.get('companion_flow_pause_title'),
+                              body: S.get('companion_flow_pause_body'),
+                              icon: Icons.hourglass_bottom_rounded,
+                            ),
+                          CompanionFlowStep.dua => _CompanionCard(
+                              eyebrow: S.get('companion_flow_content_type_dua'),
+                              title: S.get(_duaTitleKey),
+                              body: S.get('companion_flow_dua_body'),
+                              note: S.get('companion_flow_dua_note'),
+                              icon: Icons.volunteer_activism_rounded,
+                            ),
+                        },
+                      ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
-              child: SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: FilledButton(
-                  onPressed:
-                      _step == CompanionFlowStep.dua ? _finish : _continue,
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.emphasisAccent,
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 240),
+              child: _intent == null
+                  ? const SizedBox.shrink()
+                  : Padding(
+                      key: const ValueKey('companion-cta'),
+                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 20),
+                      child: SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: FilledButton(
+                          onPressed: _step == CompanionFlowStep.dua
+                              ? _finish
+                              : _continue,
+                          style: FilledButton.styleFrom(
+                            backgroundColor: AppColors.emphasisAccent,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppRadii.medium),
+                            ),
+                          ),
+                          child: Text(
+                            _step == CompanionFlowStep.dua
+                                ? S.get('companion_flow_finish_cta')
+                                : S.get('continue'),
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
-                  child: Text(
-                    _step == CompanionFlowStep.dua
-                        ? S.get('companion_flow_finish_cta')
-                        : S.get('continue'),
-                    style: const TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 15,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ),
             ),
           ],
         ),
@@ -167,8 +210,192 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
   }
 }
 
+class _CompanionIntentPicker extends StatelessWidget {
+  const _CompanionIntentPicker({super.key, required this.onSelected});
+
+  final ValueChanged<CompanionIntent> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final options = <(CompanionIntent, IconData, String, String)>[
+      (
+        CompanionIntent.overwhelmed,
+        Icons.blur_on_rounded,
+        'companion_intent_overwhelmed',
+        'companion_intent_overwhelmed_subtitle',
+      ),
+      (
+        CompanionIntent.decision,
+        Icons.alt_route_rounded,
+        'companion_intent_decision',
+        'companion_intent_decision_subtitle',
+      ),
+      (
+        CompanionIntent.gratitude,
+        Icons.favorite_outline_rounded,
+        'companion_intent_gratitude',
+        'companion_intent_gratitude_subtitle',
+      ),
+      (
+        CompanionIntent.beforeSleep,
+        Icons.bedtime_outlined,
+        'companion_intent_sleep',
+        'companion_intent_sleep_subtitle',
+      ),
+    ];
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            S.get('companion_intent_title'),
+            style: const TextStyle(
+              fontFamily: 'Merriweather',
+              fontSize: 28,
+              height: 1.25,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            S.get('companion_intent_subtitle'),
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              height: 1.5,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ...List.generate(options.length, (index) {
+            final option = options[index];
+            return TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: Duration(milliseconds: 360 + index * 70),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) => Opacity(
+                opacity: value,
+                child: Transform.translate(
+                  offset: Offset(0, 10 * (1 - value)),
+                  child: child,
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _IntentTile(
+                  icon: option.$2,
+                  title: S.get(option.$3),
+                  subtitle: S.get(option.$4),
+                  onTap: () => onSelected(option.$1),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+class _IntentTile extends StatefulWidget {
+  const _IntentTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  State<_IntentTile> createState() => _IntentTileState();
+}
+
+class _IntentTileState extends State<_IntentTile> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTapUp: (_) {
+        setState(() => _pressed = false);
+        widget.onTap();
+      },
+      child: AnimatedScale(
+        scale: _pressed ? 0.98 : 1,
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOutCubic,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.cardBg,
+            borderRadius: BorderRadius.circular(AppRadii.medium),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.ctaSecondaryFill,
+                ),
+                child: Icon(
+                  widget.icon,
+                  size: 22,
+                  color: AppColors.primaryAccent,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.subtitle,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12.5,
+                        height: 1.4,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textMuted,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _StepIndicator extends StatelessWidget {
-  const _StepIndicator({required this.step});
+  const _StepIndicator({super.key, required this.step});
 
   final CompanionFlowStep step;
 

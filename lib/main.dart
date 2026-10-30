@@ -128,6 +128,7 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
   bool _launchedFromNotification = false;
   TodayScreenIntent? _pendingTodayIntent;
   bool _pendingOpenCompanionFlow = false;
+  String? _pendingMinuteReflectionLaunchToken;
   Object? _loadError;
 
   @override
@@ -170,16 +171,28 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
         TodayScreenIntent.morningReflection,
       AdhanNotificationService.eveningReminderType =>
         TodayScreenIntent.eveningReflection,
-      AdhanNotificationService.spiritualMorningType =>
-        TodayScreenIntent.morningReflection,
-      AdhanNotificationService.spiritualMiddayType =>
-        TodayScreenIntent.reminder,
-      AdhanNotificationService.spiritualNightType =>
-        TodayScreenIntent.beforeSleep,
       _ => null,
     };
+    final shouldOpenMinuteReflection =
+        type == AdhanNotificationService.spiritualMorningType ||
+            type == AdhanNotificationService.spiritualMiddayType ||
+            type == AdhanNotificationService.spiritualNightType;
     final shouldOpenCompanion =
         type == AdhanNotificationService.nightCompanionReminderType;
+    if (shouldOpenMinuteReflection) {
+      if (!mounted) return;
+      setState(() {
+        _launchedFromNotification = true;
+        _pendingMinuteReflectionLaunchToken =
+            '${payload ?? type}|${DateTime.now().microsecondsSinceEpoch}';
+        if (_isAppReady) {
+          _showHome = true;
+        } else {
+          _showHomeWhenReady = true;
+        }
+      });
+      return;
+    }
     if (todayIntent != null) {
       if (!mounted) return;
       setState(() {
@@ -353,6 +366,7 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
       return HomeScreen(
         initialTodayIntent: _pendingTodayIntent,
         openCompanionFlowOnLaunch: _pendingOpenCompanionFlow,
+        minuteReflectionLaunchToken: _pendingMinuteReflectionLaunchToken,
         launchedFromNotification: _launchedFromNotification,
       );
     }
