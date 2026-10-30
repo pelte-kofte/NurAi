@@ -144,15 +144,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   return ValueListenableBuilder<TimeOfDay>(
                     valueListenable: LocalPreferencesService.dailyReminderTime,
                     builder: (context, time, _) {
-                      return _buildRow(
-                        title: S.get('daily_reminder_time'),
-                        icon: Icons.schedule_rounded,
-                        value:
-                            MaterialLocalizations.of(context).formatTimeOfDay(
-                          time,
-                          alwaysUse24HourFormat: true,
-                        ),
-                        onTap: _showDailyReminderTimePicker,
+                      return Column(
+                        children: [
+                          _buildRow(
+                            title: S.get('daily_reminder_time'),
+                            icon: Icons.schedule_rounded,
+                            value: MaterialLocalizations.of(context)
+                                .formatTimeOfDay(
+                              time,
+                              alwaysUse24HourFormat: true,
+                            ),
+                            onTap: _showDailyReminderTimePicker,
+                          ),
+                          _buildTefekkurNotificationPreview(),
+                          const SizedBox(height: 8),
+                        ],
                       );
                     },
                   );
@@ -911,6 +917,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
     if (!mounted) return;
     setState(() {});
+  }
+
+  Widget _buildTefekkurNotificationPreview() {
+    final colors = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            left: BorderSide(
+              width: 2,
+              color: colors.primary.withValues(alpha: 0.55),
+            ),
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(left: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.notifications_none_rounded,
+                size: 18,
+                color: colors.primary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  S.get('daily_reminder_preview'),
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12.5,
+                    height: 1.5,
+                    color: colors.onSurface.withValues(alpha: 0.64),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _onToggleReadingReminder(bool enabled) async {

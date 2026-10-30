@@ -81,9 +81,11 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final ayah = _ayahs[_ayahIndex];
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: colors.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -111,7 +113,9 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
             ),
             const SizedBox(height: 18),
             AnimatedSwitcher(
-              duration: const Duration(milliseconds: 260),
+              duration: reduceMotion
+                  ? Duration.zero
+                  : const Duration(milliseconds: 260),
               child: _intent == null
                   ? const SizedBox(height: 32, key: ValueKey('intent-space'))
                   : _StepIndicator(
@@ -121,13 +125,16 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
             ),
             Expanded(
               child: AnimatedSwitcher(
-                duration: const Duration(milliseconds: 380),
+                duration: reduceMotion
+                    ? Duration.zero
+                    : const Duration(milliseconds: 300),
                 switchInCurve: Curves.easeOutCubic,
                 transitionBuilder: (child, animation) => FadeTransition(
                   opacity: animation,
                   child: SlideTransition(
                     position: Tween<Offset>(
-                      begin: const Offset(0.035, 0),
+                      begin:
+                          reduceMotion ? Offset.zero : const Offset(0.025, 0),
                       end: Offset.zero,
                     ).animate(animation),
                     child: child,
@@ -143,6 +150,7 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
                         padding: const EdgeInsets.fromLTRB(24, 34, 24, 18),
                         child: switch (_step) {
                           CompanionFlowStep.ayah => _CompanionCard(
+                              step: CompanionFlowStep.ayah,
                               eyebrow:
                                   S.get('companion_flow_content_type_ayah'),
                               title: S.get(ayah.textKey),
@@ -151,12 +159,14 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
                               icon: Icons.menu_book_rounded,
                             ),
                           CompanionFlowStep.pause => _CompanionCard(
+                              step: CompanionFlowStep.pause,
                               eyebrow: S.get('companion_flow_step_pause'),
                               title: S.get('companion_flow_pause_title'),
                               body: S.get('companion_flow_pause_body'),
                               icon: Icons.hourglass_bottom_rounded,
                             ),
                           CompanionFlowStep.dua => _CompanionCard(
+                              step: CompanionFlowStep.dua,
                               eyebrow: S.get('companion_flow_content_type_dua'),
                               title: S.get(_duaTitleKey),
                               body: S.get('companion_flow_dua_body'),
@@ -168,7 +178,9 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
               ),
             ),
             AnimatedSwitcher(
-              duration: const Duration(milliseconds: 240),
+              duration: reduceMotion
+                  ? Duration.zero
+                  : const Duration(milliseconds: 240),
               child: _intent == null
                   ? const SizedBox.shrink()
                   : Padding(
@@ -182,11 +194,12 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
                               ? _finish
                               : _continue,
                           style: FilledButton.styleFrom(
-                            backgroundColor: AppColors.emphasisAccent,
-                            foregroundColor: Colors.white,
+                            backgroundColor: colors.primary,
+                            foregroundColor: colors.onPrimary,
                             shape: RoundedRectangleBorder(
-                              borderRadius:
-                                  BorderRadius.circular(AppRadii.medium),
+                              borderRadius: BorderRadius.circular(
+                                AppRadii.medium,
+                              ),
                             ),
                           ),
                           child: Text(
@@ -217,6 +230,9 @@ class _CompanionIntentPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final options = <(CompanionIntent, IconData, String, String)>[
       (
         CompanionIntent.overwhelmed,
@@ -251,21 +267,21 @@ class _CompanionIntentPicker extends StatelessWidget {
         children: [
           Text(
             S.get('companion_intent_title'),
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Merriweather',
               fontSize: 28,
               height: 1.25,
-              color: AppColors.textPrimary,
+              color: colors.onSurface,
             ),
           ),
           const SizedBox(height: 10),
           Text(
             S.get('companion_intent_subtitle'),
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'Inter',
               fontSize: 14,
               height: 1.5,
-              color: AppColors.textSecondary,
+              color: colors.onSurface.withValues(alpha: 0.68),
             ),
           ),
           const SizedBox(height: 24),
@@ -273,12 +289,15 @@ class _CompanionIntentPicker extends StatelessWidget {
             final option = options[index];
             return TweenAnimationBuilder<double>(
               tween: Tween(begin: 0, end: 1),
-              duration: Duration(milliseconds: 360 + index * 70),
+              duration: reduceMotion
+                  ? Duration.zero
+                  : Duration(milliseconds: 260 + index * 45),
               curve: Curves.easeOutCubic,
               builder: (context, value, child) => Opacity(
                 opacity: value,
                 child: Transform.translate(
-                  offset: Offset(0, 10 * (1 - value)),
+                  offset:
+                      reduceMotion ? Offset.zero : Offset(0, 8 * (1 - value)),
                   child: child,
                 ),
               ),
@@ -288,6 +307,7 @@ class _CompanionIntentPicker extends StatelessWidget {
                   icon: option.$2,
                   title: S.get(option.$3),
                   subtitle: S.get(option.$4),
+                  dividerColor: colors.outline.withValues(alpha: 0.42),
                   onTap: () => onSelected(option.$1),
                 ),
               ),
@@ -304,12 +324,14 @@ class _IntentTile extends StatefulWidget {
     required this.icon,
     required this.title,
     required this.subtitle,
+    required this.dividerColor,
     required this.onTap,
   });
 
   final IconData icon;
   final String title;
   final String subtitle;
+  final Color dividerColor;
   final VoidCallback onTap;
 
   @override
@@ -321,72 +343,83 @@ class _IntentTileState extends State<_IntentTile> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: (_) => setState(() => _pressed = true),
-      onTapCancel: () => setState(() => _pressed = false),
-      onTapUp: (_) {
-        setState(() => _pressed = false);
-        widget.onTap();
-      },
-      child: AnimatedScale(
-        scale: _pressed ? 0.98 : 1,
-        duration: const Duration(milliseconds: 140),
-        curve: Curves.easeOutCubic,
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppColors.cardBg,
-            borderRadius: BorderRadius.circular(AppRadii.medium),
-            border: Border.all(color: AppColors.cardBorder),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: const BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: AppColors.ctaSecondaryFill,
-                ),
-                child: Icon(
-                  widget.icon,
-                  size: 22,
-                  color: AppColors.primaryAccent,
-                ),
+    final colors = Theme.of(context).colorScheme;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    return Semantics(
+      button: true,
+      label: widget.title,
+      hint: widget.subtitle,
+      onTap: widget.onTap,
+      child: ExcludeSemantics(
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTapDown: (_) => setState(() => _pressed = true),
+          onTapCancel: () => setState(() => _pressed = false),
+          onTapUp: (_) {
+            setState(() => _pressed = false);
+            widget.onTap();
+          },
+          child: AnimatedScale(
+            scale: _pressed ? 0.98 : 1,
+            duration: reduceMotion
+                ? Duration.zero
+                : const Duration(milliseconds: 140),
+            curve: Curves.easeOutCubic,
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              decoration: BoxDecoration(
+                border: Border(bottom: BorderSide(color: widget.dividerColor)),
               ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.title,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 15,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.textPrimary,
-                      ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: colors.primaryContainer,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      widget.subtitle,
-                      style: const TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12.5,
-                        height: 1.4,
-                        color: AppColors.textSecondary,
-                      ),
+                    child: Icon(
+                      widget.icon,
+                      size: 22,
+                      color: colors.onPrimaryContainer,
                     ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.title,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: colors.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.subtitle,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12.5,
+                            height: 1.4,
+                            color: colors.onSurface.withValues(alpha: 0.66),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: colors.onSurface.withValues(alpha: 0.38),
+                  ),
+                ],
               ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.textMuted,
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -401,6 +434,9 @@ class _StepIndicator extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final labels = [
       S.get('companion_flow_step_verse'),
       S.get('companion_flow_step_pause'),
@@ -417,12 +453,14 @@ class _StepIndicator extends StatelessWidget {
               child: Column(
                 children: [
                   AnimatedContainer(
-                    duration: const Duration(milliseconds: 220),
+                    duration: reduceMotion
+                        ? Duration.zero
+                        : const Duration(milliseconds: 220),
                     height: 3,
                     decoration: BoxDecoration(
                       color: active
-                          ? AppColors.indigoAccent
-                          : AppColors.cardBorder,
+                          ? colors.primary
+                          : colors.outline.withValues(alpha: 0.45),
                       borderRadius: BorderRadius.circular(99),
                     ),
                   ),
@@ -434,8 +472,8 @@ class _StepIndicator extends StatelessWidget {
                       fontSize: 11,
                       fontWeight: active ? FontWeight.w600 : FontWeight.w400,
                       color: active
-                          ? AppColors.emphasisAccent
-                          : AppColors.textMuted,
+                          ? colors.primary
+                          : colors.onSurface.withValues(alpha: 0.46),
                     ),
                   ),
                 ],
@@ -450,6 +488,7 @@ class _StepIndicator extends StatelessWidget {
 
 class _CompanionCard extends StatelessWidget {
   const _CompanionCard({
+    required this.step,
     required this.eyebrow,
     required this.title,
     required this.body,
@@ -458,6 +497,7 @@ class _CompanionCard extends StatelessWidget {
     this.note,
   });
 
+  final CompanionFlowStep step;
   final String eyebrow;
   final String title;
   final String body;
@@ -468,38 +508,53 @@ class _CompanionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
+    final isPause = step == CompanionFlowStep.pause;
+    final isDua = step == CompanionFlowStep.dua;
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.fromLTRB(24, 26, 24, 24),
+          padding: EdgeInsets.fromLTRB(
+            isPause ? 12 : 24,
+            isPause ? 54 : 30,
+            isPause ? 12 : 24,
+            isPause ? 54 : 28,
+          ),
           decoration: BoxDecoration(
-            color: colors.surface,
+            color: isPause
+                ? Colors.transparent
+                : isDua
+                    ? colors.primaryContainer.withValues(alpha: 0.42)
+                    : colors.surface,
             borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: AppColors.cardBorder),
+            border: isPause || !isDua
+                ? null
+                : Border.all(color: colors.primary.withValues(alpha: 0.16)),
           ),
           child: Column(
             children: [
-              Icon(icon, size: 24, color: AppColors.indigoAccent),
-              const SizedBox(height: 14),
+              if (!isPause) ...[
+                Icon(icon, size: 22, color: colors.primary),
+                const SizedBox(height: 14),
+              ],
               Text(
                 eyebrow.toUpperCase(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Inter',
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1.1,
-                  color: AppColors.indigoAccent,
+                  color: colors.primary,
                 ),
               ),
-              const SizedBox(height: 22),
+              SizedBox(height: isPause ? 34 : 22),
               Text(
                 title,
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontFamily: 'Merriweather',
-                  fontSize: 25,
+                  fontSize: isPause ? 30 : 25,
                   fontWeight: FontWeight.w400,
                   height: 1.5,
                   color: colors.onSurface,
@@ -509,17 +564,22 @@ class _CompanionCard extends StatelessWidget {
                 const SizedBox(height: 14),
                 Text(
                   source!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.indigoAccent,
+                    color: colors.primary,
                   ),
                 ),
               ],
-              const SizedBox(height: 24),
-              const Divider(height: 1, color: AppColors.cardBorder),
-              const SizedBox(height: 22),
+              SizedBox(height: isPause ? 32 : 24),
+              if (!isPause) ...[
+                Divider(
+                  height: 1,
+                  color: colors.outline.withValues(alpha: 0.42),
+                ),
+                const SizedBox(height: 22),
+              ],
               Text(
                 body,
                 textAlign: TextAlign.center,

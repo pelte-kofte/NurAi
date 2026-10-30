@@ -40,6 +40,9 @@ class S {
       'home_daily_reflection_start': 'Başla',
       'home_daily_reflection_completed': 'Bugün tamamlandı',
       'home_daily_reflection_streak': '{count} günlük devam',
+      'home_daily_reflection_week_progress': 'Bu hafta {count}/7',
+      'home_daily_reflection_day_completed': 'tamamlandı',
+      'home_daily_reflection_day_not_completed': 'henüz tamamlanmadı',
       'home_see_more_for_today': 'Bugün için daha fazlasını gör',
       'today_choose_direction_label': '',
       'today_choose_fit_label': '',
@@ -242,10 +245,8 @@ class S {
           'Günü kısa bir ayet ve dua ile tamamla.',
       'minute_reflection_title': 'Bir Dakika Tefekkür',
       'minute_reflection_subtitle': 'Sadece burada kal.',
-      'minute_reflection_screen_subtitle':
-          'Ayet, zikir ve Esma ile kısa bir tefekkür alanı.',
-      'minute_reflection_home_subtitle':
-          'Ayet, zikir ve Esma ile kısa bir tefekkür alanı.',
+      'minute_reflection_screen_subtitle': 'Bugünün sözüyle bir dakika kal.',
+      'minute_reflection_home_subtitle': 'Bugünün sözüyle bir dakika kal.',
       'minute_reflection_type_ayah': 'Ayet',
       'minute_reflection_type_hadith': 'Hadis',
       'minute_reflection_type_dhikr': 'Zikir',
@@ -256,12 +257,22 @@ class S {
       'minute_reflection_completed': 'Kısa bir tefekkür tamamlandı.',
       'minute_reflection_item_guidance_timed': '20 saniye bu sözle kal.',
       'minute_reflection_next_hint': 'Sıradaki söz birazdan gelecek',
+      'minute_reflection_stay_hint': 'Biraz daha burada kal',
+      'minute_reflection_ready_hint': 'Hazırsan devam edebilirsin',
+      'minute_reflection_step_progress': 'Tefekkür adımı',
+      'minute_reflection_phase_read': 'Oku',
+      'minute_reflection_phase_pause': 'Dur',
+      'minute_reflection_phase_carry': 'Yanında taşı',
+      'minute_reflection_pause_fallback': 'Bu sözün sende bıraktığını fark et.',
+      'minute_reflection_carry_body':
+          'Bugün acele ettiğin bir anda bu sözü yeniden hatırla.',
       'minute_reflection_seconds_short': ' sn',
-      'minute_reflection_finish_title': 'Bir dakikalık tefekkür tamamlandı.',
+      'minute_reflection_finish_title': 'Bugünlük bu kadar.',
       'minute_reflection_finish_subtitle':
           'Bugün ayet, zikir veya Esma üzerine kısa bir süre düşündün.',
-      'minute_reflection_finish_subtitle_ui': 'Bugünkü kaydın oluşturuldu.',
-      'minute_reflection_finish_today': 'Bugün: ✓',
+      'minute_reflection_finish_subtitle_ui':
+          'Bu söz günün içinde sana eşlik etsin.',
+      'minute_reflection_finish_today': 'Bugünün tefekkürü tamamlandı',
       'minute_reflection_finish_home': 'Ana sayfaya dön',
       'minute_reflection_finish_repeat': 'Bir söz daha',
       'minute_reflection_enable_reminder': 'Her gün hatırlat',
@@ -438,6 +449,8 @@ class S {
       'daily_reminder_subtitle':
           'Seçtiğin saatte Bugünün Tefekkürü’nü hatırlatır.',
       'daily_reminder_time': 'Günlük hatırlatma saati',
+      'daily_reminder_preview':
+          'Örnek: “Bugünün tefekkürü hazır” — Bugünün sözüyle bir dakika kal.',
       'reading_reminder': 'Kuran okuma hatırlatması',
       'reading_reminder_subtitle': 'Kaldığın yerden devam etmeni hatırlatır.',
       'reading_reminder_time': 'Kuran okuma hatırlatma saati',
@@ -838,6 +851,9 @@ class S {
       'home_daily_reflection_start': 'Start',
       'home_daily_reflection_completed': 'Completed today',
       'home_daily_reflection_streak': '{count} days in a row',
+      'home_daily_reflection_week_progress': 'This week {count}/7',
+      'home_daily_reflection_day_completed': 'completed',
+      'home_daily_reflection_day_not_completed': 'not completed yet',
       'home_see_more_for_today': 'See more for today',
       'today_choose_direction_label': '',
       'today_choose_fit_label': '',
@@ -1052,9 +1068,9 @@ class S {
       'minute_reflection_title': 'One Minute Reflection',
       'minute_reflection_subtitle': 'Just stay here for a moment.',
       'minute_reflection_screen_subtitle':
-          'A short reflection with ayah, dhikr and the Beautiful Names of Allah.',
+          'Stay with today’s words for one minute.',
       'minute_reflection_home_subtitle':
-          'A short reflection with ayah, dhikr and the Beautiful Names of Allah.',
+          'Stay with today’s words for one minute.',
       'minute_reflection_type_ayah': 'Ayah',
       'minute_reflection_type_hadith': 'Hadith',
       'minute_reflection_type_dhikr': 'Dhikr',
@@ -1066,14 +1082,23 @@ class S {
       'minute_reflection_item_guidance_timed':
           'Stay with these words for 20 seconds.',
       'minute_reflection_next_hint': 'The next word will appear shortly',
+      'minute_reflection_stay_hint': 'Stay here a little longer',
+      'minute_reflection_ready_hint': 'Continue when you are ready',
+      'minute_reflection_step_progress': 'Reflection step',
+      'minute_reflection_phase_read': 'Read',
+      'minute_reflection_phase_pause': 'Pause',
+      'minute_reflection_phase_carry': 'Carry it with you',
+      'minute_reflection_pause_fallback':
+          'Notice what these words leave with you.',
+      'minute_reflection_carry_body':
+          'Remember these words again when the day begins to rush.',
       'minute_reflection_seconds_short': 's',
-      'minute_reflection_finish_title':
-          'May these words bring ease to your heart.',
+      'minute_reflection_finish_title': 'That is enough for today.',
       'minute_reflection_finish_subtitle':
           'You gave yourself this brief pause today.',
       'minute_reflection_finish_subtitle_ui':
-          'May this short pause bring ease to your heart.',
-      'minute_reflection_finish_today': 'Today: ✓',
+          'Let these words stay with you through the day.',
+      'minute_reflection_finish_today': 'Today’s reflection is complete',
       'minute_reflection_finish_home': 'Return Home',
       'minute_reflection_finish_repeat': 'Another word',
       'minute_reflection_enable_reminder': 'Remind me every day',
@@ -1262,6 +1287,8 @@ class S {
       'daily_reminder_subtitle':
           'Reminds you of Today’s Reflection at your chosen time.',
       'daily_reminder_time': 'Daily spiritual reminder time',
+      'daily_reminder_preview':
+          'Example: “Today’s reflection is ready” — Stay with today’s words for one minute.',
       'reading_reminder': 'Reading reminder',
       'reading_reminder_subtitle':
           'A gentle reminder to continue your Qur\'an reading.',

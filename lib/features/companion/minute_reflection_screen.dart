@@ -20,6 +20,7 @@ class MinuteReflectionScreen extends StatefulWidget {
 class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
   static const _reflectionStepSeconds = 20;
   static const _sessionItemCount = 3;
+  static const _minimumStepSeconds = 15;
 
   Timer? _timer;
   int _currentStepRemainingSeconds = _reflectionStepSeconds;
@@ -45,11 +46,12 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
     final items = await ReflectionItemsService.loadItems();
     if (!mounted) return;
     setState(() {
-      _sessionItems = ReflectionItemsService.pickDailySessionItems(
+      final dailyItem = ReflectionItemsService.pickDailySessionItems(
         items,
         date: DateTime.now(),
-        count: _sessionItemCount,
-      );
+        count: 1,
+      ).first;
+      _sessionItems = List<ReflectionItem>.filled(_sessionItemCount, dailyItem);
       _currentReflectionIndex = _currentReflectionIndex.clamp(
         0,
         _sessionItems.length - 1,
@@ -103,9 +105,7 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
         builder: (context, child) {
           if (child == null) return const SizedBox.shrink();
           return MediaQuery(
-            data: MediaQuery.of(context).copyWith(
-              alwaysUse24HourFormat: true,
-            ),
+            data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
             child: child,
           );
         },
@@ -118,18 +118,6 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
     } finally {
       if (mounted) setState(() => _isEnablingReminder = false);
     }
-  }
-
-  void _restart() {
-    _timer?.cancel();
-    setState(() {
-      _currentStepRemainingSeconds = _reflectionStepSeconds;
-      _started = false;
-      _completed = false;
-      _currentReflectionIndex = 0;
-    });
-    unawaited(_loadSessionItems());
-    _start();
   }
 
   ReflectionItem _currentReflection() {
@@ -155,20 +143,24 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
   }
 
   void _showNextReflection() {
+    final elapsed = _reflectionStepSeconds - _currentStepRemainingSeconds;
+    if (elapsed < _minimumStepSeconds) return;
     unawaited(_advanceToNextReflection(fromAutoAdvance: false));
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
 
     return Scaffold(
-      backgroundColor: AppColors.scaffoldBg,
+      backgroundColor: colorScheme.surface,
       body: SizedBox.expand(
         child: Stack(
           fit: StackFit.expand,
           children: [
-            const Positioned.fill(
+            Positioned.fill(
               child: IgnorePointer(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -176,8 +168,8 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                       colors: [
-                        AppColors.scaffoldBg,
-                        AppColors.cardBgSoft,
+                        colorScheme.surface,
+                        colorScheme.surfaceContainerHighest,
                       ],
                     ),
                   ),
@@ -185,17 +177,12 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
               ),
             ),
             Positioned.fill(
-              child: IgnorePointer(
-                child: ColoredBox(
-                  color: const Color(0xFFF9F2E8).withValues(alpha: 0.05),
-                ),
-              ),
-            ),
-            Positioned.fill(
               child: SafeArea(
                 child: ClipRect(
                   child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 260),
+                    duration: reduceMotion
+                        ? Duration.zero
+                        : const Duration(milliseconds: 280),
                     switchInCurve: Curves.easeOut,
                     switchOutCurve: Curves.easeIn,
                     layoutBuilder: (currentChild, previousChildren) {
@@ -212,7 +199,9 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
                         opacity: animation,
                         child: SlideTransition(
                           position: Tween<Offset>(
-                            begin: const Offset(0.025, 0),
+                            begin: reduceMotion
+                                ? Offset.zero
+                                : const Offset(0.018, 0),
                             end: Offset.zero,
                           ).animate(
                             CurvedAnimation(
@@ -228,7 +217,6 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
                         ? _ReflectionCompletionState(
                             key: const ValueKey('completed'),
                             onDone: () => Navigator.of(context).pop(),
-                            onRestart: _restart,
                             onEnableReminder: _enableDailyReminder,
                             isEnablingReminder: _isEnablingReminder,
                           )
@@ -241,6 +229,9 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
                             currentStepRemainingSeconds:
                                 _currentStepRemainingSeconds,
                             currentReflectionIndex: _currentReflectionIndex,
+                            canAdvance: _reflectionStepSeconds -
+                                    _currentStepRemainingSeconds >=
+                                _minimumStepSeconds,
                             colorScheme: colorScheme,
                           ),
                   ),
@@ -274,6 +265,7 @@ class _ActiveReflectionState extends StatelessWidget {
     required this.onNextReflection,
     required this.currentStepRemainingSeconds,
     required this.currentReflectionIndex,
+    required this.canAdvance,
     required this.colorScheme,
   });
 
@@ -283,6 +275,7 @@ class _ActiveReflectionState extends StatelessWidget {
   final VoidCallback onNextReflection;
   final int currentStepRemainingSeconds;
   final int currentReflectionIndex;
+  final bool canAdvance;
   final ColorScheme colorScheme;
 
   @override
@@ -334,39 +327,36 @@ class _ActiveReflectionState extends StatelessWidget {
                     started: started,
                   ),
                   const SizedBox(height: 28),
-                  GestureDetector(
-                    behavior: HitTestBehavior.opaque,
-                    onTap: started ? onNextReflection : null,
-                    child: Center(
-                      child: AnimatedSwitcher(
-                        duration: const Duration(milliseconds: 420),
-                        switchInCurve: Curves.easeOut,
-                        switchOutCurve: Curves.easeIn,
-                        transitionBuilder: (child, animation) {
-                          return FadeTransition(
-                            opacity: animation,
-                            child: SlideTransition(
-                              position: Tween<Offset>(
-                                begin: const Offset(0.04, 0),
-                                end: Offset.zero,
-                              ).animate(
-                                CurvedAnimation(
-                                  parent: animation,
-                                  curve: Curves.easeOutCubic,
-                                ),
+                  Center(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 420),
+                      switchInCurve: Curves.easeOut,
+                      switchOutCurve: Curves.easeIn,
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0.04, 0),
+                              end: Offset.zero,
+                            ).animate(
+                              CurvedAnimation(
+                                parent: animation,
+                                curve: Curves.easeOutCubic,
                               ),
-                              child: child,
                             ),
-                          );
-                        },
-                        child: _ReflectionContentView(
-                          key: ValueKey(
-                            '${reflection.type}_${reflection.arabic}_${localized.guidance}',
+                            child: child,
                           ),
-                          reflection: reflection,
-                          localized: localized,
-                          colorScheme: colorScheme,
+                        );
+                      },
+                      child: _ReflectionContentView(
+                        key: ValueKey(
+                          '${reflection.type}_${reflection.arabic}_$currentReflectionIndex',
                         ),
+                        reflection: reflection,
+                        localized: localized,
+                        phaseIndex: currentReflectionIndex,
+                        colorScheme: colorScheme,
                       ),
                     ),
                   ),
@@ -382,31 +372,45 @@ class _ActiveReflectionState extends StatelessWidget {
                     ),
                   ] else ...[
                     const SizedBox(height: 18),
-                    Text(
-                      '${S.get('minute_reflection_next_hint')} · $currentStepRemainingSeconds${S.get('minute_reflection_seconds_short')}',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w500,
-                        color: colorScheme.onSurface.withValues(alpha: 0.56),
-                        height: 1.45,
+                    Semantics(
+                      liveRegion: true,
+                      label:
+                          '${S.get('minute_reflection_step_progress')} ${currentReflectionIndex + 1} / 3',
+                      child: Text(
+                        canAdvance
+                            ? S.get('minute_reflection_ready_hint')
+                            : S.get('minute_reflection_stay_hint'),
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12.5,
+                          fontWeight: FontWeight.w500,
+                          color: colorScheme.onSurface.withValues(alpha: 0.56),
+                          height: 1.45,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 6),
-                    TextButton(
-                      onPressed: onNextReflection,
-                      style: TextButton.styleFrom(
-                        foregroundColor: colorScheme.onSurface.withValues(
-                          alpha: 0.76,
-                        ),
-                        textStyle: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
+                    AnimatedOpacity(
+                      opacity: canAdvance ? 1 : 0,
+                      duration: const Duration(milliseconds: 180),
+                      child: IgnorePointer(
+                        ignoring: !canAdvance,
+                        child: TextButton(
+                          onPressed: onNextReflection,
+                          style: TextButton.styleFrom(
+                            foregroundColor: colorScheme.onSurface.withValues(
+                              alpha: 0.76,
+                            ),
+                            textStyle: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          child: Text(S.get('continue')),
                         ),
                       ),
-                      child: Text(S.get('continue')),
                     ),
                   ],
                 ],
@@ -432,46 +436,52 @@ class _ReflectionProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: List.generate(3, (index) {
-        final progress = index < currentIndex
-            ? 1.0
-            : index > currentIndex
-                ? 0.0
-                : started
-                    ? (1 - (remainingSeconds / 20)).clamp(0.0, 1.0)
-                    : 0.0;
-        return Expanded(
-          child: Padding(
-            padding: EdgeInsets.only(right: index == 2 ? 0 : 7),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(99),
-              child: SizedBox(
-                height: 3,
-                child: ColoredBox(
-                  color: AppColors.cardBorder,
-                  child: TweenAnimationBuilder<double>(
-                    tween: Tween(end: progress),
-                    duration: const Duration(milliseconds: 450),
-                    curve: Curves.easeOutCubic,
-                    builder: (context, value, _) {
-                      return Align(
-                        alignment: Alignment.centerLeft,
-                        child: FractionallySizedBox(
-                          widthFactor: value,
-                          child: const ColoredBox(
-                            color: AppColors.primaryAccent,
-                          ),
-                        ),
-                      );
-                    },
+    return Semantics(
+      label:
+          '${S.get('minute_reflection_step_progress')} ${currentIndex + 1} / 3',
+      child: ExcludeSemantics(
+        child: Row(
+          children: List.generate(3, (index) {
+            final progress = index < currentIndex
+                ? 1.0
+                : index > currentIndex
+                    ? 0.0
+                    : started
+                        ? (1 - (remainingSeconds / 20)).clamp(0.0, 1.0)
+                        : 0.0;
+            return Expanded(
+              child: Padding(
+                padding: EdgeInsets.only(right: index == 2 ? 0 : 7),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(99),
+                  child: SizedBox(
+                    height: 3,
+                    child: ColoredBox(
+                      color: AppColors.cardBorder,
+                      child: TweenAnimationBuilder<double>(
+                        tween: Tween(end: progress),
+                        duration: const Duration(milliseconds: 450),
+                        curve: Curves.easeOutCubic,
+                        builder: (context, value, _) {
+                          return Align(
+                            alignment: Alignment.centerLeft,
+                            child: FractionallySizedBox(
+                              widthFactor: value,
+                              child: const ColoredBox(
+                                color: AppColors.primaryAccent,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-        );
-      }),
+            );
+          }),
+        ),
+      ),
     );
   }
 }
@@ -481,15 +491,23 @@ class _ReflectionContentView extends StatelessWidget {
     super.key,
     required this.reflection,
     required this.localized,
+    required this.phaseIndex,
     required this.colorScheme,
   });
 
   final ReflectionItem reflection;
   final ReflectionItemLocale localized;
+  final int phaseIndex;
   final ColorScheme colorScheme;
 
   @override
   Widget build(BuildContext context) {
+    if (phaseIndex == 1) {
+      return _buildPausePhase();
+    }
+    if (phaseIndex == 2) {
+      return _buildCarryPhase();
+    }
     return ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 430),
       child: Column(
@@ -500,12 +518,10 @@ class _ReflectionContentView extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.38),
               borderRadius: BorderRadius.circular(999),
-              border: Border.all(
-                color: Colors.white.withValues(alpha: 0.34),
-              ),
+              border: Border.all(color: Colors.white.withValues(alpha: 0.34)),
             ),
             child: Text(
-              _typeLabel(),
+              S.get('minute_reflection_phase_read').toUpperCase(),
               style: TextStyle(
                 fontFamily: 'Inter',
                 fontSize: 12,
@@ -534,7 +550,8 @@ class _ReflectionContentView extends StatelessWidget {
           ..._contentBlocks(),
           const SizedBox(height: 22),
           Text(
-            S.get('minute_reflection_item_guidance_timed'),
+            localized.guidance ??
+                S.get('minute_reflection_item_guidance_timed'),
             textAlign: TextAlign.center,
             style: TextStyle(
               fontFamily: 'Inter',
@@ -545,6 +562,114 @@ class _ReflectionContentView extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPausePhase() {
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 390),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 34),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              S.get('minute_reflection_phase_pause').toUpperCase(),
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.4,
+                color: colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              localized.guidance ?? S.get('minute_reflection_pause_fallback'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Merriweather',
+                fontSize: 29,
+                fontWeight: FontWeight.w400,
+                height: 1.5,
+                color: colorScheme.onSurface.withValues(alpha: 0.94),
+              ),
+            ),
+            const SizedBox(height: 28),
+            Container(
+              width: 42,
+              height: 1,
+              color: colorScheme.outline.withValues(alpha: 0.5),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCarryPhase() {
+    final primary = switch (reflection.type) {
+      'asma' => localized.name ?? '',
+      'dhikr' => localized.transliteration ?? '',
+      _ => localized.text ?? '',
+    };
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 410),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 26),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              S.get('minute_reflection_phase_carry').toUpperCase(),
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 1.4,
+                color: colorScheme.primary,
+              ),
+            ),
+            const SizedBox(height: 28),
+            if (_hasValue(reflection.arabic))
+              Text(
+                reflection.arabic!,
+                textAlign: TextAlign.center,
+                textDirection: TextDirection.rtl,
+                style: TextStyle(
+                  fontFamily: 'Amiri',
+                  fontSize: 27,
+                  fontWeight: FontWeight.w700,
+                  height: 1.55,
+                  color: colorScheme.onSurface.withValues(alpha: 0.82),
+                ),
+              ),
+            const SizedBox(height: 18),
+            Text(
+              primary,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Merriweather',
+                fontSize: 26,
+                fontWeight: FontWeight.w400,
+                height: 1.45,
+                color: colorScheme.onSurface.withValues(alpha: 0.95),
+              ),
+            ),
+            const SizedBox(height: 22),
+            Text(
+              S.get('minute_reflection_carry_body'),
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 15,
+                height: 1.6,
+                color: colorScheme.onSurface.withValues(alpha: 0.66),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -634,19 +759,6 @@ class _ReflectionContentView extends StatelessWidget {
     }
   }
 
-  String _typeLabel() {
-    switch (reflection.type) {
-      case 'ayah':
-        return S.get('minute_reflection_type_ayah');
-      case 'dhikr':
-        return S.get('minute_reflection_type_dhikr');
-      case 'asma':
-        return S.get('minute_reflection_type_asma');
-      default:
-        return '';
-    }
-  }
-
   bool _hasValue(String? value) => value != null && value.trim().isNotEmpty;
 }
 
@@ -677,24 +789,29 @@ class _ReflectionPrimaryButtonState extends State<_ReflectionPrimaryButton> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     return GestureDetector(
       onTapDown: (_) => _setPressed(true),
       onTapUp: (_) => _setPressed(false),
       onTapCancel: () => _setPressed(false),
       child: AnimatedScale(
         scale: _scale,
-        duration: const Duration(milliseconds: 140),
+        duration:
+            reduceMotion ? Duration.zero : const Duration(milliseconds: 140),
         curve: Curves.easeOut,
         child: SizedBox(
           height: 52,
           child: FilledButton(
             onPressed: widget.enabled ? widget.onPressed : null,
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFFEFE6D9),
-              disabledBackgroundColor: const Color(0xFFEFE6D9),
-              foregroundColor: colorScheme.onSurface.withValues(alpha: 0.88),
+              backgroundColor: colorScheme.primary,
+              disabledBackgroundColor: colorScheme.onSurface.withValues(
+                alpha: 0.12,
+              ),
+              foregroundColor: colorScheme.onPrimary,
               disabledForegroundColor: colorScheme.onSurface.withValues(
-                alpha: 0.52,
+                alpha: 0.42,
               ),
               elevation: 0,
               shape: RoundedRectangleBorder(
@@ -720,19 +837,19 @@ class _ReflectionCompletionState extends StatelessWidget {
   const _ReflectionCompletionState({
     super.key,
     required this.onDone,
-    required this.onRestart,
     required this.onEnableReminder,
     required this.isEnablingReminder,
   });
 
   final VoidCallback onDone;
-  final VoidCallback onRestart;
   final Future<void> Function() onEnableReminder;
   final bool isEnablingReminder;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     return LayoutBuilder(
       builder: (context, constraints) {
         return SizedBox.expand(
@@ -749,23 +866,23 @@ class _ReflectionCompletionState extends StatelessWidget {
                 children: [
                   TweenAnimationBuilder<double>(
                     tween: Tween(begin: 0.72, end: 1),
-                    duration: const Duration(milliseconds: 680),
-                    curve: Curves.easeOutBack,
-                    builder: (context, value, child) => Transform.scale(
-                      scale: value,
-                      child: child,
-                    ),
+                    duration: reduceMotion
+                        ? Duration.zero
+                        : const Duration(milliseconds: 520),
+                    curve: Curves.easeOutCubic,
+                    builder: (context, value, child) =>
+                        Transform.scale(scale: value, child: child),
                     child: Container(
                       width: 64,
                       height: 64,
-                      decoration: const BoxDecoration(
-                        color: AppColors.ctaSecondaryFill,
+                      decoration: BoxDecoration(
+                        color: colorScheme.primaryContainer,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.check_rounded,
                         size: 32,
-                        color: AppColors.emphasisAccent,
+                        color: colorScheme.onPrimaryContainer,
                       ),
                     ),
                   ),
@@ -804,78 +921,32 @@ class _ReflectionCompletionState extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 28),
+                  SizedBox(
+                    width: double.infinity,
+                    child: _ReflectionPrimaryButton(
+                      label: S.get('minute_reflection_finish_home'),
+                      onPressed: onDone,
+                      enabled: true,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
                   ValueListenableBuilder<bool>(
                     valueListenable:
                         LocalPreferencesService.spiritualNotificationsEnabled,
                     builder: (context, enabled, _) {
                       if (enabled) return const SizedBox.shrink();
-                      return Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: SizedBox(
-                          width: double.infinity,
-                          child: _ReflectionPrimaryButton(
-                            label: isEnablingReminder
-                                ? S.get('minute_reflection_reminder_loading')
-                                : S.get('minute_reflection_enable_reminder'),
-                            onPressed: () => unawaited(onEnableReminder()),
-                            enabled: !isEnablingReminder,
-                          ),
+                      return TextButton.icon(
+                        onPressed: isEnablingReminder
+                            ? null
+                            : () => unawaited(onEnableReminder()),
+                        icon: const Icon(Icons.notifications_none_rounded),
+                        label: Text(
+                          isEnablingReminder
+                              ? S.get('minute_reflection_reminder_loading')
+                              : S.get('minute_reflection_enable_reminder'),
                         ),
                       );
                     },
-                  ),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: OutlinedButton(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: colorScheme.onSurface.withValues(
-                          alpha: 0.82,
-                        ),
-                        side: BorderSide(
-                          color: colorScheme.onSurface.withValues(alpha: 0.14),
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      onPressed: onRestart,
-                      child: Text(
-                        S.get('minute_reflection_finish_repeat'),
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: OutlinedButton(
-                      onPressed: onDone,
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: colorScheme.onSurface.withValues(
-                          alpha: 0.82,
-                        ),
-                        side: BorderSide(
-                          color: colorScheme.onSurface.withValues(alpha: 0.14),
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: Text(
-                        S.get('minute_reflection_finish_home'),
-                        style: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
                   ),
                 ],
               ),

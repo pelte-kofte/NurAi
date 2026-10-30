@@ -90,6 +90,9 @@ class AdhanNotificationService {
   static const _iftarChannelNameAlarm = 'Iftar Alarm';
   static const _spiritualChannelId = 'spiritual_daily_content';
   static const _spiritualChannelName = 'Spiritual Daily Content';
+  static const _spiritualFallbackNotificationId = 910001;
+  static const _spiritualCategoryId = 'daily_reflection';
+  static const _spiritualStartActionId = 'start_daily_reflection';
   static const _nightRitualChannelId = 'night_companion_ritual';
   static const _nightRitualChannelName = 'Night Companion Ritual';
   static const _readingReminderChannelId = 'reading_continuation';
@@ -191,13 +194,26 @@ class AdhanNotificationService {
 
     const androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
-    const iosSettings = DarwinInitializationSettings(
+    final isTurkish =
+        LocalPreferencesService.language.value.toLowerCase() == 'tr';
+    final iosSettings = DarwinInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
+      notificationCategories: <DarwinNotificationCategory>[
+        DarwinNotificationCategory(
+          _spiritualCategoryId,
+          actions: <DarwinNotificationAction>[
+            DarwinNotificationAction.plain(
+              _spiritualStartActionId,
+              isTurkish ? 'Başla' : 'Start',
+            ),
+          ],
+        ),
+      ],
     );
     await _plugin.initialize(
-      const InitializationSettings(android: androidSettings, iOS: iosSettings),
+      InitializationSettings(android: androidSettings, iOS: iosSettings),
       onDidReceiveNotificationResponse: (response) {
         _log(
           'notification_response payload=${_redactPayload(response.payload)} actionId=${response.actionId ?? 'none'}',
@@ -699,6 +715,33 @@ class AdhanNotificationService {
         }),
       );
     }
+
+    final fallbackDate = DateTime(now.year, now.month, now.day + 7);
+    final fallbackAt = DateTime(
+      fallbackDate.year,
+      fallbackDate.month,
+      fallbackDate.day,
+      selectedTime.hour,
+      selectedTime.minute,
+    );
+    final locale = LocalPreferencesService.language.value.toLowerCase();
+    final isTurkish = locale == 'tr';
+    await _schedule(
+      id: _spiritualFallbackNotificationId,
+      title:
+          isTurkish ? 'Bugünün tefekkürü hazır' : 'Today’s reflection is ready',
+      body: isTurkish
+          ? 'Bugünün sözüyle bir dakika kal.'
+          : 'Stay with today’s words for one minute.',
+      dateTime: fallbackAt,
+      withSound: false,
+      androidChannelId: _spiritualChannelId,
+      androidChannelName: _spiritualChannelName,
+      payload: jsonEncode(<String, String>{
+        'type': _spiritualPayloadType(slot),
+      }),
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
   }
 
   static Future<void> cancelScheduledSpiritualNotifications() async {
@@ -707,6 +750,7 @@ class AdhanNotificationService {
 
   static Future<void> _cancelScheduledSpiritualNotificationsInternal() async {
     if (kIsWeb) return;
+    await _plugin.cancel(_spiritualFallbackNotificationId);
     final now = DateTime.now();
     for (var dayOffset = -1; dayOffset < 10; dayOffset++) {
       final date = DateTime(now.year, now.month, now.day + dayOffset);
@@ -727,6 +771,7 @@ class AdhanNotificationService {
     String? androidChannelId,
     String? androidChannelName,
     String? iosSoundName,
+    DateTimeComponents? matchDateTimeComponents,
   }) async {
     final zone = _resolveLocation(timezoneName);
     final tzDateTime = tz.TZDateTime(
@@ -751,6 +796,8 @@ class AdhanNotificationService {
         withSound ? InterruptionLevel.timeSensitive : InterruptionLevel.passive;
     final iosPresentSound = withSound;
     final resolvedIosSoundName = withSound ? iosSoundName ?? 'default' : null;
+    final iosCategoryIdentifier =
+        androidChannelId == _spiritualChannelId ? _spiritualCategoryId : null;
     final iosDetails = withSound
         ? DarwinNotificationDetails(
             presentAlert: true,
@@ -758,12 +805,14 @@ class AdhanNotificationService {
             presentSound: true,
             sound: resolvedIosSoundName,
             interruptionLevel: InterruptionLevel.timeSensitive,
+            categoryIdentifier: iosCategoryIdentifier,
           )
-        : const DarwinNotificationDetails(
+        : DarwinNotificationDetails(
             presentAlert: true,
             presentBadge: true,
             presentSound: false,
             interruptionLevel: InterruptionLevel.passive,
+            categoryIdentifier: iosCategoryIdentifier,
           );
     final details = NotificationDetails(
       android: withSound
@@ -804,6 +853,7 @@ class AdhanNotificationService {
       androidScheduleMode: withSound
           ? AndroidScheduleMode.exactAllowWhileIdle
           : AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: matchDateTimeComponents,
     );
     _log(
       'schedule id=$id payload=${_redactPayload(payload)} soundEnabled=$withSound channelId=$resolvedAndroidChannelId importance=${resolvedImportance.name}',

@@ -56,12 +56,23 @@ class AppSpacing {
   static const double xl = 32;
 }
 
+class AppMotion {
+  AppMotion._();
+
+  static const Duration quick = Duration(milliseconds: 150);
+  static const Duration standard = Duration(milliseconds: 280);
+  static const Duration emphasized = Duration(milliseconds: 520);
+  static const Curve standardCurve = Curves.easeOutCubic;
+}
+
 class AppTheme {
   static ThemeData light() {
     const colorScheme = ColorScheme(
       brightness: Brightness.light,
       primary: AppColors.turquoiseAccent,
       onPrimary: Colors.white,
+      primaryContainer: AppColors.ctaSecondaryFill,
+      onPrimaryContainer: AppColors.turquoiseAccentStrong,
       secondary: AppColors.indigoAccent,
       onSecondary: Colors.white,
       tertiary: AppColors.earthAccent,
@@ -244,8 +255,10 @@ class AppTheme {
 
     const colorScheme = ColorScheme(
       brightness: Brightness.dark,
-      primary: AppColors.turquoiseAccent,
-      onPrimary: Colors.white,
+      primary: Color(0xFFA7D1C2),
+      onPrimary: Color(0xFF12372C),
+      primaryContainer: Color(0xFF244D40),
+      onPrimaryContainer: Color(0xFFD8F3E8),
       secondary: AppColors.indigoAccent,
       onSecondary: Colors.white,
       tertiary: AppColors.earthAccent,
@@ -277,6 +290,66 @@ class AppTheme {
         foregroundColor: darkTextPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
+      ),
+      cardTheme: const CardThemeData(
+        color: darkCard,
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.all(Radius.circular(AppRadii.medium)),
+          side: BorderSide(color: darkOutline),
+        ),
+      ),
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: darkCard,
+        surfaceTintColor: Colors.transparent,
+        dragHandleColor: darkTextSecondary,
+      ),
+      snackBarTheme: const SnackBarThemeData(
+        backgroundColor: darkCardMuted,
+        contentTextStyle: TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 13,
+          color: darkTextPrimary,
+        ),
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: colorScheme.primary,
+          foregroundColor: colorScheme.onPrimary,
+          elevation: 0,
+          minimumSize: const Size.fromHeight(50),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadii.medium),
+          ),
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: colorScheme.primary,
+          side: const BorderSide(color: darkOutline),
+          minimumSize: const Size.fromHeight(48),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadii.medium),
+          ),
+        ),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: colorScheme.primary),
+      ),
+      chipTheme: ChipThemeData(
+        backgroundColor: darkCard,
+        selectedColor: colorScheme.primaryContainer,
+        disabledColor: darkCardMuted,
+        labelStyle: const TextStyle(
+          fontFamily: 'Inter',
+          color: darkTextSecondary,
+        ),
+        side: const BorderSide(color: darkOutline),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(999),
+        ),
       ),
       textTheme: const TextTheme(
         titleLarge: TextStyle(
