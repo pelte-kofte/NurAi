@@ -8,6 +8,7 @@ import '../../data/local_preferences_service.dart';
 import '../../data/reflection_items_service.dart';
 import '../../data/spiritual_progress_service.dart';
 import '../../l10n/app_strings.dart';
+import '../../theme/app_theme.dart';
 
 class MinuteReflectionScreen extends StatefulWidget {
   const MinuteReflectionScreen({super.key});
@@ -17,7 +18,6 @@ class MinuteReflectionScreen extends StatefulWidget {
 }
 
 class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
-  static const _backgroundAsset = 'assets/images/reflection/reflection_bg.png';
   static const _reflectionStepSeconds = 20;
   static const _sessionItemCount = 3;
 
@@ -134,38 +134,24 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFBF6F2),
+      backgroundColor: AppColors.scaffoldBg,
       body: SizedBox.expand(
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Positioned.fill(
+            const Positioned.fill(
               child: IgnorePointer(
-                child: Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    Opacity(
-                      opacity: 0.56,
-                      child: Image.asset(
-                        _backgroundAsset,
-                        fit: BoxFit.cover,
-                        filterQuality: FilterQuality.high,
-                      ),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        AppColors.scaffoldBg,
+                        AppColors.cardBgSoft,
+                      ],
                     ),
-                    DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.white.withValues(alpha: 0.03),
-                            Colors.white.withValues(alpha: 0.0),
-                            const Color(0xFFF4ECE1).withValues(alpha: 0.08),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
@@ -215,6 +201,17 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
                             colorScheme: colorScheme,
                           ),
                   ),
+                ),
+              ),
+            ),
+            Positioned(
+              top: 8,
+              left: 8,
+              child: SafeArea(
+                child: IconButton(
+                  tooltip: S.get('close'),
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(Icons.close_rounded),
                 ),
               ),
             ),
@@ -286,29 +283,27 @@ class _ActiveReflectionState extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 28),
-                  Expanded(
-                    child: GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: started ? onNextReflection : null,
-                      child: Center(
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 420),
-                          switchInCurve: Curves.easeOut,
-                          switchOutCurve: Curves.easeIn,
-                          transitionBuilder: (child, animation) {
-                            return FadeTransition(
-                              opacity: animation,
-                              child: child,
-                            );
-                          },
-                          child: _ReflectionContentView(
-                            key: ValueKey(
-                              '${reflection.type}_${reflection.arabic}_${localized.guidance}',
-                            ),
-                            reflection: reflection,
-                            localized: localized,
-                            colorScheme: colorScheme,
+                  GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: started ? onNextReflection : null,
+                    child: Center(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 420),
+                        switchInCurve: Curves.easeOut,
+                        switchOutCurve: Curves.easeIn,
+                        transitionBuilder: (child, animation) {
+                          return FadeTransition(
+                            opacity: animation,
+                            child: child,
+                          );
+                        },
+                        child: _ReflectionContentView(
+                          key: ValueKey(
+                            '${reflection.type}_${reflection.arabic}_${localized.guidance}',
                           ),
+                          reflection: reflection,
+                          localized: localized,
+                          colorScheme: colorScheme,
                         ),
                       ),
                     ),

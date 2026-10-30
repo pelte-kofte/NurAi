@@ -58,8 +58,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with RouteAware {
-  static const String _verseHeroBgAsset =
-      'assets/images/home_cards/verse_hero_bg.PNG';
   static const String _quranCardBgAsset =
       'assets/images/home_cards/quran_card_bg.PNG';
   static const String _stayWithMeBgAsset =
@@ -556,7 +554,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 borderRadius:
                     const BorderRadius.vertical(top: Radius.circular(18)),
               ),
-              child: SettingsScreen(scrollController: scrollController),
+              child: SettingsScreen(
+                scrollController: scrollController,
+                showCloseButton: true,
+              ),
             );
           },
         );
@@ -645,14 +646,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               physics: const AlwaysScrollableScrollPhysics(),
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 30, 24, 28),
-                child: ValueListenableBuilder<bool>(
-                  valueListenable: LocalPreferencesService.minimalModeEnabled,
-                  builder: (context, minimalModeEnabled, _) {
-                    return _buildHomeContent(
-                      minimalModeEnabled: minimalModeEnabled,
-                    );
-                  },
-                ),
+                child: _buildHomeContent(),
               ),
             ),
           ],
@@ -661,49 +655,33 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  Widget _buildHomeContent({required bool minimalModeEnabled}) {
+  Widget _buildHomeContent() {
     final List<Widget> sections = <Widget>[];
     sections.add(_buildGreeting());
 
-    if (minimalModeEnabled) {
-      sections.addAll(<Widget>[
-        const SizedBox(height: 32),
-        _buildHeroSection(),
+    sections.addAll(<Widget>[
+      const SizedBox(height: 24),
+      _buildHeroSection(),
+      const SizedBox(height: 20),
+      _buildCoreActionsRow(),
+      const SizedBox(height: 22),
+      _buildDailyContentSection(),
+      const SizedBox(height: 22),
+      _buildFeatureGrid(),
+      const SizedBox(height: 10),
+      _buildCompanionConnectionLine(),
+      const SizedBox(height: 8),
+      _buildReflectionHelperLinks(),
+      if (_shouldShowNightCompanionPrompt()) ...[
         const SizedBox(height: 18),
-        _buildCoreActionsRow(),
-        const SizedBox(height: 22),
-        _buildDailyContentSection(),
-        const SizedBox(height: 22),
-        _buildFeatureGrid(),
-        const SizedBox(height: 12),
-        _buildReflectionHelperLinks(),
-        const SizedBox(height: 8),
-      ]);
-    } else {
-      sections.addAll(<Widget>[
-        const SizedBox(height: 24),
-        _buildHeroSection(),
-        const SizedBox(height: 20),
-        _buildCoreActionsRow(),
-        const SizedBox(height: 22),
-        _buildDailyContentSection(),
-        const SizedBox(height: 22),
-        _buildFeatureGrid(),
-        const SizedBox(height: 10),
-        _buildCompanionConnectionLine(),
-        const SizedBox(height: 8),
-        _buildReflectionHelperLinks(),
-        if (_shouldShowNightCompanionPrompt()) ...[
-          const SizedBox(height: 18),
-          _buildNightRitualPromptCard(),
-        ],
-        const SizedBox(height: 14),
-        _buildPremiumSection(),
-        const BannerAdWidget(
-          margin: EdgeInsets.only(top: 28, bottom: 8),
-        ),
-      ]);
-    }
+        _buildNightRitualPromptCard(),
+      ],
+      const SizedBox(height: 14),
+      _buildPremiumSection(),
+      const BannerAdWidget(
+        margin: EdgeInsets.only(top: 28, bottom: 8),
+      ),
+    ]);
 
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -736,18 +714,72 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   Widget _buildFeatureGrid() {
-    return GridView.count(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      crossAxisCount: 2,
-      crossAxisSpacing: 12,
-      mainAxisSpacing: 12,
-      childAspectRatio: _HomeFeatureCard.defaultAspectRatio,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildExploreQuranEntry(context),
-        _buildMinuteReflectionEntry(),
-        _buildAsmaEntry(),
-        _buildCompanionEntry(),
+        _buildSectionHeader(
+          title: S.get('home_section_for_today'),
+          icon: Icons.wb_sunny_outlined,
+        ),
+        const SizedBox(height: 12),
+        _HomeJourneyTile(
+          icon: Icons.auto_stories_outlined,
+          title: S.get('minute_reflection_title'),
+          subtitle: S.get('minute_reflection_home_subtitle'),
+          onTap: () => Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (_) => const MinuteReflectionScreen(),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        _HomeJourneyTile(
+          icon: Icons.volunteer_activism_outlined,
+          title: S.get('companion_flow_title'),
+          subtitle: S.get('companion_flow_home_subtitle'),
+          onTap: _openCompanionFlow,
+        ),
+        const SizedBox(height: 22),
+        _buildSectionHeader(
+          title: S.get('home_section_explore'),
+          icon: Icons.grid_view_rounded,
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _HomeToolTile(
+                icon: Icons.menu_book_rounded,
+                title: S.get('start_reading'),
+                onTap: () {
+                  Navigator.of(context)
+                      .push(
+                        MaterialPageRoute(
+                          builder: (_) => const SurahListScreen(),
+                        ),
+                      )
+                      .then(
+                        (_) => _tryShowPremiumUpsell(
+                          triggeredByInteraction: true,
+                        ),
+                      );
+                },
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _HomeToolTile(
+                icon: Icons.brightness_7_outlined,
+                title: S.get('asma_screen_title'),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const AsmaulHusnaScreen(),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -779,11 +811,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               return Text(
                 _buildGreetingText(displayName),
                 style: TextStyle(
-                  fontFamily: 'Merriweather',
-                  fontSize: 28,
-                  fontWeight: FontWeight.w400,
+                  fontFamily: 'Inter',
+                  fontSize: 26,
+                  fontWeight: FontWeight.w700,
                   color: colorScheme.onSurface.withValues(alpha: 0.96),
-                  height: 1.3,
+                  height: 1.2,
                 ),
               );
             },
@@ -886,57 +918,16 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: AppColors.turquoiseAccent.withValues(alpha: 0.16),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: AppColors.indigoAccent.withValues(alpha: 0.16),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.indigoAccent.withValues(alpha: 0.05),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
+        color: AppColors.cardBg,
+        borderRadius: BorderRadius.circular(AppRadii.medium),
+        border: Border.all(color: AppColors.cardBorder),
       ),
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(AppRadii.medium),
         child: Stack(
           children: [
-            Positioned.fill(
-              child: IgnorePointer(
-                child: Opacity(
-                  opacity: 0.3,
-                  child: ImageFiltered(
-                    imageFilter: ui.ImageFilter.blur(sigmaX: 0.8, sigmaY: 0.8),
-                    child: Image.asset(
-                      'assets/images/mosque_bg.png',
-                      fit: BoxFit.cover,
-                      alignment: Alignment.topCenter,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            Positioned.fill(
-              child: IgnorePointer(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.white.withValues(alpha: 0.18),
-                        Colors.white.withValues(alpha: 0.12),
-                        colorScheme.surface.withValues(alpha: 0.05),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(18, 18, 18, 18),
+              padding: const EdgeInsets.all(AppSpacing.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1232,7 +1223,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       colorScheme: colorScheme,
       isDark: isDark,
     );
-    const borderRadius = BorderRadius.all(Radius.circular(22));
+    const borderRadius = BorderRadius.all(
+      Radius.circular(AppRadii.medium),
+    );
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
@@ -1331,7 +1324,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final colorScheme = Theme.of(context).colorScheme;
     final cleanSource = source?.trim() ?? '';
     final card = _buildQuranFramedCard(
-      backgroundAsset: _verseHeroBgAsset,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1394,7 +1386,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     final card = _buildQuranFramedCard(
-      backgroundAsset: _verseHeroBgAsset,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1451,7 +1442,6 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final meaning = asma.localizedMeaning(languageCode);
     final reflection = asma.localizedReflection(languageCode);
     final card = _buildQuranFramedCard(
-      backgroundAsset: _verseHeroBgAsset,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1905,6 +1895,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
+  // Kept temporarily for rollback during the Home information-architecture test.
+  // ignore: unused_element
   Widget _buildExploreQuranEntry(BuildContext context) {
     const readingContext = ReadingContext.explore();
     final progress = ReadingProgressService.getContextProgress(readingContext);
@@ -1925,6 +1917,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
+  // ignore: unused_element
   Widget _buildCompanionEntry() {
     return _buildFeatureCard(
       title: S.get('companion_flow_title'),
@@ -1956,6 +1949,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
+  // ignore: unused_element
   Widget _buildAsmaEntry() {
     return _buildFeatureCard(
       title: S.get('asma_screen_title'),
@@ -1971,6 +1965,7 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
+  // ignore: unused_element
   Widget _buildMinuteReflectionEntry() {
     return _buildFeatureCard(
       title: S.get('minute_reflection_title'),
@@ -2259,6 +2254,136 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       titleStyle: titleStyle,
       subtitleStyle: subtitleStyle,
       onTap: onTap,
+    );
+  }
+}
+
+class _HomeJourneyTile extends StatelessWidget {
+  const _HomeJourneyTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Material(
+      color: colors.surface,
+      borderRadius: BorderRadius.circular(AppRadii.medium),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadii.medium),
+        child: Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadii.medium),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.ctaSecondaryFill,
+                  borderRadius: BorderRadius.circular(AppRadii.small),
+                ),
+                child: Icon(icon, color: AppColors.emphasisAccent, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                        color: colors.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        height: 1.4,
+                        color: colors.onSurface.withValues(alpha: 0.68),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: colors.onSurface.withValues(alpha: 0.45),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeToolTile extends StatelessWidget {
+  const _HomeToolTile({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return Material(
+      color: colors.surface,
+      borderRadius: BorderRadius.circular(AppRadii.medium),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadii.medium),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadii.medium),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, size: 20, color: AppColors.emphasisAccent),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: colors.onSurface,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -2760,32 +2885,32 @@ class _PrimaryDailyCardStyle {
     required bool isDark,
   }) {
     if (isDark) {
-      return _PrimaryDailyCardStyle(
-        background: const Color(0xFF1A1D20),
-        backgroundGradient: const [
-          Color(0xFF20252A),
-          Color(0xFF181C21),
+      return const _PrimaryDailyCardStyle(
+        background: Color(0xFF1D211F),
+        backgroundGradient: [
+          Color(0xFF1D211F),
+          Color(0xFF1D211F),
         ],
-        accentWash: AppColors.indigoAccent.withValues(alpha: 0.08),
-        borderColor: const Color(0xFF73695E).withValues(alpha: 0.26),
-        innerGlow: const Color(0xFFD7C2A3).withValues(alpha: 0.08),
-        shadowColor: Colors.black.withValues(alpha: 0.18),
-        shadowBlur: 18,
-        shadowOffset: const Offset(0, 4),
+        accentWash: Colors.transparent,
+        borderColor: Color(0xFF39403C),
+        innerGlow: Colors.transparent,
+        shadowColor: Colors.transparent,
+        shadowBlur: 0,
+        shadowOffset: Offset.zero,
       );
     }
-    return _PrimaryDailyCardStyle(
-      background: const Color(0xFFF9F5ED),
-      backgroundGradient: const [
-        Color(0xFFFEFBF5),
-        Color(0xFFF6EFE4),
+    return const _PrimaryDailyCardStyle(
+      background: AppColors.cardBg,
+      backgroundGradient: [
+        AppColors.cardBg,
+        AppColors.cardBg,
       ],
-      accentWash: AppColors.turquoiseAccentStrong.withValues(alpha: 0.055),
-      borderColor: AppColors.indigoAccent.withValues(alpha: 0.16),
-      innerGlow: const Color(0xFFFFFCF6),
-      shadowColor: const Color(0x248C7B63),
-      shadowBlur: 28,
-      shadowOffset: const Offset(0, 14),
+      accentWash: Colors.transparent,
+      borderColor: AppColors.cardBorder,
+      innerGlow: Colors.transparent,
+      shadowColor: Colors.transparent,
+      shadowBlur: 0,
+      shadowOffset: Offset.zero,
     );
   }
 }

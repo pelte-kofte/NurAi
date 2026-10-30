@@ -378,18 +378,14 @@ class _FirstScreen extends StatelessWidget {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          Image.asset(
-            'assets/splash/splash.png',
-            fit: BoxFit.cover,
-          ),
-          Container(
-            decoration: const BoxDecoration(
+          const DecoratedBox(
+            decoration: BoxDecoration(
               gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
                 colors: [
-                  AppColors.splashOverlayTop,
-                  AppColors.splashOverlayBottom,
+                  Color(0xFFF8F5EF),
+                  Color(0xFFE8EFEA),
                 ],
               ),
             ),
@@ -399,11 +395,41 @@ class _FirstScreen extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
               child: Stack(
                 children: [
+                  const Align(
+                    alignment: Alignment.topLeft,
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 18),
+                      child: Text(
+                        'DUADA',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2.2,
+                          color: AppColors.emphasisAccent,
+                        ),
+                      ),
+                    ),
+                  ),
                   Align(
-                    alignment: const Alignment(0, 0.2),
+                    alignment: const Alignment(0, -0.04),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: const BoxDecoration(
+                            color: AppColors.ctaSecondaryFill,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.auto_stories_outlined,
+                            color: AppColors.emphasisAccent,
+                            size: 26,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
                         Text(
                           S.get('splash_headline'),
                           textAlign: TextAlign.center,
@@ -415,17 +441,10 @@ class _FirstScreen extends StatelessWidget {
                           textAlign: TextAlign.center,
                           style:
                               Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: AppColors.cardBg,
-                            fontWeight: FontWeight.w500,
-                            height: 1.45,
-                            shadows: const [
-                              Shadow(
-                                color: Color(0x6E000000),
-                                blurRadius: 8,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w400,
+                                    height: 1.55,
+                                  ),
                         ),
                       ],
                     ),
@@ -439,7 +458,7 @@ class _FirstScreen extends StatelessWidget {
                       textStyle: const TextStyle(
                         fontFamily: 'Inter',
                         fontSize: 15,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
