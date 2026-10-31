@@ -29,7 +29,7 @@ class S {
 
   static const _strings = <String, Map<String, String>>{
     'tr': {
-      'splash_headline': 'Kalbinizi sakinleştirin, niyetinizi tazeleyin.',
+      'splash_headline': 'Dua, Kur’an ve zikir, ihtiyaç duyduğun anda.',
       'splash_subtitle':
           'Her yeni vakit, Rabbine yakınlaşmak için bir davettir.',
       'home_section_now_upcoming': 'Bir sonraki vakit',
@@ -139,7 +139,7 @@ class S {
           'Namaz vaktine hazırlanman için açıyorum.',
       'companion_flow_title': 'Kalbini Dinlendir',
       'companion_flow_home_subtitle':
-          'Allah\'ı zikrederek kalbine kısa bir mola ver.',
+          'Kısa bir ayet oku, nefesini düzenle ve zikret.',
       'companion_flow_step_verse': 'Ayet',
       'companion_flow_step_breathe': 'Nefes',
       'companion_flow_step_dhikr': 'Zikir',
@@ -147,22 +147,35 @@ class S {
       'companion_flow_verse_text': 'Kalpler ancak Allah’ı anmakla huzur bulur.',
       'companion_flow_verse_text_1':
           'Kalpler ancak Allah’ı anmakla huzur bulur.',
-      'companion_flow_verse_text_2': 'Allah sizinle beraberdir.',
-      'companion_flow_verse_text_3': 'O, kalplerde olanı bilir.',
+      'companion_flow_verse_source_1': 'Ra’d Suresi, 13:28',
+      'companion_flow_verse_text_2':
+          'Nerede olursanız olun O sizinle beraberdir.',
+      'companion_flow_verse_source_2': 'Hadîd Suresi, 57:4',
+      'companion_flow_verse_text_3':
+          'Şüphesiz Allah kalplerde olanı hakkıyla bilir.',
+      'companion_flow_verse_source_3': 'Âl-i İmrân Suresi, 3:119',
       'companion_flow_verse_text_4': 'Allah kuluna kâfi değil midir?',
-      'companion_flow_verse_text_5': 'Rabbin seni terk etmedi.',
-      'companion_flow_verse_text_6': 'Allah sabredenlerle beraberdir.',
-      'companion_flow_verse_text_7': 'Sessiz bir dua da duyulur.',
-      'companion_flow_verse_text_8': 'O, sana şah damarından daha yakındır.',
+      'companion_flow_verse_source_4': 'Zümer Suresi, 39:36',
+      'companion_flow_verse_text_5':
+          'Rabbin seni terk etmedi ve sana darılmadı.',
+      'companion_flow_verse_source_5': 'Duhâ Suresi, 93:3',
+      'companion_flow_verse_text_6': 'Şüphesiz Allah sabredenlerle beraberdir.',
+      'companion_flow_verse_source_6': 'Bakara Suresi, 2:153',
+      'companion_flow_verse_text_7':
+          'Kim Allah’a tevekkül ederse O, ona yeter.',
+      'companion_flow_verse_source_7': 'Talâk Suresi, 65:3',
+      'companion_flow_verse_text_8': 'Biz ona şah damarından daha yakınız.',
+      'companion_flow_verse_source_8': 'Kâf Suresi, 50:16',
       'companion_flow_verse_text_9': 'İçinden geçenleri Allah bilir.',
       'companion_flow_verse_text_10': 'Hasbunallahu ve ni‘mel vekil.',
-      'companion_flow_verse_hint': 'Birkaç saniye bu sözün içinde kal.',
-      'companion_flow_breathe_text': 'Bir nefes al. Yavaşça ver.',
-      'companion_flow_breathe_hint': 'Hazır olduğunda ekrana dokun.',
+      'companion_flow_verse_hint': 'Devam etmek için ekrana dokun.',
+      'companion_flow_breathe_text': 'Nefesini yavaşlat.',
+      'companion_flow_breathe_hint': 'Hazır olduğunda devam etmek için dokun.',
       'companion_flow_breathe_inhale': 'Nefes al',
       'companion_flow_breathe_exhale': 'Ver',
       'companion_flow_dhikr_text': 'Sakince tekrar et',
-      'companion_flow_dhikr_subtitle': 'İçinden tekrar et.',
+      'companion_flow_dhikr_subtitle':
+          'Her dokunuşta bir kez tekrar et. 33’e ulaşınca tamamla.',
       'companion_flow_dhikr_hint': 'Her dokunuşta bir kez “Elhamdülillah” de.',
       'companion_flow_dhikr_hint_dynamic':
           'Her dokunuşta bir kez “{dhikr}” de.',
@@ -178,11 +191,11 @@ class S {
           'Kısa bir durak bazen kalbi toparlamaya yeter.',
       'companion_flow_close': 'Kapat',
       'minute_reflection_title': 'Bir Dakika Tefekkür',
-      'minute_reflection_subtitle': 'Sadece burada kal.',
+      'minute_reflection_subtitle': 'Bugünün sözüyle bir dakika kal.',
       'minute_reflection_screen_subtitle':
-          'Ayet, zikir ve Esma ile kısa bir tefekkür alanı.',
+          'Bugünün ayet, zikir veya Esma’sını oku.',
       'minute_reflection_home_subtitle':
-          'Ayet, zikir ve Esma ile kısa bir tefekkür alanı.',
+          'Bugünün ayet, zikir veya Esma’sıyla bir dakika kal.',
       'minute_reflection_type_ayah': 'Ayet',
       'minute_reflection_type_hadith': 'Hadis',
       'minute_reflection_type_dhikr': 'Zikir',
@@ -191,15 +204,16 @@ class S {
       'minute_reflection_start': 'Başla',
       'minute_reflection_done': 'Tamam',
       'minute_reflection_completed': 'Kısa bir tefekkür tamamlandı.',
-      'minute_reflection_item_guidance_timed': '20 saniye bu sözle kal.',
-      'minute_reflection_next_hint': 'Sıradaki söz birazdan gelecek',
+      'minute_reflection_item_guidance_timed':
+          'Bir dakika bu söz üzerinde düşün.',
+      'minute_reflection_next_hint': 'Tamamlamadan önce biraz daha kal',
       'minute_reflection_seconds_short': ' sn',
-      'minute_reflection_finish_title': 'Kalbin bu sözle biraz yumuşadı.',
+      'minute_reflection_finish_title': 'Bugünkü tefekkürü tamamladın.',
       'minute_reflection_finish_subtitle':
-          'Bu kısa duruşu bugün kendine hediye ettin.',
+          'Okuduğun sözü gün içinde yeniden hatırlayabilirsin.',
       'minute_reflection_finish_subtitle_ui':
-          'Bu kısa duruş kalbine iyi gelsin.',
-      'minute_reflection_finish_today': 'Bugün: ✓',
+          'Okuduğun sözü gün içinde yeniden hatırlayabilirsin.',
+      'minute_reflection_finish_today': 'Bugün tamamlandı',
       'minute_reflection_finish_home': 'Ana sayfaya dön',
       'minute_reflection_finish_repeat': 'Bir söz daha',
       'calming_flow_subtitle': 'Biraz daha uzun kal. Nefesin yavaşlasın.',
@@ -450,13 +464,13 @@ class S {
       'adhan_preview_subtitle_off': 'Bildirim kapalı.',
       'adhan_location_permission_fallback_note':
           'Konum izni olmadan şehir seçerek devam edebilirsiniz.',
-      'next_prayer_title': 'Next prayer',
-      'next_prayer_set_location_cta': 'Set location to see prayer times',
+      'next_prayer_title': 'Sıradaki vakit',
+      'next_prayer_set_location_cta': 'Namaz vakitleri için konumunu ayarla',
       'next_prayer_in_prefix': '',
       'next_prayer_hour_short': ' sa',
       'next_prayer_min_short': ' dk',
       'next_prayer_remaining_suffix': ' kaldı',
-      'next_prayer_done_today': 'No upcoming prayer today',
+      'next_prayer_done_today': 'Bugün kalan vakit yok',
       'next_prayer_none_title': 'Bugün kalan vakit yok',
 
       // Notification dialog
@@ -547,15 +561,15 @@ class S {
       'premium_disclaimer': 'Ödeme altyapısı yakında.',
       'premium_description':
           'Reklamsız ve daha sakin bir deneyim sunar. Yakında gelecek özellikleri açar ve Duada’yı destekler.',
-      'premium_hero_title': 'Daha derin bir manevi akış',
+      'premium_hero_title': 'Duada Premium',
       'premium_hero_subtitle':
-          'Gün boyunca sana dua, zikir ve tefekkürle sessizce eşlik eden daha zengin bir deneyim.',
-      'premium_social_proof': 'Her gün binlerce kişi Duada ile sakinleşiyor',
+          'Reklamları kaldırır, ek hatırlatmaları ve gelişmiş tesbihi açar.',
+      'premium_social_proof': 'Reklamsız kullanım ve ek özellikler',
       'premium_active': 'Premium aktif.',
       'premium_status_active': 'Aktif',
       'premium_subscribe_monthly': 'Aylık üyeliği başlat',
       'premium_cta_upgrade': 'Premium’a Yükselt',
-      'premium_cta_trial_hint': 'Premium ile daha derin bir deneyime geçin.',
+      'premium_cta_trial_hint': 'Premium özelliklerini aç.',
       'premium_cta_soft': 'Premium’u Başlat',
       'premium_subscription_loading': 'Abonelik yükleniyor...',
       'premium_cta_context': 'Reklamsız, sakin ve odaklı bir deneyim',
@@ -572,20 +586,18 @@ class S {
       'premium_feature_notes_list': 'Notlar için gelişmiş düzenleme (yakında)',
       'premium_feature_sync_soon': 'Senkronizasyon (yakında)',
       'premium_benefits_title': 'Seninle açılanlar',
-      'premium_benefits_subtitle':
-          'Günü daha sakin yaşaman için en çok hissedilen farklar.',
+      'premium_benefits_subtitle': 'Premium ile açılan özellikler.',
       'premium_benefit_flow_title': 'Ruh haline göre manevi akışlar',
       'premium_benefit_flow_body':
-          'Sakinleşmek, dua etmek ve geceye hazırlanmak için daha zengin içerikler.',
+          'Dua, zikir ve gece içeriklerinin tamamına erişim.',
       'premium_benefit_reminders_title': 'Günlük dua, zikir ve tefekkür',
       'premium_benefit_reminders_body':
-          'Sabah, gün ortası ve gece için daha anlamlı hatırlatmalar.',
+          'Sabah, gün ortası ve gece için ayrı bildirim saatleri.',
       'premium_benefit_tasbih_title': 'Gelişmiş tesbih deneyimi',
       'premium_benefit_tasbih_body':
           'Daha fazla zikir seçeneği ve hedefli sayımlar.',
       'premium_benefit_ad_free_title': 'Reklamsız sakin deneyim',
-      'premium_benefit_ad_free_body':
-          'Dikkatini dağıtmadan, daha huzurlu bir kullanım.',
+      'premium_benefit_ad_free_body': 'Uygulamayı reklam görmeden kullan.',
       'premium_benefit_more_reminders':
           'Sabah, gün ortası ve gece hatırlatmaları',
       'premium_benefit_night_guidance': 'Geceye geçiş alanı',
@@ -890,14 +902,26 @@ class S {
           'Surely in the remembrance of Allah do hearts find rest.',
       'companion_flow_verse_text_1':
           'Surely in the remembrance of Allah do hearts find rest.',
-      'companion_flow_verse_text_2': 'Allah is with you.',
-      'companion_flow_verse_text_3': 'He knows what is within the hearts.',
+      'companion_flow_verse_source_1': 'Surah Ar-Ra’d, 13:28',
+      'companion_flow_verse_text_2': 'He is with you wherever you may be.',
+      'companion_flow_verse_source_2': 'Surah Al-Hadid, 57:4',
+      'companion_flow_verse_text_3':
+          'Surely Allah knows well what is hidden in the hearts.',
+      'companion_flow_verse_source_3': 'Surah Ali ’Imran, 3:119',
       'companion_flow_verse_text_4': 'Is Allah not enough for His servant?',
-      'companion_flow_verse_text_5': 'Your Lord has not forsaken you.',
-      'companion_flow_verse_text_6': 'Allah is with the patient.',
-      'companion_flow_verse_text_7': 'Even a silent dua is heard.',
+      'companion_flow_verse_source_4': 'Surah Az-Zumar, 39:36',
+      'companion_flow_verse_text_5':
+          'Your Lord has not abandoned you, nor has He become hateful of you.',
+      'companion_flow_verse_source_5': 'Surah Ad-Duha, 93:3',
+      'companion_flow_verse_text_6':
+          'Surely Allah is with those who are patient.',
+      'companion_flow_verse_source_6': 'Surah Al-Baqarah, 2:153',
+      'companion_flow_verse_text_7':
+          'Whoever puts their trust in Allah, then He is sufficient for them.',
+      'companion_flow_verse_source_7': 'Surah At-Talaq, 65:3',
       'companion_flow_verse_text_8':
-          'He is closer to you than your jugular vein.',
+          'We are closer to them than their jugular vein.',
+      'companion_flow_verse_source_8': 'Surah Qaf, 50:16',
       'companion_flow_verse_text_9': 'Allah knows what you carry within.',
       'companion_flow_verse_text_10':
           'Allah is sufficient for us, and He is the best disposer of affairs.',

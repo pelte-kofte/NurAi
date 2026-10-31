@@ -18,8 +18,9 @@ class MinuteReflectionScreen extends StatefulWidget {
 
 class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
   static const _backgroundAsset = 'assets/images/reflection/reflection_bg.png';
-  static const _reflectionStepSeconds = 20;
-  static const _sessionItemCount = 3;
+  static const _reflectionStepSeconds = 60;
+  static const _sessionItemCount = 1;
+  static const _minimumReadingSeconds = 15;
 
   Timer? _timer;
   int _currentStepRemainingSeconds = _reflectionStepSeconds;
@@ -47,7 +48,11 @@ class _MinuteReflectionScreenState extends State<MinuteReflectionScreen> {
       _sessionItems = ReflectionItemsService.pickSessionItems(
         items,
         count: _sessionItemCount,
-        random: Random(),
+        random: Random(
+          DateTime.now().year * 10000 +
+              DateTime.now().month * 100 +
+              DateTime.now().day,
+        ),
       );
       _currentReflectionIndex = _currentReflectionIndex.clamp(
         0,
@@ -247,6 +252,9 @@ class _ActiveReflectionState extends StatelessWidget {
   Widget build(BuildContext context) {
     final languageCode = Localizations.localeOf(context).languageCode;
     final localized = reflection.localized(languageCode);
+    final canFinish = currentStepRemainingSeconds <=
+        _MinuteReflectionScreenState._reflectionStepSeconds -
+            _MinuteReflectionScreenState._minimumReadingSeconds;
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -286,10 +294,13 @@ class _ActiveReflectionState extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 28),
-                  Expanded(
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      minHeight: max(280, constraints.maxHeight - 360),
+                    ),
                     child: GestureDetector(
                       behavior: HitTestBehavior.opaque,
-                      onTap: started ? onNextReflection : null,
+                      onTap: started && canFinish ? onNextReflection : null,
                       child: Center(
                         child: AnimatedSwitcher(
                           duration: const Duration(milliseconds: 420),
@@ -338,7 +349,7 @@ class _ActiveReflectionState extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     TextButton(
-                      onPressed: onNextReflection,
+                      onPressed: canFinish ? onNextReflection : null,
                       style: TextButton.styleFrom(
                         foregroundColor: colorScheme.onSurface.withValues(
                           alpha: 0.76,

@@ -91,6 +91,7 @@ class AdhanNotificationService {
   static const _iftarChannelNameAlarm = 'Iftar Alarm';
   static const _spiritualChannelId = 'spiritual_daily_content';
   static const _spiritualChannelName = 'Spiritual Daily Content';
+  static const _spiritualFallbackNotificationId = 910001;
   static const _nightRitualChannelId = 'night_companion_ritual';
   static const _nightRitualChannelName = 'Night Companion Ritual';
   static const _readingReminderChannelId = 'reading_continuation';
@@ -699,6 +700,34 @@ class AdhanNotificationService {
         }),
       );
     }
+
+    // Keep the reminder alive after the seven dated, content-specific
+    // notifications have been delivered. A future sync replaces this safely.
+    final fallbackDate = DateTime(now.year, now.month, now.day + 7);
+    final fallbackAt = DateTime(
+      fallbackDate.year,
+      fallbackDate.month,
+      fallbackDate.day,
+      selectedTime.hour,
+      selectedTime.minute,
+    );
+    final isTurkish =
+        LocalPreferencesService.language.value.toLowerCase() == 'tr';
+    await _schedule(
+      id: _spiritualFallbackNotificationId,
+      title: isTurkish ? 'Bugünün tefekkürü' : 'Today’s reflection',
+      body: isTurkish
+          ? 'Bugünün sözüyle bir dakika kal.'
+          : 'Stay with today’s words for one minute.',
+      dateTime: fallbackAt,
+      withSound: false,
+      androidChannelId: _spiritualChannelId,
+      androidChannelName: _spiritualChannelName,
+      payload: jsonEncode(<String, String>{
+        'type': _spiritualPayloadType(slot),
+      }),
+      matchDateTimeComponents: DateTimeComponents.time,
+    );
   }
 
   static Future<void> cancelScheduledSpiritualNotifications() async {
@@ -707,6 +736,7 @@ class AdhanNotificationService {
 
   static Future<void> _cancelScheduledSpiritualNotificationsInternal() async {
     if (kIsWeb) return;
+    await _plugin.cancel(_spiritualFallbackNotificationId);
     final now = DateTime.now();
     for (var dayOffset = -1; dayOffset < 10; dayOffset++) {
       final date = DateTime(now.year, now.month, now.day + dayOffset);
@@ -727,6 +757,7 @@ class AdhanNotificationService {
     String? androidChannelId,
     String? androidChannelName,
     String? iosSoundName,
+    DateTimeComponents? matchDateTimeComponents,
   }) async {
     final zone = _resolveLocation(timezoneName);
     final tzDateTime = tz.TZDateTime(
@@ -804,6 +835,7 @@ class AdhanNotificationService {
       androidScheduleMode: withSound
           ? AndroidScheduleMode.exactAllowWhileIdle
           : AndroidScheduleMode.inexactAllowWhileIdle,
+      matchDateTimeComponents: matchDateTimeComponents,
     );
     _log(
       'schedule id=$id payload=${_redactPayload(payload)} soundEnabled=$withSound channelId=$resolvedAndroidChannelId importance=${resolvedImportance.name}',
@@ -1154,7 +1186,9 @@ class AdhanNotificationService {
         if (useQuote) {
           final quote = await DailyContentService.getQuoteForDate(date, locale);
           return _SpiritualNotificationContent(
-            title: isTurkish ? 'Geceye bir düşünce' : 'A quiet thought for tonight',
+            title: isTurkish
+                ? 'Geceye bir düşünce'
+                : 'A quiet thought for tonight',
             body: _joinNotificationParts([
               quote.text,
               if ((quote.source ?? '').trim().isNotEmpty) quote.source!.trim(),

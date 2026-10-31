@@ -13,6 +13,13 @@ enum CompanionFlowStep {
   dhikr,
 }
 
+class _CompanionVerse {
+  const _CompanionVerse(this.textKey, this.sourceKey);
+
+  final String textKey;
+  final String sourceKey;
+}
+
 class CompanionFlowScreen extends StatefulWidget {
   const CompanionFlowScreen({super.key});
 
@@ -24,17 +31,39 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
   static const _dhikrTarget = 33;
   static const _breathingCalligraphyAsset =
       'assets/images/calligraphy/allahu_akbar.svg';
-  static const _verseTextKeys = <String>[
-    'companion_flow_verse_text_1',
-    'companion_flow_verse_text_2',
-    'companion_flow_verse_text_3',
-    'companion_flow_verse_text_4',
-    'companion_flow_verse_text_5',
-    'companion_flow_verse_text_6',
-    'companion_flow_verse_text_7',
-    'companion_flow_verse_text_8',
-    'companion_flow_verse_text_9',
-    'companion_flow_verse_text_10',
+  static const _verses = <_CompanionVerse>[
+    _CompanionVerse(
+      'companion_flow_verse_text_1',
+      'companion_flow_verse_source_1',
+    ),
+    _CompanionVerse(
+      'companion_flow_verse_text_2',
+      'companion_flow_verse_source_2',
+    ),
+    _CompanionVerse(
+      'companion_flow_verse_text_3',
+      'companion_flow_verse_source_3',
+    ),
+    _CompanionVerse(
+      'companion_flow_verse_text_4',
+      'companion_flow_verse_source_4',
+    ),
+    _CompanionVerse(
+      'companion_flow_verse_text_5',
+      'companion_flow_verse_source_5',
+    ),
+    _CompanionVerse(
+      'companion_flow_verse_text_6',
+      'companion_flow_verse_source_6',
+    ),
+    _CompanionVerse(
+      'companion_flow_verse_text_7',
+      'companion_flow_verse_source_7',
+    ),
+    _CompanionVerse(
+      'companion_flow_verse_text_8',
+      'companion_flow_verse_source_8',
+    ),
   ];
   static const _dhikrPhraseKeys = <String>[
     'companion_flow_dhikr_phrase_1',
@@ -67,7 +96,7 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
 
   Future<void> _loadNextVerse() async {
     final nextIndex = await LocalPreferencesService.nextCompanionFlowVerseIndex(
-      totalCount: _verseTextKeys.length,
+      totalCount: _verses.length,
     );
     if (!mounted) return;
     setState(() => _verseIndex = nextIndex);
@@ -105,7 +134,9 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final verseText = S.get(_verseTextKeys[_verseIndex]);
+    final verse = _verses[_verseIndex];
+    final verseText = S.get(verse.textKey);
+    final verseSource = S.get(verse.sourceKey);
     final currentDhikr = S.get(_dhikrPhraseKeys[_dhikrPhraseIndex]);
 
     return Scaffold(
@@ -174,6 +205,7 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
                       key: ValueKey(_step),
                       step: _step,
                       verseText: verseText,
+                      verseSource: verseSource,
                       dhikrCount: _dhikrCount,
                       targetCount: _dhikrTarget,
                       dhikrLabel: currentDhikr,
@@ -195,6 +227,7 @@ class _CompanionStepContent extends StatelessWidget {
     super.key,
     required this.step,
     required this.verseText,
+    required this.verseSource,
     required this.dhikrCount,
     required this.targetCount,
     required this.dhikrLabel,
@@ -203,6 +236,7 @@ class _CompanionStepContent extends StatelessWidget {
 
   final CompanionFlowStep step;
   final String verseText;
+  final String verseSource;
   final int dhikrCount;
   final int targetCount;
   final String dhikrLabel;
@@ -216,6 +250,7 @@ class _CompanionStepContent extends StatelessWidget {
       case CompanionFlowStep.verse:
         return _CompanionStepFrame(
           title: verseText,
+          source: verseSource,
           body: S.get('companion_flow_verse_hint'),
           colorScheme: colorScheme,
         );
@@ -424,7 +459,7 @@ class _CompanionDhikrStep extends StatelessWidget {
           ),
           const SizedBox(height: 22),
           TextButton(
-            onPressed: onFinish,
+            onPressed: dhikrCount >= targetCount ? onFinish : null,
             child: Text(S.get('companion_flow_finish_cta')),
           ),
         ],
@@ -438,12 +473,14 @@ class _CompanionStepFrame extends StatelessWidget {
     required this.title,
     required this.body,
     required this.colorScheme,
+    this.source,
     this.footer,
   });
 
   final String title;
   final String body;
   final ColorScheme colorScheme;
+  final String? source;
   final Widget? footer;
 
   @override
@@ -471,6 +508,19 @@ class _CompanionStepFrame extends StatelessWidget {
               ],
             ),
           ),
+          if (source != null) ...[
+            const SizedBox(height: 12),
+            Text(
+              source!,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontFamily: 'Inter',
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.onSurface.withValues(alpha: 0.68),
+              ),
+            ),
+          ],
           const SizedBox(height: 26),
           Text(
             body,

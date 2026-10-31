@@ -28,11 +28,11 @@ class _TasbihScreenState extends State<TasbihScreen>
   static const int _customGoalValue = -1;
 
   static const List<_DhikrOption> _baseDhikrs = [
-    _DhikrOption(key: 'subhanallah', label: 'Subhanallah'),
-    _DhikrOption(key: 'alhamdulillah', label: 'Alhamdulillah'),
-    _DhikrOption(key: 'allahu_akbar', label: 'Allahu Akbar'),
-    _DhikrOption(key: 'la_ilaha_illallah', label: 'La ilaha illallah'),
-    _DhikrOption(key: 'salawat', label: 'Salawat'),
+    _DhikrOption(key: 'subhanallah', label: 'Sübhanallah'),
+    _DhikrOption(key: 'alhamdulillah', label: 'Elhamdülillah'),
+    _DhikrOption(key: 'allahu_akbar', label: 'Allahu ekber'),
+    _DhikrOption(key: 'la_ilaha_illallah', label: 'Lâ ilâhe illallah'),
+    _DhikrOption(key: 'salawat', label: 'Salavat'),
   ];
 
   String _selectedDhikrKey = _baseDhikrs.first.key;
