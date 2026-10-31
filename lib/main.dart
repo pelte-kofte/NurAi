@@ -89,7 +89,10 @@ class NurAIApp extends StatelessWidget {
                   child: child ?? const SizedBox.shrink(),
                 );
               },
-              supportedLocales: const [Locale('tr'), Locale('en')],
+              supportedLocales: const [
+                Locale('tr'),
+                Locale('en'),
+              ],
               localizationsDelegates: const [
                 GlobalMaterialLocalizations.delegate,
                 GlobalWidgetsLocalizations.delegate,
@@ -367,78 +370,37 @@ class _AppLoaderState extends State<_AppLoader> with WidgetsBindingObserver {
         launchedFromNotification: _launchedFromNotification,
       );
     }
-    return _FirstScreen(isStarting: _isStarting, onTapStart: _handleStartTap);
+    return _FirstScreen(
+      isStarting: _isStarting,
+      onTapStart: _handleStartTap,
+    );
   }
 }
 
-class _FirstScreen extends StatefulWidget {
-  const _FirstScreen({required this.isStarting, required this.onTapStart});
+class _FirstScreen extends StatelessWidget {
+  const _FirstScreen({
+    required this.isStarting,
+    required this.onTapStart,
+  });
 
   final bool isStarting;
   final VoidCallback onTapStart;
 
   @override
-  State<_FirstScreen> createState() => _FirstScreenState();
-}
-
-class _FirstScreenState extends State<_FirstScreen>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _entranceController;
-
-  @override
-  void initState() {
-    super.initState();
-    _entranceController = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 820),
-    )..forward();
-  }
-
-  @override
-  void dispose() {
-    _entranceController.dispose();
-    super.dispose();
-  }
-
-  Widget _reveal({
-    required Widget child,
-    required double begin,
-    required double end,
-    required bool reduceMotion,
-    double offset = 10,
-  }) {
-    if (reduceMotion) return child;
-    final animation = CurvedAnimation(
-      parent: _entranceController,
-      curve: Interval(begin, end, curve: Curves.easeOutCubic),
-    );
-    return FadeTransition(
-      opacity: animation,
-      child: SlideTransition(
-        position: Tween<Offset>(
-          begin: Offset(0, offset / 100),
-          end: Offset.zero,
-        ).animate(animation),
-        child: child,
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final reduceMotion =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
-          DecoratedBox(
+          const DecoratedBox(
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
-                colors: [colors.surface, colors.surfaceContainerHighest],
+                colors: [
+                  Color(0xFFF8F5EF),
+                  Color(0xFFE8EFEA),
+                ],
               ),
             ),
           ),
@@ -447,24 +409,18 @@ class _FirstScreenState extends State<_FirstScreen>
               padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
               child: Stack(
                 children: [
-                  Align(
+                  const Align(
                     alignment: Alignment.topLeft,
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 18),
-                      child: _reveal(
-                        begin: 0,
-                        end: 0.45,
-                        reduceMotion: reduceMotion,
-                        offset: 4,
-                        child: Text(
-                          'DUADA',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 2.2,
-                            color: colors.primary,
-                          ),
+                      padding: EdgeInsets.only(top: 18),
+                      child: Text(
+                        'DUADA',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: 2.2,
+                          color: AppColors.emphasisAccent,
                         ),
                       ),
                     ),
@@ -474,74 +430,49 @@ class _FirstScreenState extends State<_FirstScreen>
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        _reveal(
-                          begin: 0.1,
-                          end: 0.55,
-                          reduceMotion: reduceMotion,
-                          child: Container(
-                            width: 56,
-                            height: 56,
-                            decoration: BoxDecoration(
-                              color: colors.primaryContainer,
-                              shape: BoxShape.circle,
-                            ),
-                            child: CustomPaint(
-                              painter: _DuadaMarkPainter(
-                                color: colors.onPrimaryContainer,
-                              ),
-                            ),
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: const BoxDecoration(
+                            color: AppColors.ctaSecondaryFill,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.auto_stories_outlined,
+                            color: AppColors.emphasisAccent,
+                            size: 26,
                           ),
                         ),
                         const SizedBox(height: 24),
-                        _reveal(
-                          begin: 0.22,
-                          end: 0.72,
-                          reduceMotion: reduceMotion,
-                          child: Text(
-                            S.get('splash_headline'),
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.headlineMedium,
-                          ),
+                        Text(
+                          S.get('splash_headline'),
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.headlineMedium,
                         ),
                         const SizedBox(height: 10),
-                        _reveal(
-                          begin: 0.34,
-                          end: 0.82,
-                          reduceMotion: reduceMotion,
-                          child: Text(
-                            S.get('splash_subtitle'),
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(
-                                  color: colors.onSurface.withValues(
-                                    alpha: 0.68,
+                        Text(
+                          S.get('splash_subtitle'),
+                          textAlign: TextAlign.center,
+                          style:
+                              Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: AppColors.textSecondary,
+                                    fontWeight: FontWeight.w400,
+                                    height: 1.55,
                                   ),
-                                  fontWeight: FontWeight.w400,
-                                  height: 1.55,
-                                ),
-                          ),
                         ),
                       ],
                     ),
                   ),
                   Align(
                     alignment: Alignment.bottomCenter,
-                    child: _reveal(
-                      begin: 0.58,
-                      end: 1,
-                      reduceMotion: reduceMotion,
-                      offset: 8,
-                      child: AppCtaButton(
-                        label: S.get('continue'),
-                        fullWidth: true,
-                        onPressed: widget.isStarting ? null : widget.onTapStart,
-                        textStyle: const TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    child: AppCtaButton(
+                      label: S.get('continue'),
+                      fullWidth: true,
+                      onPressed: isStarting ? null : onTapStart,
+                      textStyle: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -553,78 +484,6 @@ class _FirstScreenState extends State<_FirstScreen>
       ),
     );
   }
-}
-
-/// A quiet open-page mark drawn specifically for Duada.
-///
-/// Keeping it code-native makes the mark crisp at every scale and avoids the
-/// generic Material-icon look on the first impression of the app.
-class _DuadaMarkPainter extends CustomPainter {
-  const _DuadaMarkPainter({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.8
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final leftPage = Path()
-      ..moveTo(size.width * 0.5, size.height * 0.73)
-      ..cubicTo(
-        size.width * 0.41,
-        size.height * 0.58,
-        size.width * 0.31,
-        size.height * 0.5,
-        size.width * 0.18,
-        size.height * 0.49,
-      )
-      ..lineTo(size.width * 0.18, size.height * 0.26)
-      ..cubicTo(
-        size.width * 0.31,
-        size.height * 0.27,
-        size.width * 0.43,
-        size.height * 0.36,
-        size.width * 0.5,
-        size.height * 0.48,
-      );
-
-    final rightPage = Path()
-      ..moveTo(size.width * 0.5, size.height * 0.73)
-      ..cubicTo(
-        size.width * 0.59,
-        size.height * 0.58,
-        size.width * 0.69,
-        size.height * 0.5,
-        size.width * 0.82,
-        size.height * 0.49,
-      )
-      ..lineTo(size.width * 0.82, size.height * 0.26)
-      ..cubicTo(
-        size.width * 0.69,
-        size.height * 0.27,
-        size.width * 0.57,
-        size.height * 0.36,
-        size.width * 0.5,
-        size.height * 0.48,
-      );
-
-    canvas.drawPath(leftPage, paint);
-    canvas.drawPath(rightPage, paint);
-    canvas.drawLine(
-      Offset(size.width * 0.5, size.height * 0.48),
-      Offset(size.width * 0.5, size.height * 0.73),
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _DuadaMarkPainter oldDelegate) =>
-      oldDelegate.color != color;
 }
 
 /// Simple error screen if data fails to load.

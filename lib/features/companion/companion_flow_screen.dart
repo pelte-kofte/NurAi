@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -82,21 +81,20 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final reduceMotion =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final ayah = _ayahs[_ayahIndex];
     return Scaffold(
-      backgroundColor: colors.surface,
+      backgroundColor: AppColors.scaffoldBg,
       body: SafeArea(
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 20, 0),
+              padding: const EdgeInsets.fromLTRB(12, 8, 20, 0),
               child: Row(
                 children: [
-                  TextButton(
+                  IconButton(
+                    tooltip: S.get('companion_flow_close'),
                     onPressed: () => Navigator.of(context).pop(),
-                    child: Text(S.get('companion_flow_close')),
+                    icon: const Icon(Icons.close_rounded),
                   ),
                   const Spacer(),
                   Text(
@@ -112,18 +110,24 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
               ),
             ),
             const SizedBox(height: 18),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 260),
+              child: _intent == null
+                  ? const SizedBox(height: 32, key: ValueKey('intent-space'))
+                  : _StepIndicator(
+                      key: const ValueKey('step-indicator'),
+                      step: _step,
+                    ),
+            ),
             Expanded(
               child: AnimatedSwitcher(
-                duration: reduceMotion
-                    ? Duration.zero
-                    : const Duration(milliseconds: 300),
+                duration: const Duration(milliseconds: 380),
                 switchInCurve: Curves.easeOutCubic,
                 transitionBuilder: (child, animation) => FadeTransition(
                   opacity: animation,
                   child: SlideTransition(
                     position: Tween<Offset>(
-                      begin:
-                          reduceMotion ? Offset.zero : const Offset(0.025, 0),
+                      begin: const Offset(0.035, 0),
                       end: Offset.zero,
                     ).animate(animation),
                     child: child,
@@ -139,34 +143,32 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
                         padding: const EdgeInsets.fromLTRB(24, 34, 24, 18),
                         child: switch (_step) {
                           CompanionFlowStep.ayah => _CompanionCard(
-                              step: CompanionFlowStep.ayah,
                               eyebrow:
                                   S.get('companion_flow_content_type_ayah'),
                               title: S.get(ayah.textKey),
                               source: S.get(ayah.sourceKey),
                               body: S.get('companion_flow_ayah_prompt'),
+                              icon: Icons.menu_book_rounded,
                             ),
                           CompanionFlowStep.pause => _CompanionCard(
-                              step: CompanionFlowStep.pause,
-                              eyebrow: '',
+                              eyebrow: S.get('companion_flow_step_pause'),
                               title: S.get('companion_flow_pause_title'),
                               body: S.get('companion_flow_pause_body'),
+                              icon: Icons.hourglass_bottom_rounded,
                             ),
                           CompanionFlowStep.dua => _CompanionCard(
-                              step: CompanionFlowStep.dua,
                               eyebrow: S.get('companion_flow_content_type_dua'),
                               title: S.get(_duaTitleKey),
                               body: S.get('companion_flow_dua_body'),
                               note: S.get('companion_flow_dua_note'),
+                              icon: Icons.volunteer_activism_rounded,
                             ),
                         },
                       ),
               ),
             ),
             AnimatedSwitcher(
-              duration: reduceMotion
-                  ? Duration.zero
-                  : const Duration(milliseconds: 240),
+              duration: const Duration(milliseconds: 240),
               child: _intent == null
                   ? const SizedBox.shrink()
                   : Padding(
@@ -180,12 +182,11 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
                               ? _finish
                               : _continue,
                           style: FilledButton.styleFrom(
-                            backgroundColor: colors.primary,
-                            foregroundColor: colors.onPrimary,
+                            backgroundColor: AppColors.emphasisAccent,
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(
-                                AppRadii.medium,
-                              ),
+                              borderRadius:
+                                  BorderRadius.circular(AppRadii.medium),
                             ),
                           ),
                           child: Text(
@@ -209,125 +210,239 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
   }
 }
 
-class _CompanionIntentPicker extends StatefulWidget {
+class _CompanionIntentPicker extends StatelessWidget {
   const _CompanionIntentPicker({super.key, required this.onSelected});
 
   final ValueChanged<CompanionIntent> onSelected;
 
   @override
-  State<_CompanionIntentPicker> createState() => _CompanionIntentPickerState();
-}
-
-class _CompanionIntentPickerState extends State<_CompanionIntentPicker> {
-  int _selectedIndex = 0;
-
-  @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final options = <(CompanionIntent, String)>[
+    final options = <(CompanionIntent, IconData, String, String)>[
       (
         CompanionIntent.overwhelmed,
+        Icons.blur_on_rounded,
         'companion_intent_overwhelmed',
+        'companion_intent_overwhelmed_subtitle',
       ),
       (
         CompanionIntent.decision,
+        Icons.alt_route_rounded,
         'companion_intent_decision',
+        'companion_intent_decision_subtitle',
       ),
       (
         CompanionIntent.gratitude,
+        Icons.favorite_outline_rounded,
         'companion_intent_gratitude',
+        'companion_intent_gratitude_subtitle',
       ),
       (
         CompanionIntent.beforeSleep,
+        Icons.bedtime_outlined,
         'companion_intent_sleep',
+        'companion_intent_sleep_subtitle',
       ),
     ];
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 26, 24, 24),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             S.get('companion_intent_title'),
-            style: TextStyle(
+            style: const TextStyle(
               fontFamily: 'Merriweather',
               fontSize: 28,
               height: 1.25,
-              color: colors.onSurface,
+              color: AppColors.textPrimary,
             ),
           ),
-          const Spacer(),
-          SizedBox(
-            height: 250,
-            child: Semantics(
-              label: S.get('companion_intent_title'),
-              child: CupertinoPicker(
-                itemExtent: 64,
-                diameterRatio: 1.35,
-                squeeze: 1,
-                useMagnifier: true,
-                magnification: 1.04,
-                selectionOverlay: Container(
-                  decoration: BoxDecoration(
-                    border: Border.symmetric(
-                      horizontal: BorderSide(
-                        color: colors.onSurface.withValues(alpha: 0.14),
+          const SizedBox(height: 10),
+          Text(
+            S.get('companion_intent_subtitle'),
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 14,
+              height: 1.5,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 24),
+          ...List.generate(options.length, (index) {
+            final option = options[index];
+            return TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0, end: 1),
+              duration: Duration(milliseconds: 360 + index * 70),
+              curve: Curves.easeOutCubic,
+              builder: (context, value, child) => Opacity(
+                opacity: value,
+                child: Transform.translate(
+                  offset: Offset(0, 10 * (1 - value)),
+                  child: child,
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _IntentTile(
+                  icon: option.$2,
+                  title: S.get(option.$3),
+                  subtitle: S.get(option.$4),
+                  onTap: () => onSelected(option.$1),
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+class _IntentTile extends StatefulWidget {
+  const _IntentTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  State<_IntentTile> createState() => _IntentTileState();
+}
+
+class _IntentTileState extends State<_IntentTile> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTapUp: (_) {
+        setState(() => _pressed = false);
+        widget.onTap();
+      },
+      child: AnimatedScale(
+        scale: _pressed ? 0.98 : 1,
+        duration: const Duration(milliseconds: 140),
+        curve: Curves.easeOutCubic,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.cardBg,
+            borderRadius: BorderRadius.circular(AppRadii.medium),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.ctaSecondaryFill,
+                ),
+                child: Icon(
+                  widget.icon,
+                  size: 22,
+                  color: AppColors.primaryAccent,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.title,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
                       ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.subtitle,
+                      style: const TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 12.5,
+                        height: 1.4,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.textMuted,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StepIndicator extends StatelessWidget {
+  const _StepIndicator({super.key, required this.step});
+
+  final CompanionFlowStep step;
+
+  @override
+  Widget build(BuildContext context) {
+    final labels = [
+      S.get('companion_flow_step_verse'),
+      S.get('companion_flow_step_pause'),
+      S.get('companion_flow_step_dua'),
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 28),
+      child: Row(
+        children: List.generate(labels.length, (index) {
+          final active = index <= step.index;
+          return Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(left: index == 0 ? 0 : 5),
+              child: Column(
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 220),
+                    height: 3,
+                    decoration: BoxDecoration(
+                      color: active
+                          ? AppColors.indigoAccent
+                          : AppColors.cardBorder,
+                      borderRadius: BorderRadius.circular(99),
                     ),
                   ),
-                ),
-                onSelectedItemChanged: (index) {
-                  HapticFeedback.selectionClick();
-                  setState(() => _selectedIndex = index);
-                },
-                children: List.generate(options.length, (index) {
-                  final selected = index == _selectedIndex;
-                  return Center(
-                    child: Text(
-                      S.get(options[index].$2),
-                      textAlign: TextAlign.center,
-                      maxLines: 2,
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: selected ? 20 : 17,
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.w400,
-                        color: colors.onSurface.withValues(
-                          alpha: selected ? 1 : 0.42,
-                        ),
-                        height: 1.2,
-                      ),
+                  const SizedBox(height: 7),
+                  Text(
+                    labels[index],
+                    style: TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 11,
+                      fontWeight: active ? FontWeight.w600 : FontWeight.w400,
+                      color: active
+                          ? AppColors.emphasisAccent
+                          : AppColors.textMuted,
                     ),
-                  );
-                }),
+                  ),
+                ],
               ),
             ),
-          ),
-          const Spacer(),
-          SizedBox(
-            width: double.infinity,
-            height: 52,
-            child: FilledButton(
-              onPressed: () => widget.onSelected(options[_selectedIndex].$1),
-              style: FilledButton.styleFrom(
-                backgroundColor: colors.primary,
-                foregroundColor: colors.onPrimary,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppRadii.medium),
-                ),
-              ),
-              child: Text(
-                S.get('continue'),
-                style: const TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ),
-        ],
+          );
+        }),
       ),
     );
   }
@@ -335,58 +450,58 @@ class _CompanionIntentPickerState extends State<_CompanionIntentPicker> {
 
 class _CompanionCard extends StatelessWidget {
   const _CompanionCard({
-    required this.step,
     required this.eyebrow,
     required this.title,
     required this.body,
+    required this.icon,
     this.source,
     this.note,
   });
 
-  final CompanionFlowStep step;
   final String eyebrow;
   final String title;
   final String body;
+  final IconData icon;
   final String? source;
   final String? note;
 
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final isPause = step == CompanionFlowStep.pause;
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            isPause ? 12 : 24,
-            isPause ? 54 : 30,
-            isPause ? 12 : 24,
-            isPause ? 54 : 28,
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.fromLTRB(24, 26, 24, 24),
+          decoration: BoxDecoration(
+            color: colors.surface,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppColors.cardBorder),
           ),
           child: Column(
             children: [
-              if (eyebrow.isNotEmpty) ...[
-                Text(
-                  eyebrow,
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: colors.onSurface.withValues(alpha: 0.56),
-                  ),
+              Icon(icon, size: 24, color: AppColors.indigoAccent),
+              const SizedBox(height: 14),
+              Text(
+                eyebrow.toUpperCase(),
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.1,
+                  color: AppColors.indigoAccent,
                 ),
-                const SizedBox(height: 22),
-              ] else
-                const SizedBox(height: 8),
+              ),
+              const SizedBox(height: 22),
               Text(
                 title,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: isPause ? 28 : 25,
-                  fontWeight: FontWeight.w500,
-                  height: 1.45,
+                  fontFamily: 'Merriweather',
+                  fontSize: 25,
+                  fontWeight: FontWeight.w400,
+                  height: 1.5,
                   color: colors.onSurface,
                 ),
               ),
@@ -394,15 +509,17 @@ class _CompanionCard extends StatelessWidget {
                 const SizedBox(height: 14),
                 Text(
                   source!,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
-                    color: colors.primary,
+                    color: AppColors.indigoAccent,
                   ),
                 ),
               ],
-              SizedBox(height: isPause ? 32 : 24),
+              const SizedBox(height: 24),
+              const Divider(height: 1, color: AppColors.cardBorder),
+              const SizedBox(height: 22),
               Text(
                 body,
                 textAlign: TextAlign.center,

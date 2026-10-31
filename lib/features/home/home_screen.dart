@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -97,9 +98,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       _scheduleFeedbackPromptCheck();
     });
     _startClockTicker(perSecond: false);
-    PremiumService.activationSuccessRevision.addListener(
-      _handlePremiumActivationSuccess,
-    );
+    PremiumService.activationSuccessRevision
+        .addListener(_handlePremiumActivationSuccess);
   }
 
   @override
@@ -141,9 +141,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     _clockTicker?.cancel();
     _premiumUpsellTimer?.cancel();
     _feedbackPromptTimer?.cancel();
-    PremiumService.activationSuccessRevision.removeListener(
-      _handlePremiumActivationSuccess,
-    );
+    PremiumService.activationSuccessRevision
+        .removeListener(_handlePremiumActivationSuccess);
     routeObserver.unsubscribe(this);
     super.dispose();
   }
@@ -201,9 +200,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final intent = widget.initialTodayIntent;
     if (intent == null) return;
     _didOpenInitialTodayIntent = true;
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => TodayScreen(intent: intent)));
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => TodayScreen(intent: intent)),
+    );
   }
 
   void _maybeOpenInitialCompanionFlow() {
@@ -223,9 +222,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   Future<void> _openMinuteReflection() async {
-    await Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const MinuteReflectionScreen()));
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const MinuteReflectionScreen()),
+    );
     if (!mounted) return;
     _refreshDailyReflectionHomeData();
   }
@@ -257,9 +256,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   void _openCompanionFlow() {
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const CompanionFlowScreen()));
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const CompanionFlowScreen()),
+    );
   }
 
   void _scheduleTimedUpsellCheck() {
@@ -270,7 +269,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  void _scheduleFeedbackPromptCheck({Duration delay = _feedbackPromptDelay}) {
+  void _scheduleFeedbackPromptCheck({
+    Duration delay = _feedbackPromptDelay,
+  }) {
     _feedbackPromptTimer?.cancel();
     _feedbackPromptTimer = Timer(delay, () {
       _maybeShowFeedbackPrompt();
@@ -304,16 +305,17 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           Navigator.of(sheetContext).pop();
           Navigator.of(context).push(
             MaterialPageRoute(
-              builder: (_) =>
-                  const TodayScreen(intent: TodayScreenIntent.beforeSleep),
+              builder: (_) => const TodayScreen(
+                intent: TodayScreenIntent.beforeSleep,
+              ),
             ),
           );
         },
         onViewProgress: () {
           Navigator.of(sheetContext).pop();
-          Navigator.of(
-            context,
-          ).push(MaterialPageRoute(builder: (_) => const RamadanHubScreen()));
+          Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const RamadanHubScreen()),
+          );
         },
       ),
     );
@@ -397,9 +399,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   }
 
   void _showFeedbackPromptFailure(String message) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message)),
+    );
   }
 
   Future<void> _tryShowPremiumUpsell({
@@ -431,10 +433,12 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetContext) => _PremiumUpsellSheet(
-        onViewPremium: () =>
-            Navigator.of(sheetContext).pop(_PremiumUpsellAction.viewPremium),
-        onDismiss: () =>
-            Navigator.of(sheetContext).pop(_PremiumUpsellAction.dismiss),
+        onViewPremium: () => Navigator.of(sheetContext).pop(
+          _PremiumUpsellAction.viewPremium,
+        ),
+        onDismiss: () => Navigator.of(sheetContext).pop(
+          _PremiumUpsellAction.dismiss,
+        ),
       ),
     );
     _isPresentingUpsell = false;
@@ -507,16 +511,15 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                     fontFamily: 'Inter',
                     fontSize: 14,
                     fontWeight: FontWeight.w400,
-                    color: Theme.of(
-                      ctx,
-                    ).colorScheme.onSurface.withValues(alpha: 0.55),
+                    color: Theme.of(ctx)
+                        .colorScheme
+                        .onSurface
+                        .withValues(alpha: 0.55),
                   ),
                   filled: true,
                   fillColor: Theme.of(ctx).colorScheme.surfaceContainerHighest,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
-                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide.none,
@@ -552,9 +555,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                       fontFamily: 'Inter',
                       fontSize: 14,
                       fontWeight: FontWeight.w400,
-                      color: Theme.of(
-                        ctx,
-                      ).colorScheme.onSurface.withValues(alpha: 0.7),
+                      color: Theme.of(ctx)
+                          .colorScheme
+                          .onSurface
+                          .withValues(alpha: 0.7),
                     ),
                   ),
                 ),
@@ -608,9 +612,8 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             return Container(
               decoration: BoxDecoration(
                 color: Theme.of(sheetContext).colorScheme.surface,
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(18),
-                ),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(18)),
               ),
               child: SettingsScreen(
                 scrollController: scrollController,
@@ -663,15 +666,51 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
-        child: SingleChildScrollView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(24, 30, 24, 28),
-            child: _buildHomeContent(),
-          ),
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: IgnorePointer(
+                child: Opacity(
+                  opacity: 0.05,
+                  child: ImageFiltered(
+                    imageFilter: ui.ImageFilter.blur(sigmaX: 7, sigmaY: 7),
+                    child: Image.asset(
+                      'assets/images/mosque_bg_2.png',
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            Positioned.fill(
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        colorScheme.surface.withValues(alpha: 0),
+                        colorScheme.surface.withValues(alpha: 0.1),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(24, 30, 24, 28),
+                child: _buildHomeContent(),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -682,13 +721,13 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     sections.add(_buildGreeting());
 
     sections.addAll(<Widget>[
-      const SizedBox(height: 20),
-      _buildDailyReflectionSection(),
-      const SizedBox(height: 20),
+      const SizedBox(height: 24),
       _buildHeroSection(),
-      const SizedBox(height: 16),
-      _buildCoreActionsRow(),
       const SizedBox(height: 20),
+      _buildCoreActionsRow(),
+      const SizedBox(height: 22),
+      _buildDailyReflectionSection(),
+      const SizedBox(height: 22),
       _buildDailyContentSection(),
       const SizedBox(height: 22),
       _buildFeatureGrid(),
@@ -700,7 +739,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       ],
       const SizedBox(height: 14),
       _buildPremiumSection(),
-      const BannerAdWidget(margin: EdgeInsets.only(top: 28, bottom: 8)),
+      const BannerAdWidget(
+        margin: EdgeInsets.only(top: 28, bottom: 8),
+      ),
     ]);
 
     return Column(
@@ -741,7 +782,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         if (data == null) {
           return const _DailyReflectionCardSkeleton();
         }
-        return _DailyReflectionCard(data: data, onTap: _openMinuteReflection);
+        return _DailyReflectionCard(
+          data: data,
+          onTap: _openMinuteReflection,
+        );
       },
     );
   }
@@ -752,10 +796,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       children: [
         _buildSectionHeader(
           title: S.get('home_section_when_needed'),
-          icon: null,
+          icon: Icons.favorite_border_rounded,
         ),
         const SizedBox(height: 12),
         _HomeJourneyTile(
+          icon: Icons.volunteer_activism_outlined,
           title: S.get('companion_flow_title'),
           subtitle: S.get('companion_flow_home_subtitle'),
           onTap: _openCompanionFlow,
@@ -780,8 +825,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                         ),
                       )
                       .then(
-                        (_) =>
-                            _tryShowPremiumUpsell(triggeredByInteraction: true),
+                        (_) => _tryShowPremiumUpsell(
+                          triggeredByInteraction: true,
+                        ),
                       );
                 },
               ),
@@ -792,7 +838,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 icon: Icons.brightness_7_outlined,
                 title: S.get('asma_screen_title'),
                 onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const AsmaulHusnaScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const AsmaulHusnaScreen(),
+                  ),
                 ),
               ),
             ),
@@ -854,18 +902,19 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  Widget _buildSectionHeader({required String title, IconData? icon}) {
+  Widget _buildSectionHeader({
+    required String title,
+    required IconData icon,
+  }) {
     final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
-        if (icon != null) ...[
-          Icon(
-            icon,
-            size: 16,
-            color: AppColors.indigoAccent.withValues(alpha: 0.88),
-          ),
-          const SizedBox(width: 8),
-        ],
+        Icon(
+          icon,
+          size: 16,
+          color: AppColors.indigoAccent.withValues(alpha: 0.88),
+        ),
+        const SizedBox(width: 8),
         Text(
           title,
           style: TextStyle(
@@ -1021,9 +1070,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     final colorScheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const PremiumPage()));
+        Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const PremiumPage()),
+        );
       },
       child: Container(
         width: double.infinity,
@@ -1135,8 +1184,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                 ayah: ayah,
                 readableText: readableText,
                 onShare: hasReadableText || localeCode == 'tr'
-                    ? () =>
-                        _shareAyahCard(ayah: ayah, readableText: readableText)
+                    ? () => _shareAyahCard(
+                          ayah: ayah,
+                          readableText: readableText,
+                        )
                     : null,
               );
             },
@@ -1171,7 +1222,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
           );
         case HomeDailyContentType.quote:
           return FutureBuilder<DailyQuoteItem>(
-            future: DailyContentService.getQuoteForDate(date, locale),
+            future: DailyContentService.getQuoteForDate(
+              date,
+              locale,
+            ),
             builder: (context, snapshot) {
               final quote = snapshot.data;
               final hasQuote = quote?.text.trim().isNotEmpty ?? false;
@@ -1227,32 +1281,104 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   Widget _buildQuranFramedCard({
     required Widget child,
+    String? backgroundAsset,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    const borderRadius = BorderRadius.all(Radius.circular(AppRadii.large));
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final style = _PrimaryDailyCardStyle.fromTheme(
+      colorScheme: colorScheme,
+      isDark: isDark,
+    );
+    const borderRadius = BorderRadius.all(
+      Radius.circular(AppRadii.medium),
+    );
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        color: colorScheme.surface,
+        color: backgroundAsset == null ? style.background : Colors.transparent,
         borderRadius: borderRadius,
-        border: Border.all(
-          color: colorScheme.outline.withValues(alpha: 0.48),
-          width: 1,
-        ),
+        border: Border.all(color: style.borderColor, width: 1),
+        gradient: backgroundAsset == null
+            ? LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: style.backgroundGradient,
+              )
+            : null,
+        boxShadow: [
+          BoxShadow(
+            color: style.shadowColor,
+            blurRadius: style.shadowBlur,
+            offset: style.shadowOffset,
+          ),
+        ],
       ),
       child: ClipRRect(
         borderRadius: borderRadius,
         clipBehavior: Clip.antiAlias,
         child: Stack(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
-              child: child,
+            if (backgroundAsset != null)
+              ..._buildImageCardBackground(
+                colorScheme,
+                backgroundAsset: backgroundAsset,
+              ),
+            if (backgroundAsset == null)
+              Positioned(
+                top: -34,
+                right: -18,
+                child: Container(
+                  width: 140,
+                  height: 140,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    gradient: RadialGradient(
+                      colors: [
+                        style.accentWash,
+                        style.accentWash.withValues(alpha: 0),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: borderRadius,
+                gradient: backgroundAsset == null
+                    ? RadialGradient(
+                        center: const Alignment(-0.85, -1.0),
+                        radius: 1.2,
+                        colors: [
+                          style.innerGlow,
+                          style.innerGlow.withValues(alpha: 0),
+                        ],
+                      )
+                    : null,
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(22, 22, 22, 20),
+                child: child,
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  List<Widget> _buildImageCardBackground(
+    ColorScheme colorScheme, {
+    required String backgroundAsset,
+  }) {
+    return [
+      Positioned.fill(
+        child: Image(
+          image: AssetImage(backgroundAsset),
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.high,
+        ),
+      ),
+    ];
   }
 
   Widget _buildPrimaryCard({
@@ -1348,7 +1474,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
             ],
           ),
           const SizedBox(height: 16),
-          _buildPrimaryAyahReadableLine(ayah: ayah, readableText: readableText),
+          _buildPrimaryAyahReadableLine(
+            ayah: ayah,
+            readableText: readableText,
+          ),
           const SizedBox(height: 16),
           Text(
             ayah.reference,
@@ -1399,8 +1528,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
               ),
               if (onShare != null)
                 _buildOverflowButton(
-                  onTap: () =>
-                      _showAsmaCardMenu(asma: asma, languageCode: languageCode),
+                  onTap: () => _showAsmaCardMenu(
+                    asma: asma,
+                    languageCode: languageCode,
+                  ),
                 ),
             ],
           ),
@@ -1591,7 +1722,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
   Future<void> _openAsmaDetail(AsmaulHusnaName asma) async {
     if (!mounted) return;
     await Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => AsmaulHusnaDetailScreen(item: asma)),
+      MaterialPageRoute(
+        builder: (_) => AsmaulHusnaDetailScreen(
+          item: asma,
+        ),
+      ),
     );
   }
 
@@ -1621,9 +1756,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
                   context: sheetContext,
                   icon: Icons.ios_share_rounded,
                   label: S.get('ramadan_suggestions_share'),
-                  onTap: () => Navigator.of(
-                    sheetContext,
-                  ).pop(_HomeAsmaCardMenuAction.share),
+                  onTap: () => Navigator.of(sheetContext).pop(
+                    _HomeAsmaCardMenuAction.share,
+                  ),
                 ),
                 const SizedBox(height: 4),
                 Divider(
@@ -1647,7 +1782,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     if (!mounted || action == null) return;
     switch (action) {
       case _HomeAsmaCardMenuAction.share:
-        await _shareAsmaCard(asma: asma, languageCode: languageCode);
+        await _shareAsmaCard(
+          asma: asma,
+          languageCode: languageCode,
+        );
         break;
     }
   }
@@ -1695,9 +1833,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
 
   void _showShareError() {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(S.get('daily_card_share_failed'))));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(S.get('daily_card_share_failed'))),
+    );
   }
 
   Widget _buildPrimaryAyahReadableLine({
@@ -1837,7 +1975,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       backgroundAsset: _quranCardBgAsset,
       onTap: () {
         Navigator.of(context)
-            .push(MaterialPageRoute(builder: (_) => const SurahListScreen()))
+            .push(
+              MaterialPageRoute(builder: (_) => const SurahListScreen()),
+            )
             .then((_) => _tryShowPremiumUpsell(triggeredByInteraction: true));
       },
     );
@@ -1866,9 +2006,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
         height: 1.42,
       ),
       onTap: () {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const RamadanHubScreen()));
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const RamadanHubScreen(),
+          ),
+        );
       },
     );
   }
@@ -1880,9 +2022,11 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       subtitle: S.get('asma_explore_subtitle'),
       backgroundAsset: _asmaCardBgAsset,
       onTap: () {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const AsmaulHusnaScreen()));
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => const AsmaulHusnaScreen(),
+          ),
+        );
       },
     );
   }
@@ -1911,7 +2055,9 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       ),
       onTap: () {
         Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const MinuteReflectionScreen()),
+          MaterialPageRoute(
+            builder: (_) => const MinuteReflectionScreen(),
+          ),
         );
       },
     );
@@ -2042,11 +2188,13 @@ class _DailyReflectionHomeData {
   const _DailyReflectionHomeData({
     required this.item,
     required this.completedToday,
+    required this.streakCount,
     required this.week,
   });
 
   final ReflectionItem item;
   final bool completedToday;
+  final int streakCount;
   final List<bool> week;
 
   factory _DailyReflectionHomeData.fromProgress({
@@ -2062,16 +2210,17 @@ class _DailyReflectionHomeData {
         ? null
         : DateTime(lastDate.year, lastDate.month, lastDate.day);
     final completedToday = normalizedLast == localToday;
-    final completedDates = progress.reflectionCompletionDates.toSet();
+    final streak = progress.reflectionStreakCount.clamp(0, 999);
     final week = List<bool>.generate(7, (index) {
+      if (normalizedLast == null || streak <= 0) return false;
       final day = localToday.subtract(Duration(days: 6 - index));
-      final month = day.month.toString().padLeft(2, '0');
-      final date = day.day.toString().padLeft(2, '0');
-      return completedDates.contains('${day.year}-$month-$date');
+      final distance = normalizedLast.difference(day).inDays;
+      return distance >= 0 && distance < streak;
     });
     return _DailyReflectionHomeData(
       item: item,
       completedToday: completedToday,
+      streakCount: streak,
       week: week,
     );
   }
@@ -2082,13 +2231,12 @@ class _DailyReflectionCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
     return Container(
       height: 254,
       decoration: BoxDecoration(
-        color: colors.surface,
+        color: AppColors.cardBg,
         borderRadius: BorderRadius.circular(AppRadii.large),
-        border: Border.all(color: colors.outline.withValues(alpha: 0.55)),
+        border: Border.all(color: AppColors.cardBorder),
       ),
     );
   }
@@ -2109,9 +2257,6 @@ class _DailyReflectionCardState extends State<_DailyReflectionCard> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final reduceMotion =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
     final languageCode = Localizations.localeOf(context).languageCode;
     final localized = widget.data.item.localized(languageCode);
     final title = switch (widget.data.item.type) {
@@ -2125,38 +2270,18 @@ class _DailyReflectionCardState extends State<_DailyReflectionCard> {
       _ => localized.source ?? '',
     };
     final labels = languageCode == 'tr'
-        ? const ['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pa']
-        : const ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-    final fullLabels = languageCode == 'tr'
-        ? const [
-            'Pazartesi',
-            'Salı',
-            'Çarşamba',
-            'Perşembe',
-            'Cuma',
-            'Cumartesi',
-            'Pazar',
-          ]
-        : const [
-            'Monday',
-            'Tuesday',
-            'Wednesday',
-            'Thursday',
-            'Friday',
-            'Saturday',
-            'Sunday',
-          ];
+        ? const ['P', 'S', 'Ç', 'P', 'C', 'C', 'P']
+        : const ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     final today = DateTime.now();
 
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
-      duration:
-          reduceMotion ? Duration.zero : const Duration(milliseconds: 320),
+      duration: const Duration(milliseconds: 520),
       curve: Curves.easeOutCubic,
       builder: (context, value, child) => Opacity(
         opacity: value,
         child: Transform.translate(
-          offset: reduceMotion ? Offset.zero : Offset(0, 8 * (1 - value)),
+          offset: Offset(0, 12 * (1 - value)),
           child: child,
         ),
       ),
@@ -2164,31 +2289,28 @@ class _DailyReflectionCardState extends State<_DailyReflectionCard> {
         behavior: HitTestBehavior.opaque,
         onTapDown: (_) => setState(() => _pressed = true),
         onTapCancel: () => setState(() => _pressed = false),
-        onTapUp: (_) => setState(() => _pressed = false),
-        onTap: () {
+        onTapUp: (_) {
+          setState(() => _pressed = false);
           HapticFeedback.selectionClick();
           unawaited(widget.onTap());
         },
         child: AnimatedScale(
           scale: _pressed ? 0.985 : 1,
-          duration:
-              reduceMotion ? Duration.zero : const Duration(milliseconds: 150),
+          duration: const Duration(milliseconds: 150),
           curve: Curves.easeOutCubic,
           child: AnimatedContainer(
-            duration: reduceMotion
-                ? Duration.zero
-                : const Duration(milliseconds: 220),
+            duration: const Duration(milliseconds: 220),
             width: double.infinity,
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 18),
             decoration: BoxDecoration(
               color: widget.data.completedToday
-                  ? colors.primaryContainer.withValues(alpha: 0.52)
-                  : colors.surface,
+                  ? AppColors.ctaSecondaryFill
+                  : AppColors.cardBg,
               borderRadius: BorderRadius.circular(AppRadii.large),
               border: Border.all(
                 color: widget.data.completedToday
-                    ? colors.primary.withValues(alpha: 0.24)
-                    : colors.outline.withValues(alpha: 0.55),
+                    ? AppColors.ctaSecondaryBorder
+                    : AppColors.cardBorder,
               ),
             ),
             child: Column(
@@ -2213,16 +2335,16 @@ class _DailyReflectionCardState extends State<_DailyReflectionCard> {
                         vertical: 5,
                       ),
                       decoration: BoxDecoration(
-                        color: colors.surfaceContainerHighest,
+                        color: AppColors.cardBgSoft,
                         borderRadius: BorderRadius.circular(99),
                       ),
                       child: Text(
                         S.get('home_daily_reflection_duration'),
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontFamily: 'Inter',
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
-                          color: colors.onSurface.withValues(alpha: 0.68),
+                          color: AppColors.textSecondary,
                         ),
                       ),
                     ),
@@ -2233,12 +2355,12 @@ class _DailyReflectionCardState extends State<_DailyReflectionCard> {
                   title,
                   maxLines: 3,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontFamily: 'Merriweather',
                     fontSize: 23,
                     fontWeight: FontWeight.w400,
                     height: 1.42,
-                    color: colors.onSurface,
+                    color: AppColors.textPrimary,
                   ),
                 ),
                 if (detail.isNotEmpty) ...[
@@ -2247,19 +2369,16 @@ class _DailyReflectionCardState extends State<_DailyReflectionCard> {
                     detail,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 13,
                       height: 1.45,
-                      color: colors.onSurface.withValues(alpha: 0.7),
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],
                 const SizedBox(height: 18),
-                Divider(
-                  height: 1,
-                  color: colors.outline.withValues(alpha: 0.48),
-                ),
+                const Divider(height: 1, color: AppColors.cardBorder),
                 const SizedBox(height: 14),
                 Row(
                   children: List.generate(7, (index) {
@@ -2267,66 +2386,55 @@ class _DailyReflectionCardState extends State<_DailyReflectionCard> {
                     final completed = widget.data.week[index];
                     final isToday = index == 6;
                     return Expanded(
-                      child: Semantics(
-                        label:
-                            '${fullLabels[date.weekday - 1]}: ${completed ? S.get('home_daily_reflection_day_completed') : S.get('home_daily_reflection_day_not_completed')}',
-                        child: ExcludeSemantics(
-                          child: Column(
-                            children: [
-                              Text(
-                                labels[date.weekday - 1],
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 10,
-                                  fontWeight: isToday
-                                      ? FontWeight.w700
-                                      : FontWeight.w500,
-                                  color: isToday
-                                      ? colors.primary
-                                      : colors.onSurface.withValues(
-                                          alpha: 0.48,
-                                        ),
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              TweenAnimationBuilder<double>(
-                                tween: Tween(begin: 0.6, end: 1),
-                                duration: reduceMotion
-                                    ? Duration.zero
-                                    : Duration(
-                                        milliseconds: 220 + (index * 28),
-                                      ),
-                                curve: Curves.easeOutCubic,
-                                builder: (context, value, child) =>
-                                    Transform.scale(scale: value, child: child),
-                                child: Container(
-                                  width: 22,
-                                  height: 22,
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    color: completed
-                                        ? colors.primary
-                                        : Colors.transparent,
-                                    border: Border.all(
-                                      color: isToday
-                                          ? colors.primary
-                                          : colors.outline.withValues(
-                                              alpha: 0.58,
-                                            ),
-                                    ),
-                                  ),
-                                  child: completed
-                                      ? const Icon(
-                                          Icons.check_rounded,
-                                          size: 14,
-                                          color: Colors.white,
-                                        )
-                                      : null,
-                                ),
-                              ),
-                            ],
+                      child: Column(
+                        children: [
+                          Text(
+                            labels[date.weekday - 1],
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 10,
+                              fontWeight:
+                                  isToday ? FontWeight.w700 : FontWeight.w500,
+                              color: isToday
+                                  ? AppColors.primaryAccent
+                                  : AppColors.textMuted,
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 6),
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0.6, end: 1),
+                            duration: Duration(
+                              milliseconds: 260 + (index * 45),
+                            ),
+                            curve: Curves.easeOutBack,
+                            builder: (context, value, child) => Transform.scale(
+                              scale: value,
+                              child: child,
+                            ),
+                            child: Container(
+                              width: 22,
+                              height: 22,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: completed
+                                    ? AppColors.primaryAccent
+                                    : Colors.transparent,
+                                border: Border.all(
+                                  color: isToday
+                                      ? AppColors.primaryAccent
+                                      : AppColors.cardBorder,
+                                ),
+                              ),
+                              child: completed
+                                  ? const Icon(
+                                      Icons.check_rounded,
+                                      size: 14,
+                                      color: Colors.white,
+                                    )
+                                  : null,
+                            ),
+                          ),
+                        ],
                       ),
                     );
                   }),
@@ -2354,18 +2462,19 @@ class _DailyReflectionCardState extends State<_DailyReflectionCard> {
                       ),
                     ),
                     const Spacer(),
-                    Text(
-                      S.get('home_daily_reflection_week_progress').replaceAll(
-                            '{count}',
-                            '${widget.data.week.where((done) => done).length}',
-                          ),
-                      style: TextStyle(
-                        fontFamily: 'Inter',
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: colors.onSurface.withValues(alpha: 0.52),
+                    if (widget.data.streakCount > 1)
+                      Text(
+                        S.get('home_daily_reflection_streak').replaceAll(
+                              '{count}',
+                              '${widget.data.streakCount}',
+                            ),
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                          color: AppColors.textMuted,
+                        ),
                       ),
-                    ),
                   ],
                 ),
               ],
@@ -2379,11 +2488,13 @@ class _DailyReflectionCardState extends State<_DailyReflectionCard> {
 
 class _HomeJourneyTile extends StatelessWidget {
   const _HomeJourneyTile({
+    required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
   });
 
+  final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
@@ -2392,20 +2503,29 @@ class _HomeJourneyTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Material(
-      color: Colors.transparent,
+      color: colors.surface,
+      borderRadius: BorderRadius.circular(AppRadii.medium),
       child: InkWell(
         onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadii.medium),
         child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 18),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: colors.outline.withValues(alpha: 0.3),
-              ),
-            ),
+            borderRadius: BorderRadius.circular(AppRadii.medium),
+            border: Border.all(color: AppColors.cardBorder),
           ),
           child: Row(
             children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.ctaSecondaryFill,
+                  borderRadius: BorderRadius.circular(AppRadii.small),
+                ),
+                child: Icon(icon, color: AppColors.emphasisAccent, size: 22),
+              ),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2431,6 +2551,11 @@ class _HomeJourneyTile extends StatelessWidget {
                     ),
                   ],
                 ),
+              ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: colors.onSurface.withValues(alpha: 0.45),
               ),
             ],
           ),
@@ -2586,7 +2711,9 @@ class _HomeFeatureCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(22),
           onTap: onTap,
           child: Ink(
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(22)),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+            ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(22),
               child: Stack(
@@ -2890,7 +3017,9 @@ class _PremiumUpsellSheet extends StatelessWidget {
             text: S.get('premium_upsell_benefit_upcoming_features'),
           ),
           const SizedBox(height: 10),
-          _PremiumUpsellBullet(text: S.get('premium_upsell_benefit_support')),
+          _PremiumUpsellBullet(
+            text: S.get('premium_upsell_benefit_support'),
+          ),
           const SizedBox(height: 24),
           AppCtaButton(
             label: S.get('premium_upsell_primary_cta'),
@@ -2958,6 +3087,64 @@ class _PremiumUpsellBullet extends StatelessWidget {
   }
 }
 
-enum _HomeAsmaCardMenuAction { share }
+class _PrimaryDailyCardStyle {
+  const _PrimaryDailyCardStyle({
+    required this.background,
+    required this.backgroundGradient,
+    required this.accentWash,
+    required this.borderColor,
+    required this.innerGlow,
+    required this.shadowColor,
+    required this.shadowBlur,
+    required this.shadowOffset,
+  });
+
+  final Color background;
+  final List<Color> backgroundGradient;
+  final Color accentWash;
+  final Color borderColor;
+  final Color innerGlow;
+  final Color shadowColor;
+  final double shadowBlur;
+  final Offset shadowOffset;
+
+  factory _PrimaryDailyCardStyle.fromTheme({
+    required ColorScheme colorScheme,
+    required bool isDark,
+  }) {
+    if (isDark) {
+      return const _PrimaryDailyCardStyle(
+        background: Color(0xFF1D211F),
+        backgroundGradient: [
+          Color(0xFF1D211F),
+          Color(0xFF1D211F),
+        ],
+        accentWash: Colors.transparent,
+        borderColor: Color(0xFF39403C),
+        innerGlow: Colors.transparent,
+        shadowColor: Colors.transparent,
+        shadowBlur: 0,
+        shadowOffset: Offset.zero,
+      );
+    }
+    return const _PrimaryDailyCardStyle(
+      background: AppColors.cardBg,
+      backgroundGradient: [
+        AppColors.cardBg,
+        AppColors.cardBg,
+      ],
+      accentWash: Colors.transparent,
+      borderColor: AppColors.cardBorder,
+      innerGlow: Colors.transparent,
+      shadowColor: Colors.transparent,
+      shadowBlur: 0,
+      shadowOffset: Offset.zero,
+    );
+  }
+}
+
+enum _HomeAsmaCardMenuAction {
+  share,
+}
 
 enum _PrayerType { fajr, dhuhr, asr, maghrib, isha, none }

@@ -44,6 +44,7 @@ class _TasbihScreenState extends State<TasbihScreen>
   int _currentCount = 0;
   bool _loading = true;
   late final AnimationController _tapPulseController;
+  late final AnimationController _completionGlowController;
   bool _didShowCompletionMessage = false;
   StateSetter? _settingsSheetSetState;
 
@@ -55,12 +56,17 @@ class _TasbihScreenState extends State<TasbihScreen>
       duration: const Duration(milliseconds: 220),
       reverseDuration: const Duration(milliseconds: 320),
     );
+    _completionGlowController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1600),
+    );
     _loadState();
   }
 
   @override
   void dispose() {
     _tapPulseController.dispose();
+    _completionGlowController.dispose();
     super.dispose();
   }
 
@@ -272,11 +278,14 @@ class _TasbihScreenState extends State<TasbihScreen>
     });
     await _saveState();
     if (nextCount == _effectiveGoal) {
+      _completionGlowController.forward(from: 0);
       _showCompletionMessage();
     }
   }
 
   Future<void> _reset() async {
+    _completionGlowController.stop();
+    _completionGlowController.value = 0;
     setState(() {
       _currentCount = 0;
       _didShowCompletionMessage = false;
@@ -743,128 +752,310 @@ class _TasbihScreenState extends State<TasbihScreen>
     final progress = _effectiveGoal <= 0
         ? 0.0
         : (_currentCount / _effectiveGoal).clamp(0.0, 1.0);
-    final colors = Theme.of(context).colorScheme;
-    final reduceMotion =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    final status = completed
-        ? (_isAsmaMemorizationMode
-            ? S.get('tasbih_completed')
-            : S.get('tasbih_target_reached'))
-        : (_isAsmaMemorizationMode
-            ? S.get('tasbih_tap_for_next_name')
-            : S.get('tasbih_tap_to_count'));
 
-    return Semantics(
-      button: true,
-      label: '$status. $_currentCount / $_effectiveGoal',
+    return GestureDetector(
       onTap: _increment,
-      child: ExcludeSemantics(
-        child: GestureDetector(
-          onTap: _increment,
-          behavior: HitTestBehavior.opaque,
-          child: AnimatedBuilder(
-            animation: _tapPulseController,
-            builder: (context, _) {
-              final scale =
-                  reduceMotion ? 1.0 : 1 - (_tapPulseController.value * 0.016);
-              return Transform.scale(
-                scale: scale,
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.fromLTRB(24, 36, 24, 30),
-                  decoration: BoxDecoration(
+      behavior: HitTestBehavior.opaque,
+      child: AnimatedBuilder(
+        animation: Listenable.merge([
+          _tapPulseController,
+          _completionGlowController,
+        ]),
+        builder: (context, _) {
+          final scale = 1 - (_tapPulseController.value * 0.018);
+          return Transform.scale(
+            scale: scale,
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.white.withValues(alpha: 0.9),
+                    completed
+                        ? AppColors.turquoiseAccent.withValues(alpha: 0.18)
+                        : const Color(0xFFF5EFE7),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(34),
+                border: Border.all(
+                  color: completed
+                      ? AppColors.emphasisAccent.withValues(alpha: 0.28)
+                      : const Color(0xFFE8DED2),
+                ),
+                boxShadow: [
+                  BoxShadow(
                     color: completed
-                        ? colors.primaryContainer.withValues(alpha: 0.52)
-                        : colors.surface,
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: completed
-                          ? colors.primary.withValues(alpha: 0.28)
-                          : colors.outline.withValues(alpha: 0.48),
+                        ? AppColors.turquoiseAccentStrong
+                            .withValues(alpha: 0.18)
+                        : const Color(0x0A8F7E6E),
+                    blurRadius: completed ? 34 : 20,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Positioned(
+                    top: 28,
+                    right: 26,
+                    child: IgnorePointer(
+                      child: Container(
+                        width: 120,
+                        height: 120,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          gradient: RadialGradient(
+                            colors: [
+                              completed
+                                  ? AppColors.emphasisAccent.withValues(
+                                      alpha: 0.24,
+                                    )
+                                  : AppColors.turquoiseAccent.withValues(
+                                      alpha: 0.18,
+                                    ),
+                              Colors.transparent,
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
-                  child: Column(
-                    children: [
-                      SizedBox(
-                        width: 238,
-                        height: 238,
-                        child: Stack(
-                          alignment: Alignment.center,
-                          children: [
-                            TweenAnimationBuilder<double>(
-                              tween: Tween<double>(begin: 0, end: progress),
-                              duration: reduceMotion
-                                  ? Duration.zero
-                                  : AppMotion.emphasized,
-                              curve: AppMotion.standardCurve,
-                              builder: (context, value, _) => SizedBox(
-                                width: 220,
-                                height: 220,
-                                child: CircularProgressIndicator(
-                                  value: value,
-                                  strokeWidth: 5,
-                                  strokeCap: StrokeCap.round,
-                                  backgroundColor:
-                                      colors.outline.withValues(alpha: 0.22),
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    colors.primary,
-                                  ),
-                                ),
-                              ),
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Center(
+                        child: Container(
+                          width: 314,
+                          height: 314,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                completed
+                                    ? AppColors.emphasisAccent.withValues(
+                                        alpha: 0.10 +
+                                            (_completionGlowController.value *
+                                                0.10),
+                                      )
+                                    : AppColors.indigoAccent.withValues(
+                                        alpha: 0.025 +
+                                            (_tapPulseController.value * 0.035),
+                                      ),
+                                Colors.transparent,
+                              ],
                             ),
-                            AnimatedSwitcher(
-                              duration: reduceMotion
-                                  ? Duration.zero
-                                  : AppMotion.quick,
-                              transitionBuilder: (child, animation) =>
-                                  FadeTransition(
-                                      opacity: animation, child: child),
-                              child: Text(
-                                '$_currentCount',
-                                key: ValueKey<int>(_currentCount),
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  fontSize: 76,
-                                  fontWeight: FontWeight.w600,
-                                  letterSpacing: -2,
-                                  height: 1,
-                                  color: colors.onSurface,
-                                ),
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 18),
-                      Text(
-                        '$_currentCount / $_effectiveGoal',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 14,
-                          fontWeight: FontWeight.w600,
-                          color: colors.onSurface.withValues(alpha: 0.56),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text(
-                        status,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 15,
-                          fontWeight: FontWeight.w500,
-                          color: completed
-                              ? colors.primary
-                              : colors.onSurface.withValues(alpha: 0.72),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-              );
-            },
-          ),
-        ),
+                  Positioned.fill(
+                    child: IgnorePointer(
+                      child: Center(
+                        child: Container(
+                          width: 242,
+                          height: 242,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              colors: [
+                                Colors.white.withValues(
+                                  alpha: completed
+                                      ? 0.26 +
+                                          (_completionGlowController.value *
+                                              0.08)
+                                      : 0.22 +
+                                          (_tapPulseController.value * 0.05),
+                                ),
+                                Colors.white.withValues(alpha: 0.04),
+                                Colors.transparent,
+                              ],
+                              stops: const [0.0, 0.54, 1.0],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 24,
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 290,
+                          height: 290,
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              TweenAnimationBuilder<double>(
+                                tween: Tween<double>(begin: 0, end: progress),
+                                duration: const Duration(milliseconds: 520),
+                                curve: Curves.easeOutQuart,
+                                builder: (context, value, _) {
+                                  return SizedBox(
+                                    width: 262,
+                                    height: 262,
+                                    child: CircularProgressIndicator(
+                                      value: value,
+                                      strokeWidth: 8.5,
+                                      backgroundColor: const Color(0xFFEDE5DB),
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        completed
+                                            ? AppColors.turquoiseAccentStrong
+                                            : AppColors.indigoAccent.withValues(
+                                                alpha: 0.92,
+                                              ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                              Container(
+                                width: 228,
+                                height: 228,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      Colors.white.withValues(alpha: 0.94),
+                                      completed
+                                          ? AppColors.turquoiseAccent
+                                              .withValues(
+                                              alpha: 0.24,
+                                            )
+                                          : const Color(0xFFF2EBE2),
+                                    ],
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: completed
+                                          ? AppColors.turquoiseAccentStrong
+                                              .withValues(alpha: 0.16)
+                                          : const Color(0x0A9D9488),
+                                      blurRadius: completed ? 28 : 20,
+                                      offset: const Offset(0, 10),
+                                    ),
+                                    BoxShadow(
+                                      color: Colors.white.withValues(
+                                        alpha: completed ? 0.42 : 0.34,
+                                      ),
+                                      blurRadius: 2,
+                                      spreadRadius: -1,
+                                      offset: const Offset(0, -2),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              Padding(
+                                padding:
+                                    const EdgeInsets.symmetric(horizontal: 22),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    AnimatedSwitcher(
+                                      duration:
+                                          const Duration(milliseconds: 180),
+                                      transitionBuilder: (child, animation) {
+                                        return FadeTransition(
+                                          opacity: animation,
+                                          child: ScaleTransition(
+                                            scale: Tween<double>(
+                                              begin: 0.94,
+                                              end: 1,
+                                            ).animate(animation),
+                                            child: child,
+                                          ),
+                                        );
+                                      },
+                                      child: Text(
+                                        '$_currentCount',
+                                        key: ValueKey<int>(_currentCount),
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: completed ? 88 : 84,
+                                          fontWeight: FontWeight.w700,
+                                          color: completed
+                                              ? const Color(0xFF203432)
+                                              : const Color(0xFF1F1A17),
+                                          letterSpacing: -2.2,
+                                          height: 1,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 14),
+                                    Text(
+                                      '$_currentCount / $_effectiveGoal',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w600,
+                                        color: completed
+                                            ? AppColors.turquoiseAccentStrong
+                                                .withValues(alpha: 0.9)
+                                            : const Color(0xFF6B625A),
+                                        letterSpacing: 0.1,
+                                      ),
+                                    ),
+                                    if (completed) ...[
+                                      const SizedBox(height: 10),
+                                      Text(
+                                        _isAsmaMemorizationMode
+                                            ? S.get('tasbih_completed')
+                                            : S.get('tasbih_target_reached'),
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          fontFamily: 'Inter',
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w600,
+                                          color: AppColors.emphasisAccent,
+                                          letterSpacing: 0.15,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          completed
+                              ? (_isAsmaMemorizationMode
+                                  ? S.get('tasbih_completed')
+                                  : S.get('tasbih_target_reached'))
+                              : (_isAsmaMemorizationMode
+                                  ? S.get('tasbih_tap_for_next_name')
+                                  : S.get('tasbih_tap_to_count')),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: completed
+                                ? AppColors.turquoiseAccentStrong
+                                    .withValues(alpha: 0.92)
+                                : const Color(0xFF5E564F),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
       ),
     );
   }

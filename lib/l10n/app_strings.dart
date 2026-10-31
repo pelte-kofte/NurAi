@@ -29,7 +29,7 @@ class S {
 
   static const _strings = <String, Map<String, String>>{
     'tr': {
-      'splash_headline': 'Günün içinde duaya yer aç.',
+      'splash_headline': 'Günün içinde kısa bir duruş.',
       'splash_subtitle':
           'Namaz vakitleri, Kur’an ve zikir; ihtiyaç duyduğunda yanında.',
       'home_section_now_upcoming': 'Bir sonraki vakit',
@@ -40,9 +40,6 @@ class S {
       'home_daily_reflection_start': 'Başla',
       'home_daily_reflection_completed': 'Bugün tamamlandı',
       'home_daily_reflection_streak': '{count} günlük devam',
-      'home_daily_reflection_week_progress': 'Bu hafta {count}/7',
-      'home_daily_reflection_day_completed': 'tamamlandı',
-      'home_daily_reflection_day_not_completed': 'henüz tamamlanmadı',
       'home_see_more_for_today': 'Bugün için daha fazlasını gör',
       'today_choose_direction_label': '',
       'today_choose_fit_label': '',
@@ -114,7 +111,8 @@ class S {
       'juz_selected': 'Cüz seçildi',
       'juz_label': 'Cüz',
       'ramadan_hub_title': 'Kalbini Dinlendir',
-      'ramadan_intro': 'Biraz Kur’an oku, zikir çek veya dua et.',
+      'ramadan_intro':
+          'Kalbindeki yükü Allah\'a bırak.\nKısa bir duruşla kalbini zikirle dinlendir.',
       'guided_helper_title': 'Nasıl hissediyorsun?',
       'guided_helper_subtitle': 'Şu an yapmak istediğini seç.',
       'guided_helper_emotional_title': 'Şu an nasıl hissediyorsun?',
@@ -141,7 +139,7 @@ class S {
       'guided_helper_dua_sheet_body':
           'İçinden geçenleri Allah’a sessizce bırak. Hazır hissettiğinde bir cümleyle dua etmeye başlayabilirsin.',
       'guided_helper_dua_sheet_cta': 'Burada kalacağım',
-      'guided_helper_message_calmer': 'Bir ayet okuyarak başlayabilirsin.',
+      'guided_helper_message_calmer': 'Bir dakikalık duruşla başlayabilirsin.',
       'guided_helper_message_read_quran': 'Kaldığın yerden devam edebilirsin.',
       'guided_helper_message_short_dhikr': 'Kısa bir zikirle başlayabilirsin.',
       'guided_helper_message_daily_reminder':
@@ -151,7 +149,8 @@ class S {
       'guided_helper_message_prepare_prayer':
           'Namaz vaktine hazırlanmak için buradan başlayabilirsin.',
       'companion_flow_title': 'Kalbini Dinlendir',
-      'companion_flow_home_subtitle': 'Bir ayet oku. İstersen ardından dua et.',
+      'companion_flow_home_subtitle':
+          'Bir ayetle dur, içinden geldiği gibi dua et.',
       'companion_flow_step_verse': 'Ayet',
       'companion_flow_step_pause': 'Dur',
       'companion_flow_step_dua': 'Dua',
@@ -173,10 +172,11 @@ class S {
       'companion_flow_ayah_source_7': 'Talâk Suresi · 3. ayet',
       'companion_flow_ayah_8': 'Şükrederseniz elbette size nimetimi artırırım.',
       'companion_flow_ayah_source_8': 'İbrâhîm Suresi · 7. ayet',
-      'companion_flow_ayah_prompt': 'İstersen ayeti bir kez daha oku.',
-      'companion_flow_pause_title': 'Biraz burada kal.',
+      'companion_flow_ayah_prompt':
+          'Bu ayeti hemen geçmek zorunda değilsin. Sende kalan kelimeyi fark et.',
+      'companion_flow_pause_title': 'Biraz sessiz kal.',
       'companion_flow_pause_body':
-          'Birkaç saniye hiçbir şey yapma. Hazır olduğunda devam et.',
+          'Nefesini değiştirmeye çalışma. İçinden geçenleri olduğu gibi fark et ve Allah’ın seni bildiğini hatırla.',
       'companion_flow_dua_title':
           'Allah’ım, içimde taşıdığım şeyi Sen biliyorsun. Bana doğru olanı kolaylaştır, kalbime ferahlık ver.',
       'companion_flow_dua_decision':
@@ -186,7 +186,7 @@ class S {
       'companion_flow_dua_sleep':
           'Allah’ım, bu günü Sana emanet ediyorum. Eksiklerimi bağışla ve bana huzurlu bir gece nasip et.',
       'companion_flow_dua_body':
-          'Bu duayı okuyabilir veya kendi sözlerinle dua edebilirsin.',
+          'İstersen bu duayı oku; istersen kendi sözlerinle devam et.',
       'companion_flow_dua_note':
           'Bu metin ayet veya hadis değil, Duada’nın hazırladığı bir dua önerisidir.',
       'companion_flow_step_breathe': 'Nefes',
@@ -220,25 +220,32 @@ class S {
       'companion_flow_dhikr_phrase_4': 'La ilahe illallah',
       'companion_flow_dhikr_phrase_5': 'Hasbiyallahu la ilahe illa Hu',
       'companion_flow_dhikr_phrase_6': 'La havle ve la kuvvete illa billah',
-      'companion_flow_finish_cta': 'Ana sayfaya dön',
+      'companion_flow_finish_cta': 'Duayı tamamla',
       'companion_flow_finish_title': 'Duan tamamlandı.',
       'companion_flow_finish_body':
           'İstersen kendi sözlerinle dua etmeye devam edebilirsin.',
       'companion_flow_close': 'Kapat',
-      'companion_intent_title': 'Şu an seni en çok ne meşgul ediyor?',
-      'companion_intent_subtitle': '',
+      'companion_intent_title': 'Şu an neye ihtiyacın var?',
+      'companion_intent_subtitle':
+          'Seçimine göre kısa bir ayet, duruş ve dua açılır.',
       'companion_intent_overwhelmed': 'Aklım çok dolu',
-      'companion_intent_overwhelmed_subtitle': '',
+      'companion_intent_overwhelmed_subtitle':
+          'Bir ayetle durup düşüncelerini fark et.',
       'companion_intent_decision': 'Bir karar vermem gerekiyor',
-      'companion_intent_decision_subtitle': '',
+      'companion_intent_decision_subtitle':
+          'Tevekkül üzerine kısa bir ayet ve dua.',
       'companion_intent_gratitude': 'Şükretmek istiyorum',
-      'companion_intent_gratitude_subtitle': '',
-      'companion_intent_sleep': 'Uyumadan önce biraz okumak istiyorum',
-      'companion_intent_sleep_subtitle': '',
+      'companion_intent_gratitude_subtitle':
+          'Bugünkü nimetleri hatırlamak için kısa bir duruş.',
+      'companion_intent_sleep': 'Uyumadan önce',
+      'companion_intent_sleep_subtitle':
+          'Günü kısa bir ayet ve dua ile tamamla.',
       'minute_reflection_title': 'Bir Dakika Tefekkür',
       'minute_reflection_subtitle': 'Sadece burada kal.',
-      'minute_reflection_screen_subtitle': 'Bugünün sözüyle bir dakika kal.',
-      'minute_reflection_home_subtitle': 'Bugünün sözüyle bir dakika kal.',
+      'minute_reflection_screen_subtitle':
+          'Ayet, zikir ve Esma ile kısa bir tefekkür alanı.',
+      'minute_reflection_home_subtitle':
+          'Ayet, zikir ve Esma ile kısa bir tefekkür alanı.',
       'minute_reflection_type_ayah': 'Ayet',
       'minute_reflection_type_hadith': 'Hadis',
       'minute_reflection_type_dhikr': 'Zikir',
@@ -249,22 +256,12 @@ class S {
       'minute_reflection_completed': 'Kısa bir tefekkür tamamlandı.',
       'minute_reflection_item_guidance_timed': '20 saniye bu sözle kal.',
       'minute_reflection_next_hint': 'Sıradaki söz birazdan gelecek',
-      'minute_reflection_stay_hint': 'Biraz daha burada kal',
-      'minute_reflection_ready_hint': 'Hazırsan devam edebilirsin',
-      'minute_reflection_step_progress': 'Tefekkür adımı',
-      'minute_reflection_phase_read': 'Oku',
-      'minute_reflection_phase_pause': 'Dur',
-      'minute_reflection_phase_carry': 'Yanında taşı',
-      'minute_reflection_pause_fallback': 'Bu sözün sende bıraktığını fark et.',
-      'minute_reflection_carry_body':
-          'Bugün acele ettiğin bir anda bu sözü yeniden hatırla.',
       'minute_reflection_seconds_short': ' sn',
-      'minute_reflection_finish_title': 'Bugünlük bu kadar.',
+      'minute_reflection_finish_title': 'Bir dakikalık tefekkür tamamlandı.',
       'minute_reflection_finish_subtitle':
           'Bugün ayet, zikir veya Esma üzerine kısa bir süre düşündün.',
-      'minute_reflection_finish_subtitle_ui':
-          'Bu söz günün içinde sana eşlik etsin.',
-      'minute_reflection_finish_today': 'Bugünün tefekkürü tamamlandı',
+      'minute_reflection_finish_subtitle_ui': 'Bugünkü kaydın oluşturuldu.',
+      'minute_reflection_finish_today': 'Bugün: ✓',
       'minute_reflection_finish_home': 'Ana sayfaya dön',
       'minute_reflection_finish_repeat': 'Bir söz daha',
       'minute_reflection_enable_reminder': 'Her gün hatırlat',
@@ -276,7 +273,7 @@ class S {
           'Aklından geçenleri fark et; hemen cevap vermen gerekmiyor.',
       'calming_flow_stage_3':
           'Allah’ın seni bildiğini hatırla ve kısa bir dua et.',
-      'calming_flow_completed': 'Tamamlandı.',
+      'calming_flow_completed': 'Kısa duruş tamamlandı.',
       'calming_flow_finish_title': 'Bu adımı tamamladın.',
       'calming_flow_finish_subtitle': 'İstersen bir kez daha başlayabilirsin.',
       'calming_flow_finish_home': 'Ana sayfaya dön',
@@ -287,7 +284,7 @@ class S {
       'spiritual_connection_status_today': 'Bugün tefekkür ettin',
       'spiritual_connection_status_recent': 'Son tefekkürün yakın zamanda',
       'spiritual_connection_status_empty':
-          'İlk tefekkürünü buradan açabilirsin',
+          'İlk kısa duruşuna buradan başlayabilirsin',
       'spiritual_connection_detail_gentle':
           'Tamamladığın kısa tefekkürleri burada görebilirsin.',
       'spiritual_connection_detail_count':
@@ -348,7 +345,7 @@ class S {
           'Akşamını hatırlamayla tamamladın. Allah kabul etsin.',
       'reflection_evening_completed_message_3':
           'Bugünü ayetle mühürledin. Ne güzel bir kapanış.',
-      'today_intent_calmer_title': 'Bir ayet oku',
+      'today_intent_calmer_title': 'Kısa bir duruş',
       'today_intent_calmer_body':
           'Bugün kısa ayet ve tefekkür içeriklerini öne aldık.',
       'today_intent_reminder_title': 'Bugünün içeriği',
@@ -441,8 +438,6 @@ class S {
       'daily_reminder_subtitle':
           'Seçtiğin saatte Bugünün Tefekkürü’nü hatırlatır.',
       'daily_reminder_time': 'Günlük hatırlatma saati',
-      'daily_reminder_preview':
-          'Örnek: “Bugünün tefekkürü hazır” — Bugünün sözüyle bir dakika kal.',
       'reading_reminder': 'Kuran okuma hatırlatması',
       'reading_reminder_subtitle': 'Kaldığın yerden devam etmeni hatırlatır.',
       'reading_reminder_time': 'Kuran okuma hatırlatma saati',
@@ -474,7 +469,7 @@ class S {
       'qibla_location_read_failed':
           'Konum bilgisi alınamadı.\nLütfen tekrar deneyin.',
       'reading_juz_label': 'Cüz',
-      'reading_juz_companion_subtitle': '{juz}. Cüz',
+      'reading_juz_companion_subtitle': '{juz}. Cüz · Kısa bir duruş alanı',
       'bookmarks_title': 'Kaydedilenler',
       'bookmarks_empty':
           'Henüz kaydettiğiniz ayet yok.\n\nOkurken bir ayeti kaydetmek için yer imi simgesine dokunun.',
@@ -843,9 +838,6 @@ class S {
       'home_daily_reflection_start': 'Start',
       'home_daily_reflection_completed': 'Completed today',
       'home_daily_reflection_streak': '{count} days in a row',
-      'home_daily_reflection_week_progress': 'This week {count}/7',
-      'home_daily_reflection_day_completed': 'completed',
-      'home_daily_reflection_day_not_completed': 'not completed yet',
       'home_see_more_for_today': 'See more for today',
       'today_choose_direction_label': '',
       'today_choose_fit_label': '',
@@ -960,7 +952,7 @@ class S {
           'Opening a gentle prayer preparation for you.',
       'companion_flow_title': 'Rest Your Heart',
       'companion_flow_home_subtitle':
-          'Read an ayah. If you want, make dua afterwards.',
+          'Pause with one verse, then pray in your own words.',
       'companion_flow_step_verse': 'Verse',
       'companion_flow_step_pause': 'Pause',
       'companion_flow_step_dua': 'Dua',
@@ -1037,27 +1029,32 @@ class S {
       'companion_flow_dhikr_phrase_4': 'La ilaha illallah',
       'companion_flow_dhikr_phrase_5': 'Hasbiyallahu la ilaha illa Hu',
       'companion_flow_dhikr_phrase_6': 'La hawla wa la quwwata illa billah',
-      'companion_flow_finish_cta': 'Return home',
+      'companion_flow_finish_cta': 'Finish the dua',
       'companion_flow_finish_title': 'You can continue from here.',
       'companion_flow_finish_body':
           'A short pause can be enough to steady the heart.',
       'companion_flow_close': 'Close',
-      'companion_intent_title': 'What is on your mind right now?',
-      'companion_intent_subtitle': '',
+      'companion_intent_title': 'What do you need right now?',
+      'companion_intent_subtitle':
+          'Your choice opens a short verse, pause, and dua.',
       'companion_intent_overwhelmed': 'My mind feels full',
-      'companion_intent_overwhelmed_subtitle': '',
+      'companion_intent_overwhelmed_subtitle':
+          'Pause with a verse and notice your thoughts.',
       'companion_intent_decision': 'I need to make a decision',
-      'companion_intent_decision_subtitle': '',
+      'companion_intent_decision_subtitle':
+          'A short verse and dua about trusting Allah.',
       'companion_intent_gratitude': 'I want to give thanks',
-      'companion_intent_gratitude_subtitle': '',
-      'companion_intent_sleep': 'I want to read something before sleep',
-      'companion_intent_sleep_subtitle': '',
+      'companion_intent_gratitude_subtitle':
+          'Take a moment to remember today’s blessings.',
+      'companion_intent_sleep': 'Before sleep',
+      'companion_intent_sleep_subtitle':
+          'Close the day with a short verse and dua.',
       'minute_reflection_title': 'One Minute Reflection',
       'minute_reflection_subtitle': 'Just stay here for a moment.',
       'minute_reflection_screen_subtitle':
-          'Stay with today’s words for one minute.',
+          'A short reflection with ayah, dhikr and the Beautiful Names of Allah.',
       'minute_reflection_home_subtitle':
-          'Stay with today’s words for one minute.',
+          'A short reflection with ayah, dhikr and the Beautiful Names of Allah.',
       'minute_reflection_type_ayah': 'Ayah',
       'minute_reflection_type_hadith': 'Hadith',
       'minute_reflection_type_dhikr': 'Dhikr',
@@ -1069,23 +1066,14 @@ class S {
       'minute_reflection_item_guidance_timed':
           'Stay with these words for 20 seconds.',
       'minute_reflection_next_hint': 'The next word will appear shortly',
-      'minute_reflection_stay_hint': 'Stay here a little longer',
-      'minute_reflection_ready_hint': 'Continue when you are ready',
-      'minute_reflection_step_progress': 'Reflection step',
-      'minute_reflection_phase_read': 'Read',
-      'minute_reflection_phase_pause': 'Pause',
-      'minute_reflection_phase_carry': 'Carry it with you',
-      'minute_reflection_pause_fallback':
-          'Notice what these words leave with you.',
-      'minute_reflection_carry_body':
-          'Remember these words again when the day begins to rush.',
       'minute_reflection_seconds_short': 's',
-      'minute_reflection_finish_title': 'That is enough for today.',
+      'minute_reflection_finish_title':
+          'May these words bring ease to your heart.',
       'minute_reflection_finish_subtitle':
           'You gave yourself this brief pause today.',
       'minute_reflection_finish_subtitle_ui':
-          'Let these words stay with you through the day.',
-      'minute_reflection_finish_today': 'Today’s reflection is complete',
+          'May this short pause bring ease to your heart.',
+      'minute_reflection_finish_today': 'Today: ✓',
       'minute_reflection_finish_home': 'Return Home',
       'minute_reflection_finish_repeat': 'Another word',
       'minute_reflection_enable_reminder': 'Remind me every day',
@@ -1274,8 +1262,6 @@ class S {
       'daily_reminder_subtitle':
           'Reminds you of Today’s Reflection at your chosen time.',
       'daily_reminder_time': 'Daily spiritual reminder time',
-      'daily_reminder_preview':
-          'Example: “Today’s reflection is ready” — Stay with today’s words for one minute.',
       'reading_reminder': 'Reading reminder',
       'reading_reminder_subtitle':
           'A gentle reminder to continue your Qur\'an reading.',

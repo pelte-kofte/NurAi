@@ -9,10 +9,8 @@ void main() {
 
   Future<void> pumpScreenAtSize(
     WidgetTester tester,
-    Size size, {
-    ThemeData? theme,
-    TextScaler textScaler = TextScaler.noScaling,
-  }) async {
+    Size size,
+  ) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = size;
     addTearDown(() {
@@ -22,13 +20,7 @@ void main() {
 
     SharedPreferences.setMockInitialValues(<String, Object>{});
     await tester.pumpWidget(
-      MaterialApp(
-        theme: theme,
-        home: MediaQuery(
-          data: MediaQueryData(textScaler: textScaler),
-          child: const MinuteReflectionScreen(),
-        ),
-      ),
+      const MaterialApp(home: MinuteReflectionScreen()),
     );
     await tester.pump();
   }
@@ -44,19 +36,6 @@ void main() {
   testWidgets('renders without layout errors on a large iPhone',
       (tester) async {
     await pumpScreenAtSize(tester, const Size(430, 932));
-
-    expect(find.text('Bir Dakika Tefekkür'), findsOneWidget);
-    expect(tester.takeException(), isNull);
-  });
-
-  testWidgets('supports dark mode and large accessibility text',
-      (tester) async {
-    await pumpScreenAtSize(
-      tester,
-      const Size(430, 932),
-      theme: ThemeData.dark(useMaterial3: true),
-      textScaler: const TextScaler.linear(1.8),
-    );
 
     expect(find.text('Bir Dakika Tefekkür'), findsOneWidget);
     expect(tester.takeException(), isNull);
