@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -90,13 +91,12 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 20, 0),
+              padding: const EdgeInsets.fromLTRB(16, 8, 20, 0),
               child: Row(
                 children: [
-                  IconButton(
-                    tooltip: S.get('companion_flow_close'),
+                  TextButton(
                     onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
+                    child: Text(S.get('companion_flow_close')),
                   ),
                   const Spacer(),
                   Text(
@@ -112,17 +112,6 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
               ),
             ),
             const SizedBox(height: 18),
-            AnimatedSwitcher(
-              duration: reduceMotion
-                  ? Duration.zero
-                  : const Duration(milliseconds: 260),
-              child: _intent == null
-                  ? const SizedBox(height: 32, key: ValueKey('intent-space'))
-                  : _StepIndicator(
-                      key: const ValueKey('step-indicator'),
-                      step: _step,
-                    ),
-            ),
             Expanded(
               child: AnimatedSwitcher(
                 duration: reduceMotion
@@ -156,14 +145,12 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
                               title: S.get(ayah.textKey),
                               source: S.get(ayah.sourceKey),
                               body: S.get('companion_flow_ayah_prompt'),
-                              icon: Icons.menu_book_rounded,
                             ),
                           CompanionFlowStep.pause => _CompanionCard(
                               step: CompanionFlowStep.pause,
-                              eyebrow: S.get('companion_flow_step_pause'),
+                              eyebrow: '',
                               title: S.get('companion_flow_pause_title'),
                               body: S.get('companion_flow_pause_body'),
-                              icon: Icons.hourglass_bottom_rounded,
                             ),
                           CompanionFlowStep.dua => _CompanionCard(
                               step: CompanionFlowStep.dua,
@@ -171,7 +158,6 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
                               title: S.get(_duaTitleKey),
                               body: S.get('companion_flow_dua_body'),
                               note: S.get('companion_flow_dua_note'),
-                              icon: Icons.volunteer_activism_rounded,
                             ),
                         },
                       ),
@@ -223,45 +209,42 @@ class _CompanionFlowScreenState extends State<CompanionFlowScreen> {
   }
 }
 
-class _CompanionIntentPicker extends StatelessWidget {
+class _CompanionIntentPicker extends StatefulWidget {
   const _CompanionIntentPicker({super.key, required this.onSelected});
 
   final ValueChanged<CompanionIntent> onSelected;
 
   @override
+  State<_CompanionIntentPicker> createState() => _CompanionIntentPickerState();
+}
+
+class _CompanionIntentPickerState extends State<_CompanionIntentPicker> {
+  int _selectedIndex = 0;
+
+  @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final reduceMotion =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    final options = <(CompanionIntent, IconData, String, String)>[
+    final options = <(CompanionIntent, String)>[
       (
         CompanionIntent.overwhelmed,
-        Icons.blur_on_rounded,
         'companion_intent_overwhelmed',
-        'companion_intent_overwhelmed_subtitle',
       ),
       (
         CompanionIntent.decision,
-        Icons.alt_route_rounded,
         'companion_intent_decision',
-        'companion_intent_decision_subtitle',
       ),
       (
         CompanionIntent.gratitude,
-        Icons.favorite_outline_rounded,
         'companion_intent_gratitude',
-        'companion_intent_gratitude_subtitle',
       ),
       (
         CompanionIntent.beforeSleep,
-        Icons.bedtime_outlined,
         'companion_intent_sleep',
-        'companion_intent_sleep_subtitle',
       ),
     ];
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 26, 24, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -274,213 +257,77 @@ class _CompanionIntentPicker extends StatelessWidget {
               color: colors.onSurface,
             ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            S.get('companion_intent_subtitle'),
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              height: 1.5,
-              color: colors.onSurface.withValues(alpha: 0.68),
+          const Spacer(),
+          SizedBox(
+            height: 250,
+            child: Semantics(
+              label: S.get('companion_intent_title'),
+              child: CupertinoPicker(
+                itemExtent: 64,
+                diameterRatio: 1.35,
+                squeeze: 1,
+                useMagnifier: true,
+                magnification: 1.04,
+                selectionOverlay: Container(
+                  decoration: BoxDecoration(
+                    border: Border.symmetric(
+                      horizontal: BorderSide(
+                        color: colors.onSurface.withValues(alpha: 0.14),
+                      ),
+                    ),
+                  ),
+                ),
+                onSelectedItemChanged: (index) {
+                  HapticFeedback.selectionClick();
+                  setState(() => _selectedIndex = index);
+                },
+                children: List.generate(options.length, (index) {
+                  final selected = index == _selectedIndex;
+                  return Center(
+                    child: Text(
+                      S.get(options[index].$2),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: selected ? 20 : 17,
+                        fontWeight:
+                            selected ? FontWeight.w600 : FontWeight.w400,
+                        color: colors.onSurface.withValues(
+                          alpha: selected ? 1 : 0.42,
+                        ),
+                        height: 1.2,
+                      ),
+                    ),
+                  );
+                }),
+              ),
             ),
           ),
-          const SizedBox(height: 24),
-          ...List.generate(options.length, (index) {
-            final option = options[index];
-            return TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: 1),
-              duration: reduceMotion
-                  ? Duration.zero
-                  : Duration(milliseconds: 260 + index * 45),
-              curve: Curves.easeOutCubic,
-              builder: (context, value, child) => Opacity(
-                opacity: value,
-                child: Transform.translate(
-                  offset:
-                      reduceMotion ? Offset.zero : Offset(0, 8 * (1 - value)),
-                  child: child,
+          const Spacer(),
+          SizedBox(
+            width: double.infinity,
+            height: 52,
+            child: FilledButton(
+              onPressed: () => widget.onSelected(options[_selectedIndex].$1),
+              style: FilledButton.styleFrom(
+                backgroundColor: colors.primary,
+                foregroundColor: colors.onPrimary,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadii.medium),
                 ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _IntentTile(
-                  icon: option.$2,
-                  title: S.get(option.$3),
-                  subtitle: S.get(option.$4),
-                  dividerColor: colors.outline.withValues(alpha: 0.42),
-                  onTap: () => onSelected(option.$1),
+              child: Text(
+                S.get('continue'),
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-            );
-          }),
+            ),
+          ),
         ],
-      ),
-    );
-  }
-}
-
-class _IntentTile extends StatefulWidget {
-  const _IntentTile({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.dividerColor,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color dividerColor;
-  final VoidCallback onTap;
-
-  @override
-  State<_IntentTile> createState() => _IntentTileState();
-}
-
-class _IntentTileState extends State<_IntentTile> {
-  bool _pressed = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final reduceMotion =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    return Semantics(
-      button: true,
-      label: widget.title,
-      hint: widget.subtitle,
-      onTap: widget.onTap,
-      child: ExcludeSemantics(
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: (_) => setState(() => _pressed = true),
-          onTapCancel: () => setState(() => _pressed = false),
-          onTapUp: (_) {
-            setState(() => _pressed = false);
-            widget.onTap();
-          },
-          child: AnimatedScale(
-            scale: _pressed ? 0.98 : 1,
-            duration: reduceMotion
-                ? Duration.zero
-                : const Duration(milliseconds: 140),
-            curve: Curves.easeOutCubic,
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 18),
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: widget.dividerColor)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: colors.primaryContainer,
-                    ),
-                    child: Icon(
-                      widget.icon,
-                      size: 22,
-                      color: colors.onPrimaryContainer,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.title,
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 15,
-                            fontWeight: FontWeight.w700,
-                            color: colors.onSurface,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          widget.subtitle,
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 12.5,
-                            height: 1.4,
-                            color: colors.onSurface.withValues(alpha: 0.66),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Icon(
-                    Icons.chevron_right_rounded,
-                    color: colors.onSurface.withValues(alpha: 0.38),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StepIndicator extends StatelessWidget {
-  const _StepIndicator({super.key, required this.step});
-
-  final CompanionFlowStep step;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = Theme.of(context).colorScheme;
-    final reduceMotion =
-        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
-    final labels = [
-      S.get('companion_flow_step_verse'),
-      S.get('companion_flow_step_pause'),
-      S.get('companion_flow_step_dua'),
-    ];
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 28),
-      child: Row(
-        children: List.generate(labels.length, (index) {
-          final active = index <= step.index;
-          return Expanded(
-            child: Padding(
-              padding: EdgeInsets.only(left: index == 0 ? 0 : 5),
-              child: Column(
-                children: [
-                  AnimatedContainer(
-                    duration: reduceMotion
-                        ? Duration.zero
-                        : const Duration(milliseconds: 220),
-                    height: 3,
-                    decoration: BoxDecoration(
-                      color: active
-                          ? colors.primary
-                          : colors.outline.withValues(alpha: 0.45),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                  const SizedBox(height: 7),
-                  Text(
-                    labels[index],
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 11,
-                      fontWeight: active ? FontWeight.w600 : FontWeight.w400,
-                      color: active
-                          ? colors.primary
-                          : colors.onSurface.withValues(alpha: 0.46),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }),
       ),
     );
   }
@@ -492,7 +339,6 @@ class _CompanionCard extends StatelessWidget {
     required this.eyebrow,
     required this.title,
     required this.body,
-    required this.icon,
     this.source,
     this.note,
   });
@@ -501,7 +347,6 @@ class _CompanionCard extends StatelessWidget {
   final String eyebrow;
   final String title;
   final String body;
-  final IconData icon;
   final String? source;
   final String? note;
 
@@ -509,54 +354,39 @@ class _CompanionCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     final isPause = step == CompanionFlowStep.pause;
-    final isDua = step == CompanionFlowStep.dua;
     return Center(
       child: ConstrainedBox(
         constraints: const BoxConstraints(maxWidth: 480),
-        child: Container(
-          width: double.infinity,
+        child: Padding(
           padding: EdgeInsets.fromLTRB(
             isPause ? 12 : 24,
             isPause ? 54 : 30,
             isPause ? 12 : 24,
             isPause ? 54 : 28,
           ),
-          decoration: BoxDecoration(
-            color: isPause
-                ? Colors.transparent
-                : isDua
-                    ? colors.primaryContainer.withValues(alpha: 0.42)
-                    : colors.surface,
-            borderRadius: BorderRadius.circular(22),
-            border: isPause || !isDua
-                ? null
-                : Border.all(color: colors.primary.withValues(alpha: 0.16)),
-          ),
           child: Column(
             children: [
-              if (!isPause) ...[
-                Icon(icon, size: 22, color: colors.primary),
-                const SizedBox(height: 14),
-              ],
-              Text(
-                eyebrow.toUpperCase(),
-                style: TextStyle(
-                  fontFamily: 'Inter',
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.1,
-                  color: colors.primary,
+              if (eyebrow.isNotEmpty) ...[
+                Text(
+                  eyebrow,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: colors.onSurface.withValues(alpha: 0.56),
+                  ),
                 ),
-              ),
-              SizedBox(height: isPause ? 34 : 22),
+                const SizedBox(height: 22),
+              ] else
+                const SizedBox(height: 8),
               Text(
                 title,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontFamily: 'Merriweather',
-                  fontSize: isPause ? 30 : 25,
-                  fontWeight: FontWeight.w400,
-                  height: 1.5,
+                  fontFamily: 'Inter',
+                  fontSize: isPause ? 28 : 25,
+                  fontWeight: FontWeight.w500,
+                  height: 1.45,
                   color: colors.onSurface,
                 ),
               ),
@@ -573,13 +403,6 @@ class _CompanionCard extends StatelessWidget {
                 ),
               ],
               SizedBox(height: isPause ? 32 : 24),
-              if (!isPause) ...[
-                Divider(
-                  height: 1,
-                  color: colors.outline.withValues(alpha: 0.42),
-                ),
-                const SizedBox(height: 22),
-              ],
               Text(
                 body,
                 textAlign: TextAlign.center,

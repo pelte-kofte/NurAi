@@ -752,11 +752,10 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
       children: [
         _buildSectionHeader(
           title: S.get('home_section_when_needed'),
-          icon: Icons.favorite_border_rounded,
+          icon: null,
         ),
         const SizedBox(height: 12),
         _HomeJourneyTile(
-          icon: Icons.volunteer_activism_outlined,
           title: S.get('companion_flow_title'),
           subtitle: S.get('companion_flow_home_subtitle'),
           onTap: _openCompanionFlow,
@@ -855,16 +854,18 @@ class _HomeScreenState extends State<HomeScreen> with RouteAware {
     );
   }
 
-  Widget _buildSectionHeader({required String title, required IconData icon}) {
+  Widget _buildSectionHeader({required String title, IconData? icon}) {
     final colorScheme = Theme.of(context).colorScheme;
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: AppColors.indigoAccent.withValues(alpha: 0.88),
-        ),
-        const SizedBox(width: 8),
+        if (icon != null) ...[
+          Icon(
+            icon,
+            size: 16,
+            color: AppColors.indigoAccent.withValues(alpha: 0.88),
+          ),
+          const SizedBox(width: 8),
+        ],
         Text(
           title,
           style: TextStyle(
@@ -2378,13 +2379,11 @@ class _DailyReflectionCardState extends State<_DailyReflectionCard> {
 
 class _HomeJourneyTile extends StatelessWidget {
   const _HomeJourneyTile({
-    required this.icon,
     required this.title,
     required this.subtitle,
     required this.onTap,
   });
 
-  final IconData icon;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
@@ -2393,29 +2392,20 @@ class _HomeJourneyTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Material(
-      color: colors.surface,
-      borderRadius: BorderRadius.circular(AppRadii.medium),
+      color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(AppRadii.medium),
         child: Container(
-          padding: const EdgeInsets.all(18),
+          padding: const EdgeInsets.symmetric(vertical: 18),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AppRadii.medium),
-            border: Border.all(color: AppColors.cardBorder),
+            border: Border(
+              bottom: BorderSide(
+                color: colors.outline.withValues(alpha: 0.3),
+              ),
+            ),
           ),
           child: Row(
             children: [
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: AppColors.ctaSecondaryFill,
-                  borderRadius: BorderRadius.circular(AppRadii.small),
-                ),
-                child: Icon(icon, color: AppColors.emphasisAccent, size: 22),
-              ),
-              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2441,11 +2431,6 @@ class _HomeJourneyTile extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.chevron_right_rounded,
-                color: colors.onSurface.withValues(alpha: 0.45),
               ),
             ],
           ),
