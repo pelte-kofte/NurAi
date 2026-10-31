@@ -28,11 +28,11 @@ class _TasbihScreenState extends State<TasbihScreen>
   static const int _customGoalValue = -1;
 
   static const List<_DhikrOption> _baseDhikrs = [
-    _DhikrOption(key: 'subhanallah', label: 'Sübhanallah'),
-    _DhikrOption(key: 'alhamdulillah', label: 'Elhamdülillah'),
-    _DhikrOption(key: 'allahu_akbar', label: 'Allahu ekber'),
-    _DhikrOption(key: 'la_ilaha_illallah', label: 'Lâ ilâhe illallah'),
-    _DhikrOption(key: 'salawat', label: 'Salavat'),
+    _DhikrOption(key: 'subhanallah', label: 'Subhanallah'),
+    _DhikrOption(key: 'alhamdulillah', label: 'Alhamdulillah'),
+    _DhikrOption(key: 'allahu_akbar', label: 'Allahu Akbar'),
+    _DhikrOption(key: 'la_ilaha_illallah', label: 'La ilaha illallah'),
+    _DhikrOption(key: 'salawat', label: 'Salawat'),
   ];
 
   String _selectedDhikrKey = _baseDhikrs.first.key;
@@ -553,6 +553,7 @@ class _TasbihScreenState extends State<TasbihScreen>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final completed = _currentCount >= _effectiveGoal;
+    final remaining = (_effectiveGoal - _currentCount).clamp(0, _effectiveGoal);
 
     if (!completed && _didShowCompletionMessage) {
       _didShowCompletionMessage = false;
@@ -567,9 +568,9 @@ class _TasbihScreenState extends State<TasbihScreen>
         title: Text(
           S.get('tasbih'),
           style: TextStyle(
-            fontFamily: 'Inter',
+            fontFamily: 'Merriweather',
             fontSize: 20,
-            fontWeight: FontWeight.w700,
+            fontWeight: FontWeight.w400,
             color: colorScheme.onSurface,
           ),
         ),
@@ -596,12 +597,10 @@ class _TasbihScreenState extends State<TasbihScreen>
                   children: [
                     _buildFocusHeader(completed: completed),
                     const SizedBox(height: 18),
-                    SizedBox(
-                      height: (MediaQuery.sizeOf(context).height - 360)
-                          .clamp(340.0, 430.0)
-                          .toDouble(),
+                    Expanded(
                       child: _buildCountingSanctuary(
                         completed: completed,
+                        remaining: remaining,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -684,23 +683,6 @@ class _TasbihScreenState extends State<TasbihScreen>
               ),
             ),
           ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 6),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.66),
-              borderRadius: BorderRadius.circular(99),
-            ),
-            child: Text(
-              '${S.get('tasbih_goal')}: $_effectiveGoal',
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF70655D),
-              ),
-            ),
-          ),
           if (_currentDhikrMeaningText != null) ...[
             const SizedBox(height: 8),
             AnimatedSwitcher(
@@ -748,6 +730,7 @@ class _TasbihScreenState extends State<TasbihScreen>
 
   Widget _buildCountingSanctuary({
     required bool completed,
+    required int remaining,
   }) {
     final progress = _effectiveGoal <= 0
         ? 0.0
@@ -1006,22 +989,26 @@ class _TasbihScreenState extends State<TasbihScreen>
                                         letterSpacing: 0.1,
                                       ),
                                     ),
-                                    if (completed) ...[
-                                      const SizedBox(height: 10),
-                                      Text(
-                                        _isAsmaMemorizationMode
-                                            ? S.get('tasbih_completed')
-                                            : S.get('tasbih_target_reached'),
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(
-                                          fontFamily: 'Inter',
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w600,
-                                          color: AppColors.emphasisAccent,
-                                          letterSpacing: 0.15,
-                                        ),
+                                    const SizedBox(height: 10),
+                                    Text(
+                                      completed
+                                          ? (_isAsmaMemorizationMode
+                                              ? S.get('tasbih_completed')
+                                              : S.get('tasbih_target_reached'))
+                                          : '$remaining',
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: completed ? 13 : 28,
+                                        fontWeight: completed
+                                            ? FontWeight.w600
+                                            : FontWeight.w500,
+                                        color: completed
+                                            ? AppColors.emphasisAccent
+                                            : const Color(0xFF877D73),
+                                        letterSpacing: completed ? 0.15 : -0.2,
                                       ),
-                                    ],
+                                    ),
                                   ],
                                 ),
                               ),

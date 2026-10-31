@@ -160,8 +160,7 @@ class LocalPreferencesService {
         LocalDataRecovery.getBool(_prefs, _keyIftarLiveActivityTipSeen);
     var spiritualNotificationsEnabledValue =
         LocalDataRecovery.getBool(_prefs, _keySpiritualNotificationsEnabled);
-    minimalModeEnabled.value =
-        LocalDataRecovery.getBool(_prefs, _keyMinimalMode);
+    minimalModeEnabled.value = LocalDataRecovery.getBool(_prefs, _keyMinimalMode);
     final legacyNightCompanionReminderEnabled =
         LocalDataRecovery.getBool(_prefs, _keyNightCompanionReminderEnabled);
     if (!spiritualNotificationsEnabledValue &&
@@ -337,9 +336,7 @@ class LocalPreferencesService {
   }
 
   static Future<void> markCompanionFlowCompletedToday() async {
-    final todayKey = _todayDateKey();
-    await _prefs?.setString(_keyCompanionFlowCompletedDate, todayKey);
-    companionFlowCompletedToday.value = true;
+    await markReflectionCompletedToday();
     await _prefs?.setInt(
       _keyCompanionFlowCompletionCount,
       companionFlowCompletionCount + 1,
@@ -388,8 +385,7 @@ class LocalPreferencesService {
         final json = jsonDecode(raw) as Map<String, dynamic>;
         decoded = PrayerLocation.fromJson(json);
       } catch (error, stackTrace) {
-        LocalDataRecovery.log(
-            'prayerLocation:$_keyPrayerLocation', error, stackTrace);
+        LocalDataRecovery.log('prayerLocation:$_keyPrayerLocation', error, stackTrace);
         await LocalDataRecovery.clearPrefsKeys(_prefs, [_keyPrayerLocation]);
         // Fall through to legacy keys.
       }

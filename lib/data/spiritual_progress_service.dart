@@ -43,7 +43,6 @@ class SpiritualProgressState {
     required this.dailyGoalDate,
     required this.reflectionStreakCount,
     required this.reflectionLastCompletedDate,
-    required this.reflectionCompletionDates,
     required this.morningReflectionCompletedDate,
     required this.eveningReflectionCompletedDate,
   });
@@ -58,7 +57,6 @@ class SpiritualProgressState {
   final String? dailyGoalDate;
   final int reflectionStreakCount;
   final String? reflectionLastCompletedDate;
-  final List<String> reflectionCompletionDates;
   final String? morningReflectionCompletedDate;
   final String? eveningReflectionCompletedDate;
 }
@@ -74,7 +72,6 @@ class SpiritualProgressService {
   static const _keyReflectionStreakCount = 'reflection_streak_count';
   static const _keyReflectionLastCompletedDate =
       'reflection_last_completed_date';
-  static const _keyReflectionCompletionDates = 'reflection_completion_dates_v1';
   static const _keyMorningReflectionCompletedDate =
       'morning_reflection_completed_date';
   static const _keyEveningReflectionCompletedDate =
@@ -93,10 +90,8 @@ class SpiritualProgressService {
   static Future<SpiritualProgressState> loadState() async {
     final prefs = await _instance();
     final todayKey = _dateKey(DateTime.now());
-    final storedDailyGoalDate = await _readCanonicalDateKey(
-      prefs,
-      _keyDailyGoalDate,
-    );
+    final storedDailyGoalDate =
+        await _readCanonicalDateKey(prefs, _keyDailyGoalDate);
     var dailyGoalDone = LocalDataRecovery.getBool(prefs, _keyDailyGoalDone);
 
     if (storedDailyGoalDate != todayKey && dailyGoalDone) {
@@ -113,22 +108,12 @@ class SpiritualProgressService {
         : highestCompletedJuz > 0
             ? (highestCompletedJuz + 1).clamp(1, 30)
             : 1;
-    final reflectionStreakCount = _sanitizeNonNegativeInt(
-      prefs,
-      _keyReflectionStreakCount,
-    );
-    final reflectionLastCompletedDate = await _readCanonicalDateKey(
-      prefs,
-      _keyReflectionLastCompletedDate,
-    );
-    final reflectionCompletionDates = await _readReflectionCompletionDates(
-      prefs,
-      legacyLastCompletedDate: reflectionLastCompletedDate,
-      legacyStreakCount: reflectionStreakCount,
-    );
 
     return SpiritualProgressState(
-      streakCount: _sanitizeNonNegativeInt(prefs, _keyStreakCount),
+      streakCount: _sanitizeNonNegativeInt(
+        prefs,
+        _keyStreakCount,
+      ),
       lastReadDate: await _readCanonicalDateKey(prefs, _keyLastReadDate),
       currentJuz: currentJuz,
       highestCompletedJuz: highestCompletedJuz,
@@ -136,17 +121,18 @@ class SpiritualProgressService {
       allJuzCompleted: allJuzCompleted,
       dailyGoalDone: dailyGoalDone && storedDailyGoalDate == todayKey,
       dailyGoalDate: storedDailyGoalDate,
-      reflectionStreakCount: reflectionStreakCount,
-      reflectionLastCompletedDate: reflectionLastCompletedDate,
-      reflectionCompletionDates: reflectionCompletionDates,
+      reflectionStreakCount: _sanitizeNonNegativeInt(
+        prefs,
+        _keyReflectionStreakCount,
+      ),
+      reflectionLastCompletedDate: await _readCanonicalDateKey(
+        prefs,
+        _keyReflectionLastCompletedDate,
+      ),
       morningReflectionCompletedDate: await _readCanonicalDateKey(
-        prefs,
-        _keyMorningReflectionCompletedDate,
-      ),
+          prefs, _keyMorningReflectionCompletedDate),
       eveningReflectionCompletedDate: await _readCanonicalDateKey(
-        prefs,
-        _keyEveningReflectionCompletedDate,
-      ),
+          prefs, _keyEveningReflectionCompletedDate),
     );
   }
 
@@ -155,10 +141,8 @@ class SpiritualProgressService {
     final today = DateTime.now();
     final todayKey = _dateKey(today);
     final lastReadDate = await _readCanonicalDateKey(prefs, _keyLastReadDate);
-    final storedDailyGoalDate = await _readCanonicalDateKey(
-      prefs,
-      _keyDailyGoalDate,
-    );
+    final storedDailyGoalDate =
+        await _readCanonicalDateKey(prefs, _keyDailyGoalDate);
     final wasDailyGoalDoneToday =
         LocalDataRecovery.getBool(prefs, _keyDailyGoalDone) &&
             storedDailyGoalDate == todayKey;
@@ -214,12 +198,9 @@ class SpiritualProgressService {
     };
     final lastPeriodCompletion = await _readCanonicalDateKey(prefs, periodKey);
     if (lastPeriodCompletion == todayKey) {
-      await _recordReflectionCompletionDate(prefs, todayKey);
       return ReflectionCompletionResult(
-        reflectionStreakCount: _sanitizeNonNegativeInt(
-          prefs,
-          _keyReflectionStreakCount,
-        ),
+        reflectionStreakCount:
+            _sanitizeNonNegativeInt(prefs, _keyReflectionStreakCount),
         completedNow: false,
         streakContinued: false,
       );
@@ -232,12 +213,9 @@ class SpiritualProgressService {
       _keyReflectionLastCompletedDate,
     );
     if (lastReflectionDate == todayKey) {
-      await _recordReflectionCompletionDate(prefs, todayKey);
       return ReflectionCompletionResult(
-        reflectionStreakCount: _sanitizeNonNegativeInt(
-          prefs,
-          _keyReflectionStreakCount,
-        ),
+        reflectionStreakCount:
+            _sanitizeNonNegativeInt(prefs, _keyReflectionStreakCount),
         completedNow: true,
         streakContinued: false,
       );
@@ -254,7 +232,6 @@ class SpiritualProgressService {
 
     await prefs.setInt(_keyReflectionStreakCount, streakCount);
     await prefs.setString(_keyReflectionLastCompletedDate, todayKey);
-    await _recordReflectionCompletionDate(prefs, todayKey);
     return ReflectionCompletionResult(
       reflectionStreakCount: streakCount,
       completedNow: true,
@@ -277,71 +254,11 @@ class SpiritualProgressService {
     return normalized;
   }
 
-  static Future<List<String>> _readReflectionCompletionDates(
-    SharedPreferences prefs, {
-    String? legacyLastCompletedDate,
-    int legacyStreakCount = 0,
-  }) async {
-    var rawDates =
-        prefs.getStringList(_keyReflectionCompletionDates) ?? const <String>[];
-    if (rawDates.isEmpty &&
-        legacyLastCompletedDate != null &&
-        legacyStreakCount > 0) {
-      final lastDate = _dateFromKey(legacyLastCompletedDate);
-      if (lastDate != null) {
-        final migratedCount = legacyStreakCount.clamp(1, 60);
-        rawDates = List<String>.generate(
-          migratedCount,
-          (index) => _dateKey(
-            lastDate.subtract(Duration(days: migratedCount - index - 1)),
-          ),
-        );
-      }
-    }
-    final normalized = rawDates
-        .map(_normalizeDateKey)
-        .whereType<String>()
-        .toSet()
-        .toList()
-      ..sort();
-
-    final recent = normalized.length <= 60
-        ? normalized
-        : normalized.sublist(normalized.length - 60);
-    if (recent.length != rawDates.length ||
-        !List.generate(
-          recent.length,
-          (index) => recent[index],
-        ).every((value) => rawDates.contains(value))) {
-      await prefs.setStringList(_keyReflectionCompletionDates, recent);
-    }
-    return recent;
-  }
-
-  static Future<void> _recordReflectionCompletionDate(
-    SharedPreferences prefs,
-    String dateKey,
-  ) async {
-    final dates = (await _readReflectionCompletionDates(prefs)).toSet()
-      ..add(dateKey);
-    final sorted = dates.toList()..sort();
-    await prefs.setStringList(
-      _keyReflectionCompletionDates,
-      sorted.length <= 60 ? sorted : sorted.sublist(sorted.length - 60),
-    );
-  }
-
   static String? _normalizeDateKey(String? value) {
     if (value == null || value.isEmpty) return null;
     final directMatch = RegExp(r'^\d{4}-\d{2}-\d{2}$').firstMatch(value);
     if (directMatch != null) {
       return directMatch.group(0);
-    }
-
-    final timestampDate =
-        RegExp(r'^(\d{4}-\d{2}-\d{2})(?:T|\s)').firstMatch(value);
-    if (timestampDate != null) {
-      return timestampDate.group(1);
     }
 
     final parsed = DateTime.tryParse(value);

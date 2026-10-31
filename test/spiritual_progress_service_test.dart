@@ -68,25 +68,6 @@ void main() {
       expect(afterGap.streakContinued, isFalse);
     });
 
-    test('keeps actual completion dates when days are skipped', () async {
-      await SpiritualProgressService.completeReflectionForTesting(
-        period: ReflectionPeriod.evening,
-        now: DateTime(2026, 4, 18, 21),
-      );
-      await SpiritualProgressService.completeReflectionForTesting(
-        period: ReflectionPeriod.evening,
-        now: DateTime(2026, 4, 21, 21),
-      );
-
-      final state = await SpiritualProgressService.loadState();
-
-      expect(
-        state.reflectionCompletionDates,
-        containsAll(<String>['2026-04-18', '2026-04-21']),
-      );
-      expect(state.reflectionCompletionDates, isNot(contains('2026-04-20')));
-    });
-
     test('normalizes legacy timestamp values to calendar days', () async {
       SharedPreferences.setMockInitialValues({
         'reflection_streak_count': 4,

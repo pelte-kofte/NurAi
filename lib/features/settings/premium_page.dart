@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../../data/premium_service.dart';
-import '../../theme/app_theme.dart';
 import '../home/today_screen.dart';
 import '../ramadan/ramadan_hub_screen.dart';
 import '../../l10n/app_strings.dart';
@@ -17,7 +16,7 @@ class PremiumPage extends StatefulWidget {
 }
 
 class _PremiumPageState extends State<PremiumPage> {
-  static const Color _premiumPrimary = AppColors.primaryAccent;
+  static const Color _premiumPrimary = Color(0xFF2F6B57);
   static const Color _premiumSecondary = Color(0xFF7EA08C);
   static const Color _premiumGlow = Color(0xFFF0E4C8);
   static const Color _premiumInk = Color(0xFF314744);
@@ -44,8 +43,14 @@ class _PremiumPageState extends State<PremiumPage> {
     final colorScheme = Theme.of(context).colorScheme;
     final cardDecoration = BoxDecoration(
       color: colorScheme.surface,
-      borderRadius: BorderRadius.circular(AppRadii.medium),
-      border: Border.all(color: AppColors.cardBorder),
+      borderRadius: BorderRadius.circular(18),
+      boxShadow: [
+        BoxShadow(
+          color: colorScheme.shadow.withValues(alpha: 0.07),
+          blurRadius: 26,
+          offset: const Offset(0, 14),
+        ),
+      ],
     );
 
     return Scaffold(
@@ -78,13 +83,6 @@ class _PremiumPageState extends State<PremiumPage> {
                                       _buildHeroSection(
                                         isPremium: isPremium,
                                         productPrice: product?.price,
-                                        ctaLabel: _ctaLabel(context),
-                                        onCtaPressed: isPremium ||
-                                                isLoading ||
-                                                isProductLoading ||
-                                                product == null
-                                            ? null
-                                            : PremiumService.buyMonthly,
                                       ),
                                       const SizedBox(height: 24),
                                       if (isPremium) ...[
@@ -138,7 +136,7 @@ class _PremiumPageState extends State<PremiumPage> {
                                               Text(S.get('premium_try_again')),
                                         ),
                                       ],
-                                      const SizedBox(height: 20),
+                                      const SizedBox(height: 28),
                                       if (isLoading)
                                         const Center(
                                           child: Padding(
@@ -153,6 +151,39 @@ class _PremiumPageState extends State<PremiumPage> {
                                             ),
                                           ),
                                         ),
+                                      SizedBox(
+                                        width: double.infinity,
+                                        child: Container(
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(18),
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: _premiumSecondary
+                                                    .withValues(alpha: 0.18),
+                                                blurRadius: 24,
+                                                offset: const Offset(0, 10),
+                                              ),
+                                            ],
+                                          ),
+                                          child: AppCtaButton(
+                                            label: _ctaLabel(context),
+                                            fullWidth: true,
+                                            onPressed: isPremium ||
+                                                    isLoading ||
+                                                    isProductLoading ||
+                                                    product == null
+                                                ? null
+                                                : PremiumService.buyMonthly,
+                                            textStyle: const TextStyle(
+                                              fontFamily: 'Inter',
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
                                       Center(
                                         child: Text(
                                           S.get('premium_cta_context'),
@@ -268,108 +299,6 @@ class _PremiumPageState extends State<PremiumPage> {
   }
 
   Widget _buildHeroSection({
-    required bool isPremium,
-    required String? productPrice,
-    required String ctaLabel,
-    required VoidCallback? onCtaPressed,
-  }) {
-    final colors = Theme.of(context).colorScheme;
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(22),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF6F1E9),
-        borderRadius: BorderRadius.circular(AppRadii.medium),
-        border: Border.all(color: const Color(0xFFE4DACD)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            S.get('premium_app_title'),
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.5,
-              color: _premiumPrimary,
-            ),
-          ),
-          const SizedBox(height: 14),
-          Text(
-            S.get('premium_hero_title'),
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-              height: 1.25,
-              color: _premiumInk,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            S.get('premium_hero_subtitle'),
-            style: TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              height: 1.55,
-              color: colors.onSurface.withValues(alpha: 0.76),
-            ),
-          ),
-          const SizedBox(height: 20),
-          _PremiumConcreteBenefit(
-            icon: Icons.block_rounded,
-            text: S.get('premium_benefit_ad_free_title'),
-          ),
-          const SizedBox(height: 10),
-          _PremiumConcreteBenefit(
-            icon: Icons.notifications_none_rounded,
-            text: S.get('premium_benefit_more_reminders'),
-          ),
-          const SizedBox(height: 10),
-          _PremiumConcreteBenefit(
-            icon: Icons.touch_app_outlined,
-            text: S.get('premium_benefit_advanced_tasbih'),
-          ),
-          const SizedBox(height: 20),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.72),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Text(
-              isPremium
-                  ? S.get('premium_active')
-                  : '${S.get('premium_membership_label')} · ${productPrice ?? S.get('premium_subscription_loading')}',
-              style: const TextStyle(
-                fontFamily: 'Inter',
-                fontSize: 13,
-                fontWeight: FontWeight.w700,
-                color: _premiumPrimary,
-              ),
-            ),
-          ),
-          const SizedBox(height: 14),
-          AppCtaButton(
-            label: ctaLabel,
-            fullWidth: true,
-            onPressed: onCtaPressed,
-            textStyle: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Kept temporarily for rollback while the new concrete Premium hero is tested.
-  // ignore: unused_element
-  Widget _buildLegacyHeroSection({
     required bool isPremium,
     required String? productPrice,
   }) {
@@ -829,34 +758,6 @@ class _PremiumPageState extends State<PremiumPage> {
 
   String _trustLine(BuildContext context) {
     return S.get('premium_cancel_anytime');
-  }
-}
-
-class _PremiumConcreteBenefit extends StatelessWidget {
-  const _PremiumConcreteBenefit({required this.icon, required this.text});
-
-  final IconData icon;
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, size: 19, color: _PremiumPageState._premiumPrimary),
-        const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: const TextStyle(
-              fontFamily: 'Inter',
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: _PremiumPageState._premiumInk,
-            ),
-          ),
-        ),
-      ],
-    );
   }
 }
 

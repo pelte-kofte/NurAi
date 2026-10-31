@@ -2,23 +2,23 @@ import 'package:flutter/material.dart';
 
 class AppColors {
   // --- Background ---
-  static const Color scaffoldBg = Color(0xFFF7F4EE);
-  static const Color cardBg = Color(0xFFFFFDF9);
-  static const Color cardBgMuted = Color(0xFFF0ECE4);
-  static const Color cardBgSoft = Color(0xFFF4F0E8);
-  static const Color cardBorder = Color(0xFFE1D9CE);
+  static const Color scaffoldBg = Color(0xFFFBFAF5);
+  static const Color cardBg = Color(0xFFFFFFFF);
+  static const Color cardBgMuted = Color(0xFFF5F1E8);
+  static const Color cardBgSoft = Color(0xFFF7F4EC);
+  static const Color cardBorder = Color(0xFFE7E1D6);
 
   // --- Accents ---
-  static const Color turquoiseAccent = Color(0xFF355E52); // Primary
-  static const Color indigoAccent = Color(0xFF5D756D); // Secondary
-  static const Color turquoiseAccentStrong = Color(0xFF294C42); // Emphasis
-  static const Color earthAccent = Color(0xFFA17D58); // Muted warm accent
-  static const Color ctaPrimaryStart = Color(0xFF355E52);
-  static const Color ctaPrimaryEnd = Color(0xFF355E52);
+  static const Color turquoiseAccent = Color(0xFFC8D9DB); // Primary
+  static const Color indigoAccent = Color(0xFF7D9194); // Secondary
+  static const Color turquoiseAccentStrong = Color(0xFF6E878A); // Emphasis
+  static const Color earthAccent = Color(0xFFB7A48A); // Muted warm accent
+  static const Color ctaPrimaryStart = Color(0xFF7F9EA0);
+  static const Color ctaPrimaryEnd = Color(0xFF6C858E);
   static const Color ctaPrimaryText = Color(0xFFFDFBF7);
-  static const Color ctaSecondaryFill = Color(0xFFE9EFEC);
-  static const Color ctaSecondaryBorder = Color(0xFFCFDCD6);
-  static const Color ctaShadow = Colors.transparent;
+  static const Color ctaSecondaryFill = Color(0xFFEAF0F0);
+  static const Color ctaSecondaryBorder = Color(0xFFD4E0E1);
+  static const Color ctaShadow = Color(0x245E7377);
 
   // Aliases for use in ColorScheme
   static const Color primaryAccent = turquoiseAccent;
@@ -26,34 +26,16 @@ class AppColors {
   static const Color emphasisAccent = turquoiseAccentStrong;
 
   // --- Text ---
-  static const Color textPrimary = Color(0xFF252A27);
-  static const Color textSecondary = Color(0xFF5E655F);
-  static const Color textMuted = Color(0xFF858B86);
+  static const Color textPrimary = Color(0xFF2F2F2F);
+  static const Color textSecondary = Color(0xFF6B6B6B);
+  static const Color textMuted = Color(0xFF9A9A9A);
 
   // --- Icons ---
-  static const Color iconMuted = Color(0xFF71857D);
+  static const Color iconMuted = Color(0xFF9FB2B4);
 
   // --- Splash ---
   static const Color splashOverlayTop = Color(0x5C171411);
   static const Color splashOverlayBottom = Color(0x91302A23);
-}
-
-class AppRadii {
-  AppRadii._();
-
-  static const double small = 12;
-  static const double medium = 16;
-  static const double large = 24;
-}
-
-class AppSpacing {
-  AppSpacing._();
-
-  static const double xs = 4;
-  static const double sm = 8;
-  static const double md = 16;
-  static const double lg = 24;
-  static const double xl = 32;
 }
 
 class AppTheme {
@@ -61,7 +43,7 @@ class AppTheme {
     const colorScheme = ColorScheme(
       brightness: Brightness.light,
       primary: AppColors.turquoiseAccent,
-      onPrimary: Colors.white,
+      onPrimary: AppColors.textPrimary,
       secondary: AppColors.indigoAccent,
       onSecondary: Colors.white,
       tertiary: AppColors.earthAccent,
@@ -82,10 +64,10 @@ class AppTheme {
     const textTheme = TextTheme(
       headlineMedium: TextStyle(
         fontFamily: 'Merriweather',
-        fontSize: 32,
+        fontSize: 34,
         fontWeight: FontWeight.w400,
-        color: AppColors.textPrimary,
-        height: 1.24,
+        color: AppColors.cardBg,
+        height: 1.2,
       ),
       titleLarge: TextStyle(
         fontFamily: 'Merriweather',
@@ -101,7 +83,7 @@ class AppTheme {
       ),
       bodyMedium: TextStyle(
         fontFamily: 'Inter',
-        fontSize: 15,
+        fontSize: 14,
         fontWeight: FontWeight.w400,
         color: AppColors.textSecondary,
       ),
@@ -122,16 +104,6 @@ class AppTheme {
       cardColor: AppColors.cardBg,
       dividerColor: AppColors.cardBorder,
       canvasColor: AppColors.cardBg,
-      cardTheme: const CardThemeData(
-        color: AppColors.cardBg,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.all(Radius.circular(AppRadii.medium)),
-          side: BorderSide(color: AppColors.cardBorder),
-        ),
-      ),
       bottomSheetTheme: const BottomSheetThemeData(
         backgroundColor: AppColors.cardBg,
         surfaceTintColor: Colors.transparent,
@@ -143,12 +115,6 @@ class AppTheme {
         foregroundColor: AppColors.textPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
-        titleTextStyle: TextStyle(
-          fontFamily: 'Inter',
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          color: AppColors.textPrimary,
-        ),
       ),
       snackBarTheme: const SnackBarThemeData(
         backgroundColor: AppColors.cardBg,
@@ -168,7 +134,7 @@ class AppTheme {
           minimumSize: const Size.fromHeight(50),
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.medium),
+            borderRadius: BorderRadius.circular(16),
           ),
           textStyle: const TextStyle(
             fontFamily: 'Inter',
@@ -184,7 +150,7 @@ class AppTheme {
           minimumSize: const Size.fromHeight(48),
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadii.medium),
+            borderRadius: BorderRadius.circular(16),
           ),
           textStyle: const TextStyle(
             fontFamily: 'Inter',

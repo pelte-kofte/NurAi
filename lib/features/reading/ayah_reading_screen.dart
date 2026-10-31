@@ -1,3 +1,5 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:scrollable_positioned_list/scrollable_positioned_list.dart';
@@ -427,79 +429,97 @@ class _AyahReadingScreenState extends State<AyahReadingScreen> {
           ],
         ],
       ),
-      body: ColoredBox(
-        color: theme.scaffoldBackgroundColor,
-        child: Column(
-          children: [
-            _buildSecondaryModeSelector(),
-            if ((_secondaryTextMode ?? _SecondaryTextMode.transliteration) ==
-                    _SecondaryTextMode.translation &&
-                Localizations.localeOf(context).languageCode == 'tr')
-              Padding(
-                padding: const EdgeInsets.fromLTRB(24, 8, 24, 0),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    S.get('quran_meal_source_pending'),
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 11.5,
-                      color: mutedTextColor,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: IgnorePointer(
+              child: Opacity(
+                opacity: 0.28,
+                child: Transform.scale(
+                  scale: 1.05,
+                  child: ImageFiltered(
+                    imageFilter: ui.ImageFilter.blur(sigmaX: 1.1, sigmaY: 1.1),
+                    child: Image.asset(
+                      'assets/images/mosque_bg_2.png',
+                      fit: BoxFit.cover,
+                      alignment: Alignment.center,
                     ),
                   ),
                 ),
               ),
-            Expanded(
-              child: ScrollablePositionedList.builder(
-                itemScrollController: _itemScrollController,
-                padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-                itemCount: _ayahs.length + (_isJuzMode ? 1 : 0),
-                itemBuilder: (context, index) {
-                  // Subtle header for juz mode
-                  if (_isJuzMode && index == 0) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 24),
-                      child: Text(
-                        S
-                            .get(
-                              'reading_juz_companion_subtitle',
-                            )
-                            .replaceFirst(
-                                '{juz}', '${widget.readingContext.juzNumber}'),
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: mutedTextColor,
-                          height: 1.4,
-                        ),
-                      ),
-                    );
-                  }
-
-                  final ayahIndex = _isJuzMode ? index - 1 : index;
-                  final ayah = _ayahs[ayahIndex];
-                  final languageCode = Localizations.localeOf(context)
-                      .languageCode
-                      .toLowerCase();
-                  final secondaryMode =
-                      _secondaryTextMode ?? _SecondaryTextMode.transliteration;
-                  return _AyahBlock(
-                    ayah: ayah,
-                    surahName: _localizedSurahName(ayah.surah),
-                    secondaryTextMode: secondaryMode,
-                    languageCode: languageCode,
-                    isLastRead: _isLastRead(ayah),
-                    isResumeHighlight: _isResumeHighlight(ayah),
-                    isWithinJuzRange: _isAyahWithinJuzRange(ayah),
-                    onTap: () => _onAyahTap(ayah),
-                  );
-                },
+            ),
+          ),
+          Positioned.fill(
+            child: IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      theme.scaffoldBackgroundColor.withValues(alpha: 0.03),
+                      theme.scaffoldBackgroundColor.withValues(alpha: 0.09),
+                    ],
+                  ),
+                ),
               ),
             ),
-          ],
-        ),
+          ),
+          Column(
+            children: [
+              _buildSecondaryModeSelector(),
+              Expanded(
+                child: ScrollablePositionedList.builder(
+                  itemScrollController: _itemScrollController,
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+                  itemCount: _ayahs.length + (_isJuzMode ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    // Subtle header for juz mode
+                    if (_isJuzMode && index == 0) {
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 24),
+                        child: Text(
+                          S
+                              .get(
+                                'reading_juz_companion_subtitle',
+                              )
+                              .replaceFirst('{juz}',
+                                  '${widget.readingContext.juzNumber}'),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontFamily: 'Inter',
+                            fontSize: 12,
+                            fontWeight: FontWeight.w400,
+                            color: mutedTextColor,
+                            height: 1.4,
+                          ),
+                        ),
+                      );
+                    }
+
+                    final ayahIndex = _isJuzMode ? index - 1 : index;
+                    final ayah = _ayahs[ayahIndex];
+                    final languageCode = Localizations.localeOf(context)
+                        .languageCode
+                        .toLowerCase();
+                    final secondaryMode = _secondaryTextMode ??
+                        _SecondaryTextMode.transliteration;
+                    return _AyahBlock(
+                      ayah: ayah,
+                      surahName: _localizedSurahName(ayah.surah),
+                      secondaryTextMode: secondaryMode,
+                      languageCode: languageCode,
+                      isLastRead: _isLastRead(ayah),
+                      isResumeHighlight: _isResumeHighlight(ayah),
+                      isWithinJuzRange: _isAyahWithinJuzRange(ayah),
+                      onTap: () => _onAyahTap(ayah),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -647,52 +667,6 @@ class _AyahBlockState extends State<_AyahBlock> {
     }
   }
 
-  Future<void> _showActions() async {
-    await showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      useSafeArea: true,
-      builder: (sheetContext) => Padding(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: Icon(
-                _isBookmarked
-                    ? Icons.bookmark_remove_rounded
-                    : Icons.bookmark_add_outlined,
-              ),
-              title: Text(
-                S.get(
-                  _isBookmarked
-                      ? 'ayah_action_remove_bookmark'
-                      : 'ayah_action_bookmark',
-                ),
-              ),
-              onTap: () async {
-                Navigator.of(sheetContext).pop();
-                await _toggleBookmark();
-              },
-            ),
-            ListTile(
-              leading: Icon(
-                _hasNote
-                    ? Icons.sticky_note_2_rounded
-                    : Icons.sticky_note_2_outlined,
-              ),
-              title: Text(S.get('ayah_action_note')),
-              onTap: () async {
-                Navigator.of(sheetContext).pop();
-                await _openNote();
-              },
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -772,29 +746,6 @@ class _AyahBlockState extends State<_AyahBlock> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 9,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(99),
-                      ),
-                      child: Text(
-                        '${widget.ayah.ayahNumber}',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                          color: secondaryTextColor,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
                   // Dot marker above Arabic text for last-read ayah
                   if (widget.isLastRead)
                     Padding(
@@ -840,13 +791,31 @@ class _AyahBlockState extends State<_AyahBlock> {
                       ),
                       const SizedBox(width: 8),
                       GestureDetector(
-                        onTap: _showActions,
+                        onTap: _toggleBookmark,
                         child: Padding(
                           padding: const EdgeInsets.only(top: 2),
                           child: Icon(
-                            Icons.more_horiz_rounded,
+                            _isBookmarked
+                                ? Icons.bookmark_rounded
+                                : Icons.bookmark_border_rounded,
                             size: 20,
                             color: secondaryTextColor,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      GestureDetector(
+                        onTap: _openNote,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Icon(
+                            _hasNote
+                                ? Icons.sticky_note_2_rounded
+                                : Icons.sticky_note_2_outlined,
+                            size: 20,
+                            color: _hasNote
+                                ? colorScheme.primary
+                                : secondaryTextColor,
                           ),
                         ),
                       ),

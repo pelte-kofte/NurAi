@@ -18,14 +18,9 @@ import '../notes/notes_screen.dart';
 import 'premium_page.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({
-    super.key,
-    this.scrollController,
-    this.showCloseButton = false,
-  });
+  const SettingsScreen({super.key, this.scrollController});
 
   final ScrollController? scrollController;
-  final bool showCloseButton;
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -51,26 +46,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    S.get('settings'),
-                    style: TextStyle(
-                      fontFamily: 'Inter',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                ),
-                if (widget.showCloseButton)
-                  IconButton(
-                    tooltip: S.get('close'),
-                    onPressed: () => Navigator.of(context).pop(),
-                    icon: const Icon(Icons.close_rounded),
-                  ),
-              ],
+            child: Text(
+              S.get('settings'),
+              style: TextStyle(
+                fontFamily: 'Merriweather',
+                fontSize: 20,
+                fontWeight: FontWeight.w400,
+                color: colorScheme.onSurface,
+              ),
             ),
           ),
           _buildSectionGroup(
@@ -105,6 +88,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     icon: Icons.tune_rounded,
                     value: _themeModeLabel(mode),
                     onTap: () => _showThemePicker(),
+                  );
+                },
+              ),
+              ValueListenableBuilder<bool>(
+                valueListenable: LocalPreferencesService.minimalModeEnabled,
+                builder: (context, enabled, _) {
+                  return _buildSwitchRow(
+                    title: S.get('minimal_mode'),
+                    value: enabled,
+                    onChanged: LocalPreferencesService.setMinimalModeEnabled,
                   );
                 },
               ),
@@ -146,9 +139,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     builder: (context, time, _) {
                       return _buildRow(
                         title: S.get('daily_reminder_time'),
-                        icon: Icons.schedule_rounded,
-                        value:
-                            MaterialLocalizations.of(context).formatTimeOfDay(
+                        icon: Icons.bedtime_outlined,
+                        value: MaterialLocalizations.of(context).formatTimeOfDay(
                           time,
                           alwaysUse24HourFormat: true,
                         ),
@@ -174,14 +166,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 builder: (context, enabled, _) {
                   if (!enabled) return const SizedBox.shrink();
                   return ValueListenableBuilder<TimeOfDay>(
-                    valueListenable:
-                        LocalPreferencesService.readingReminderTime,
+                    valueListenable: LocalPreferencesService.readingReminderTime,
                     builder: (context, time, _) {
                       return _buildRow(
                         title: S.get('reading_reminder_time'),
                         icon: Icons.menu_book_outlined,
-                        value:
-                            MaterialLocalizations.of(context).formatTimeOfDay(
+                        value: MaterialLocalizations.of(context).formatTimeOfDay(
                           time,
                           alwaysUse24HourFormat: true,
                         ),
@@ -198,8 +188,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     if (!isSupported) return const SizedBox.shrink();
                     return _buildSwitchRow(
                       title: S.get('iftar_countdown_toggle'),
-                      value: LocalPreferencesService
-                          .iftarLiveActivityEnabled.value,
+                      value:
+                          LocalPreferencesService.iftarLiveActivityEnabled.value,
                       onChanged: _onToggleIftarCountdown,
                     );
                   },
@@ -237,8 +227,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       _buildRow(
                         title: S.get('premium_app_title'),
                         icon: Icons.workspace_premium_outlined,
-                        value:
-                            isPremium ? S.get('premium_status_active') : null,
+                        value: isPremium ? S.get('premium_status_active') : null,
                         onTap: _openPremiumPage,
                       ),
                       if (isPremium) ...[

@@ -34,9 +34,7 @@ class _AppCtaButtonState extends State<AppCtaButton> {
   @override
   Widget build(BuildContext context) {
     final enabled = widget.onPressed != null;
-    final radius = BorderRadius.circular(
-      widget.compact ? AppRadii.small : AppRadii.medium,
-    );
+    final radius = BorderRadius.circular(widget.compact ? 14 : 18);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final textStyle = (widget.textStyle ??
@@ -127,9 +125,30 @@ class _AppCtaButtonState extends State<AppCtaButton> {
       case AppCtaLevel.primary:
         return BoxDecoration(
           borderRadius: radius,
-          color: enabled
-              ? AppColors.ctaPrimaryEnd
-              : colorScheme.outline.withValues(alpha: 0.32),
+          gradient: enabled
+              ? const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.ctaPrimaryStart,
+                    AppColors.ctaPrimaryEnd,
+                  ],
+                )
+              : LinearGradient(
+                  colors: [
+                    colorScheme.outline.withValues(alpha: 0.3),
+                    colorScheme.outline.withValues(alpha: 0.4),
+                  ],
+                ),
+          boxShadow: enabled
+              ? [
+                  const BoxShadow(
+                    color: AppColors.ctaShadow,
+                    blurRadius: 18,
+                    offset: Offset(0, 8),
+                  ),
+                ]
+              : null,
         );
       case AppCtaLevel.secondary:
         return BoxDecoration(
